@@ -110,14 +110,16 @@ impl <const BUFSIZE: usize> Ruffbox<BUFSIZE> {
         }
     }
            
-    pub fn process(&mut self, stream_time: f64) -> [[f32; BUFSIZE]; 2] {        
+    pub fn process(&mut self, stream_time: f64, track_time_internally: bool) -> [[f32; BUFSIZE]; 2] {        
         let mut out_buf: [[f32; BUFSIZE]; 2] = [[0.0; BUFSIZE]; 2];
 
         let mut master_delay_in: [[f32; BUFSIZE]; 2] = [[0.0; BUFSIZE]; 2];        
         let mut master_reverb_in: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
-        self.now = stream_time;
-        
+	if !track_time_internally {
+	    self.now = stream_time;
+	}
+                
         // remove finished instances ...
         self.running_instances.retain( |instance| !&instance.is_finished());
 
@@ -185,6 +187,10 @@ impl <const BUFSIZE: usize> Ruffbox<BUFSIZE> {
             out_buf[0][s] += reverb_out[0][s] + delay_out[0][s];
             out_buf[1][s] += reverb_out[1][s] + delay_out[1][s];
         }
+
+	if track_time_internally {
+	    self.now += self.block_duration;
+	}
                               
         out_buf
     }
@@ -251,7 +257,7 @@ mod tests {
         
         ruff.trigger(inst);
         
-        let out_1 = ruff.process(0.0);
+        let out_1 = ruff.process(0.0, true);
         let mut comp_1 = [0.0; 128];
 
         for i in 0..128 {
@@ -276,7 +282,7 @@ mod tests {
         let bnum1 = ruff.load_sample(&sample1);
         let bnum2 = ruff.load_sample(&sample2);
         
-        ruff.process(0.0);
+        ruff.process(0.0, true);
 
         let inst_1 = ruff.prepare_instance(SourceType::Sampler, 0.0, bnum1);
         let inst_2 = ruff.prepare_instance(SourceType::Sampler, 0.0, bnum2);
@@ -301,7 +307,7 @@ mod tests {
         ruff.trigger(inst_1);
         ruff.trigger(inst_2);
 
-        let out_buf = ruff.process(0.0);
+        let out_buf = ruff.process(0.0, true);
         
         for i in 0..9 {
             println!("{} {} ", out_buf[0][i], sample1[i + 1] + sample2[i + 1]);
@@ -319,7 +325,7 @@ mod tests {
                 
         let bnum1 = ruff.load_sample(&sample1);
                 
-        ruff.process(0.0);
+        ruff.process(0.0, true);
 
         let inst_1 = ruff.prepare_instance(SourceType::Sampler, 0.0, bnum1);        
 
@@ -335,7 +341,7 @@ mod tests {
                        
         ruff.trigger(inst_1);
         
-        let out_buf = ruff.process(0.0);
+        let out_buf = ruff.process(0.0, true);
         
         for i in 0..9 {
             println!("{} {} ", out_buf[0][i], sample1[i + 1]);
@@ -383,11 +389,11 @@ mod tests {
         let mut stream_time = 0.0;
         // calculate a few blocks
         for _ in 0..100 {
-            ruff.process(stream_time);
+            ruff.process(stream_time, false);
             stream_time += block_duration;
         }
                         
-        let out_buf = ruff.process(stream_time);
+        let out_buf = ruff.process(stream_time, false);
                        
         for i in 0..9 {
             assert_approx_eq::assert_approx_eq!(out_buf[0][33 + i], sample1[i + 1] + sample2[i + 1], 0.03);
@@ -435,11 +441,11 @@ mod tests {
         
         // calculate a few blocks
         for _ in 0..100 {
-            ruff.process(stream_time);
+            ruff.process(stream_time, false);
             stream_time += block_duration;
         }
          
-        let out_buf = ruff.process(stream_time);
+        let out_buf = ruff.process(stream_time, false);
 
         // offsets to account for interpolation
         for i in 0..4 {
@@ -501,11 +507,11 @@ mod tests {
         
         // calculate a few blocks
         for _ in 0..100 {
-            ruff.process(stream_time);
+            ruff.process(stream_time, false);
             stream_time += block_duration;
         }
          
-        let out_buf = ruff.process(stream_time);
+        let out_buf = ruff.process(stream_time, false);
         stream_time += block_duration;
                 
         for i in 0..9 {
@@ -514,11 +520,11 @@ mod tests {
         
         // calculate a few blocks more
         for _ in 0..9 {
-            ruff.process(stream_time);            
+            ruff.process(stream_time, false);            
             stream_time += block_duration;
         }
         
-        let out_buf = ruff.process(stream_time);
+        let out_buf = ruff.process(stream_time, false);
         
         for i in 0..9 {
             assert_approx_eq::assert_approx_eq!(out_buf[0][33 + i], sample2[i + 1], 0.03);
@@ -534,7 +540,7 @@ mod tests {
                 
         let bnum1 = ruff.load_sample(&sample1);        
         
-        ruff.process(0.0);
+        ruff.process(0.0, false);
 
         let inst_1 = ruff.prepare_instance(SourceType::Sampler, 0.1, bnum1);
 
@@ -550,7 +556,7 @@ mod tests {
         ruff.trigger(inst_1);
 
         // process after the instance's trigger time
-        let out_buf = ruff.process(0.101);
+        let out_buf = ruff.process(0.101, false);
         
         for i in 0..9 {
             assert_approx_eq::assert_approx_eq!(out_buf[0][i], sample1[i + 1], 0.03);

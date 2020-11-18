@@ -29,7 +29,7 @@ pub extern "C" fn process(out_ptr_l: *mut f32, out_ptr_r: *mut f32, size: usize,
     let out_buf_r: &mut [f32] = unsafe { std::slice::from_raw_parts_mut(out_ptr_r, size)};
 
     // no more mono for now ... 
-    let out = ruff.process(stream_time);
+    let out = ruff.process(stream_time, false);
     for i in 0..128 {
         out_buf_l[i] = out[0][i];
         out_buf_r[i] = out[1][i];
