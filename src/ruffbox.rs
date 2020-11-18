@@ -126,7 +126,8 @@ impl <const BUFSIZE: usize> Ruffbox<BUFSIZE> {
         // add new instances
         for new_event in self.new_instances_q_rec.try_iter() {
             if new_event.timestamp == 0.0 || new_event.timestamp == self.now {
-                self.running_instances.push(new_event.source);                
+                self.running_instances.push(new_event.source);
+		//println!("now");
             } else if new_event.timestamp < self.now { // late events 
                 self.running_instances.push(new_event.source);
                 // how to send out a late message ??
@@ -152,13 +153,13 @@ impl <const BUFSIZE: usize> Ruffbox<BUFSIZE> {
         
         // sort new events by timestamp, order of already sorted elements doesn't matter
         self.pending_events.sort_unstable_by(|a, b| b.cmp(a));
-        let block_end = stream_time + self.block_duration;
+        let block_end = self.now + self.block_duration;
         
         // fetch event if it belongs to this block, if any ...
         while !self.pending_events.is_empty() && self.pending_events.last().unwrap().timestamp < block_end {
 
             let mut current_event = self.pending_events.pop().unwrap();
-
+	    //println!("on time");
             // calculate precise timing
             let sample_offset = (current_event.timestamp - stream_time) / self.sec_per_sample;           
 
