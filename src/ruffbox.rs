@@ -234,7 +234,7 @@ impl <const BUFSIZE: usize> Ruffbox<BUFSIZE> {
         self.buffers.len() - 1
     }
 
-    pub fn now(&self) -> f64 {
+    pub fn get_now(&self) -> f64 {
 	self.now
     }
 }
