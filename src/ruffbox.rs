@@ -132,7 +132,7 @@ impl <const BUFSIZE: usize> Ruffbox<BUFSIZE> {
                 self.running_instances.push(new_event.source);
                 // how to send out a late message ??
                 // some lock-free message queue to a printer thread or something .... 
-                // println!("late");
+                println!("late");
             } else {
                 self.pending_events.push(new_event);
             }            
@@ -157,14 +157,14 @@ impl <const BUFSIZE: usize> Ruffbox<BUFSIZE> {
         
         // fetch event if it belongs to this block, if any ...
         while !self.pending_events.is_empty() && self.pending_events.last().unwrap().timestamp < block_end {
-
+	    
             let mut current_event = self.pending_events.pop().unwrap();
-	    //println!("on time");
+	    //println!("on time ts: {} st: {}", current_event.timestamp, self.now);
             // calculate precise timing
-            let sample_offset = (current_event.timestamp - stream_time) / self.sec_per_sample;           
+            let sample_offset = (current_event.timestamp - self.now) / self.sec_per_sample;           
 
             let block = current_event.source.get_next_block(sample_offset.round() as usize);
-
+	    
             for s in 0..BUFSIZE {
                 out_buf[0][s] += block[0][s];
                 out_buf[1][s] += block[1][s];
