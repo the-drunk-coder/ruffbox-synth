@@ -134,16 +134,18 @@ impl Comb {
 }
 
 /**
- * Classic Schroeder/Moorer reverb, adapted from the 
- * original Freeverb code written by "Jezar at Dreampoint".
+ * Multichannel extension of the classic Schroeder/Moorer reverb, 
+ * adapted from the original Freeverb code written by "Jezar at Dreampoint".
  * 
  * It's slightly simplified and doesn't have a dry/wet paramater,
  * as it's meant to be used on a bus rather than directly on a track.
  * For the same reason, it only has a replacing process function.
  *
  * The freeze mode feature has been left out as well.
+ *
+ * The multichannel expansion is somewhat experimental and might change 
  */
-pub struct StereoFreeverb<const BUFSIZE:usize> {
+pub struct MultichannelFreeverb<const BUFSIZE:usize, const NCHAN:usize> {
     comb_l: Vec<Comb>,
     comb_r: Vec<Comb>,
     allpass_l: Vec<Allpass>,
@@ -157,7 +159,7 @@ pub struct StereoFreeverb<const BUFSIZE:usize> {
     width: f32,
 }
 
-impl <const BUFSIZE:usize> StereoFreeverb<BUFSIZE> {
+impl <const BUFSIZE:usize, const NCHAN:usize> MultichannelFreeverb<BUFSIZE, NCHAN> {
     pub fn new() -> Self {
         let mut comb_l = Vec::new();
         let mut comb_r = Vec::new();
@@ -195,7 +197,7 @@ impl <const BUFSIZE:usize> StereoFreeverb<BUFSIZE> {
         let wet1 = wet * ((FreeverbDefaultTuning::INITIAL_WIDTH / 2.0) + 0.5);
         let wet2 = wet * ((1.0 - FreeverbDefaultTuning::INITIAL_WIDTH) / 2.0);
 
-        StereoFreeverb {
+        MultichannelFreeverb {
             comb_l: comb_l,
             comb_r: comb_r,
             allpass_l: allpass_l,
@@ -259,36 +261,39 @@ impl <const BUFSIZE:usize> StereoFreeverb<BUFSIZE> {
      * Main processing routine.
      * Takes a mono block, as this would be downmixed anyway.
      */
-    pub fn process(&mut self, block: [f32; BUFSIZE]) -> [[f32; BUFSIZE]; 2] {
-        let mut out_buf = [[0.0; BUFSIZE]; 2];
-        
-        for i in 0..BUFSIZE {
-            let mut out_l = 0.0;
-            let mut out_r = 0.0;
+    pub fn process(&mut self, block: [[f32; BUFSIZE]; NCHAN]) -> [[f32; BUFSIZE]; NCHAN] {
+        let mut out_buf = [[0.0; BUFSIZE]; NCHAN];
 
-            let in_mix = block[i] * self.gain;
-            
-            // accumulate comb filters in parallel
-            for comb in self.comb_l.iter_mut() {
-                out_l += comb.process_sample(in_mix);
-            }
+	for c in 0..NCHAN {
+	    let upper = (c + 1) % NCHAN;
+            for i in 0..BUFSIZE {
+		let mut out_l = 0.0;
+		let mut out_r = 0.0;
+		
+		let in_mix = block[c][i] * self.gain;
+		
+		// accumulate comb filters in parallel
+		for comb in self.comb_l.iter_mut() {
+                    out_l += comb.process_sample(in_mix);
+		}
 
-            for comb in self.comb_r.iter_mut() {
-                out_r += comb.process_sample(in_mix);
-            }
+		for comb in self.comb_r.iter_mut() {
+                    out_r += comb.process_sample(in_mix);
+		}
 
-            // accumulate allpass filters in series
-            for allpass in self.allpass_l.iter_mut() {
-                out_l = allpass.process_sample(out_l);
-            }
-            
-            for allpass in self.allpass_r.iter_mut() {
-                out_r = allpass.process_sample(out_r);
-            }
+		// accumulate allpass filters in series
+		for allpass in self.allpass_l.iter_mut() {
+                    out_l = allpass.process_sample(out_l);
+		}
+		
+		for allpass in self.allpass_r.iter_mut() {
+                    out_r = allpass.process_sample(out_r);
+		}
 
-            out_buf[0][i] = (out_l * self.wet1) + (out_r * self.wet2);
-            out_buf[1][i] = (out_r * self.wet1) + (out_l * self.wet2);            
-        }
+		out_buf[c][i] = (out_l * self.wet1) + (out_r * self.wet2);
+		out_buf[upper][i] = (out_r * self.wet1) + (out_l * self.wet2);            
+            }
+	}
         
         out_buf
     }

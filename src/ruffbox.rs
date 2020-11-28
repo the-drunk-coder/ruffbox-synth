@@ -13,7 +13,7 @@ use std::sync::Arc;
 use crate::ruffbox::synth::Synth;
 use crate::ruffbox::synth::SynthParameter;
 use crate::ruffbox::synth::SourceType;
-use crate::ruffbox::synth::freeverb::StereoFreeverb;
+use crate::ruffbox::synth::freeverb::MultichannelFreeverb;
 use crate::ruffbox::synth::delay::MultichannelDelay;
 use crate::ruffbox::synth::synths::*;
 
@@ -77,7 +77,7 @@ pub struct Ruffbox<const BUFSIZE:usize, const NCHAN:usize> {
     block_duration: f64,
     sec_per_sample: f64,
     now: f64,
-    master_reverb: StereoFreeverb<BUFSIZE>,
+    master_reverb: MultichannelFreeverb<BUFSIZE, NCHAN>,
     master_delay: MultichannelDelay<BUFSIZE, NCHAN>,
 }
 
@@ -86,7 +86,7 @@ impl <const BUFSIZE: usize, const NCHAN:usize> Ruffbox<BUFSIZE, NCHAN> {
         let (tx, rx): (Sender<ScheduledEvent<BUFSIZE, NCHAN>>, Receiver<ScheduledEvent<BUFSIZE, NCHAN>>) = crossbeam::channel::bounded(1000);
 
         // tweak some reverb values ... 
-        let mut rev = StereoFreeverb::new();
+        let mut rev = MultichannelFreeverb::new();
         rev.set_roomsize(0.65);
         rev.set_damp(0.43);
         rev.set_wet(1.0);
@@ -111,8 +111,8 @@ impl <const BUFSIZE: usize, const NCHAN:usize> Ruffbox<BUFSIZE, NCHAN> {
     pub fn process(&mut self, stream_time: f64, track_time_internally: bool) -> [[f32; BUFSIZE]; NCHAN] {        
         let mut out_buf: [[f32; BUFSIZE]; NCHAN] = [[0.0; BUFSIZE]; NCHAN];
 
-        let mut master_delay_in: [[f32; BUFSIZE]; NCHAN] = [[0.0; BUFSIZE]; NCHAN];        
-        let mut master_reverb_in: [f32; BUFSIZE] = [0.0; BUFSIZE];
+        let mut master_delay_in: [[f32; BUFSIZE]; NCHAN] = [[0.0; BUFSIZE]; NCHAN];
+        let mut master_reverb_in: [[f32; BUFSIZE]; NCHAN] = [[0.0; BUFSIZE]; NCHAN];     
 
 	if !track_time_internally {
 	    self.now = stream_time;
@@ -140,9 +140,10 @@ impl <const BUFSIZE: usize, const NCHAN:usize> Ruffbox<BUFSIZE, NCHAN> {
         for running_inst in self.running_instances.iter_mut() {
             let block = running_inst.get_next_block(0);
 	    for c in 0..NCHAN {
+		let next = (c + 1) % NCHAN;
 		for s in 0..BUFSIZE {
                     out_buf[c][s] += block[0][s];                    		    
-                    master_reverb_in[s] += block[c][s] * running_inst.reverb_level();
+                    master_reverb_in[c][s] += (block[c][s] + block[next][s]) * running_inst.reverb_level();
                     master_delay_in[c][s] += block[0][s] * running_inst.delay_level();                    
 		}
 	    }            
@@ -163,9 +164,10 @@ impl <const BUFSIZE: usize, const NCHAN:usize> Ruffbox<BUFSIZE, NCHAN> {
             let block = current_event.source.get_next_block(sample_offset.round() as usize);
 	    
             for c in 0..NCHAN {
+		let next = (c + 1) % NCHAN;
 		for s in 0..BUFSIZE {
                     out_buf[c][s] += block[0][s];                    		    
-                    master_reverb_in[s] += block[c][s] * current_event.source.reverb_level();
+                    master_reverb_in[c][s] += (block[c][s] + block[next][s]) * current_event.source.reverb_level();
                     master_delay_in[c][s] += block[0][s] * current_event.source.delay_level();                    
 		}
 	    } 
