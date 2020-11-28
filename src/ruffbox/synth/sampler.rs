@@ -1,5 +1,5 @@
 // parent imports
-use crate::ruffbox::synth::Source;
+use crate::ruffbox::synth::MonoSource;
 use crate::ruffbox::synth::SynthState;
 use crate::ruffbox::synth::SynthParameter;
 
@@ -94,7 +94,7 @@ impl <const BUFSIZE:usize> Sampler <BUFSIZE> {
     }
 }
 
-impl <const BUFSIZE:usize> Source <BUFSIZE> for Sampler <BUFSIZE> {
+impl <const BUFSIZE:usize> MonoSource <BUFSIZE> for Sampler <BUFSIZE> {
 
     fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         match par {

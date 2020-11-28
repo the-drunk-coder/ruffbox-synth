@@ -1,4 +1,4 @@
-use crate::ruffbox::synth::Source;
+use crate::ruffbox::synth::MonoSource;
 use crate::ruffbox::synth::SynthParameter;
 
 use std::f32::consts::PI;
@@ -26,7 +26,7 @@ impl <const BUFSIZE:usize> SineOsc<BUFSIZE> {
     }
 }
 
-impl <const BUFSIZE:usize> Source<BUFSIZE> for SineOsc<BUFSIZE> {
+impl <const BUFSIZE:usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
     // some parameter limits might be nice ... 
     fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         match par {
@@ -84,7 +84,7 @@ impl <const BUFSIZE:usize> LFSaw<BUFSIZE> {
     }
 }
 
-impl <const BUFSIZE:usize> Source<BUFSIZE> for LFSaw<BUFSIZE> {
+impl <const BUFSIZE:usize> MonoSource<BUFSIZE> for LFSaw<BUFSIZE> {
 
     // some parameter limits might be nice ... 
     fn set_parameter(&mut self, par: SynthParameter, value: f32) {
@@ -153,7 +153,7 @@ impl <const BUFSIZE:usize> LFSquare<BUFSIZE> {
     }
 }
 
-impl <const BUFSIZE:usize> Source<BUFSIZE> for LFSquare<BUFSIZE> {
+impl <const BUFSIZE:usize> MonoSource<BUFSIZE> for LFSquare<BUFSIZE> {
 
     // some parameter limits might be nice ... 
     fn set_parameter(&mut self, par: SynthParameter, value: f32) {

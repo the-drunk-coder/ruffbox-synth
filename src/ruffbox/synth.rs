@@ -58,7 +58,7 @@ pub enum SourceType {
     LFSquareSynth,
 }
 
-pub trait Source<const BUFSIZE:usize> {
+pub trait MonoSource<const BUFSIZE:usize> {
     fn set_parameter(&mut self, par: SynthParameter, value: f32);
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
