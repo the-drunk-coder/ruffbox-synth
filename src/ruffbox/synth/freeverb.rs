@@ -263,14 +263,15 @@ impl <const BUFSIZE:usize, const NCHAN:usize> MultichannelFreeverb<BUFSIZE, NCHA
      */
     pub fn process(&mut self, block: [[f32; BUFSIZE]; NCHAN]) -> [[f32; BUFSIZE]; NCHAN] {
         let mut out_buf = [[0.0; BUFSIZE]; NCHAN];
-
+	let cur_gain = self.gain * 0.5;
+	
 	for c in 0..NCHAN {
 	    let upper = (c + 1) % NCHAN;
             for i in 0..BUFSIZE {
 		let mut out_l = 0.0;
 		let mut out_r = 0.0;
 		
-		let in_mix = block[c][i] * self.gain;
+		let in_mix = (block[c][i] + block[c][upper]) * cur_gain;
 		
 		// accumulate comb filters in parallel
 		for comb in self.comb_l.iter_mut() {

@@ -139,11 +139,10 @@ impl <const BUFSIZE: usize, const NCHAN:usize> Ruffbox<BUFSIZE, NCHAN> {
         // handle already running instances
         for running_inst in self.running_instances.iter_mut() {
             let block = running_inst.get_next_block(0);
-	    for c in 0..NCHAN {
-		let next = (c + 1) % NCHAN;
+	    for c in 0..NCHAN {		
 		for s in 0..BUFSIZE {
                     out_buf[c][s] += block[0][s];                    		    
-                    master_reverb_in[c][s] += (block[c][s] + block[next][s]) * running_inst.reverb_level();
+                    master_reverb_in[c][s] += block[c][s] * running_inst.reverb_level();
                     master_delay_in[c][s] += block[0][s] * running_inst.delay_level();                    
 		}
 	    }            
@@ -164,10 +163,9 @@ impl <const BUFSIZE: usize, const NCHAN:usize> Ruffbox<BUFSIZE, NCHAN> {
             let block = current_event.source.get_next_block(sample_offset.round() as usize);
 	    
             for c in 0..NCHAN {
-		let next = (c + 1) % NCHAN;
 		for s in 0..BUFSIZE {
                     out_buf[c][s] += block[0][s];                    		    
-                    master_reverb_in[c][s] += (block[c][s] + block[next][s]) * current_event.source.reverb_level();
+                    master_reverb_in[c][s] += block[c][s] * current_event.source.reverb_level();
                     master_delay_in[c][s] += block[0][s] * current_event.source.delay_level();                    
 		}
 	    } 

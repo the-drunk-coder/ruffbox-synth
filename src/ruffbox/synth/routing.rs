@@ -29,8 +29,7 @@ impl <const BUFSIZE:usize, const NCHAN:usize> PanChan<BUFSIZE, NCHAN> {
 		lvls[lower as usize % (NCHAN as usize)] = angle_rad.cos();
                 lvls[upper as usize % (NCHAN as usize)] = angle_rad.sin();
 				                                
-		self.levels = lvls;
-		println!("upper: {} lower: {} {:?}", upper, lower , self.levels);
+		self.levels = lvls;		
             },
             _ => (),
         };
