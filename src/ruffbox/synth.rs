@@ -45,7 +45,7 @@ pub enum SynthParameter {
     ReverbRoomsize,             // 25
     SampleBufferNumber,         // 26
     Samplerate,                 // 27 
-    StereoPosition,             // 28
+    ChannelPosition,             // 28
     Sustain,                    // 29
 }
 
