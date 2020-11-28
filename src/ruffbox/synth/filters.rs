@@ -1,4 +1,4 @@
-use crate::ruffbox::synth::Effect;
+use crate::ruffbox::synth::MonoEffect;
 use crate::ruffbox::synth::SynthParameter;
 
 /**
@@ -73,7 +73,7 @@ impl <const BUFSIZE:usize> Lpf18<BUFSIZE> {
     }
 }
 
-impl <const BUFSIZE:usize> Effect<BUFSIZE> for Lpf18<BUFSIZE> {
+impl <const BUFSIZE:usize> MonoEffect<BUFSIZE> for Lpf18<BUFSIZE> {
     // some parameter limits might be nice ... 
     fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         match par {

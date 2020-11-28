@@ -1,4 +1,4 @@
-use crate::ruffbox::synth::Effect;
+use crate::ruffbox::synth::MonoEffect;
 use crate::ruffbox::synth::SynthParameter;
 use crate::ruffbox::synth::SynthState;
 
@@ -46,7 +46,7 @@ impl <const BUFSIZE:usize> ASREnvelope <BUFSIZE> {
     }    
 }
 
-impl <const BUFSIZE:usize> Effect<BUFSIZE> for ASREnvelope<BUFSIZE> {
+impl <const BUFSIZE:usize> MonoEffect<BUFSIZE> for ASREnvelope<BUFSIZE> {
     fn finish(&mut self) {
         self.state = SynthState::Finished;
     }

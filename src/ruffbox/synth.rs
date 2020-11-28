@@ -65,7 +65,7 @@ pub trait MonoSource<const BUFSIZE:usize> {
     fn get_next_block(&mut self, start_sample: usize) -> [f32; BUFSIZE];
 }
 
-pub trait Effect<const BUFSIZE:usize> {
+pub trait MonoEffect<const BUFSIZE:usize> {
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
     fn set_parameter(&mut self, par: SynthParameter, value: f32);    
