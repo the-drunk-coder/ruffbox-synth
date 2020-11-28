@@ -139,13 +139,16 @@ impl <const BUFSIZE: usize, const NCHAN:usize> Ruffbox<BUFSIZE, NCHAN> {
         // handle already running instances
         for running_inst in self.running_instances.iter_mut() {
             let block = running_inst.get_next_block(0);
-	    for c in 0..NCHAN {		
+
+	    // this should benefit from unrolling outer loop with macro ...
+	    for c in 0..NCHAN {
 		for s in 0..BUFSIZE {
-                    out_buf[c][s] += block[c][s];                    		    
-                    master_reverb_in[c][s] += block[c][s] * running_inst.reverb_level();
-                    master_delay_in[c][s] += block[c][s] * running_inst.delay_level();                    
+		    out_buf[c][s] += block[c][s];                    		    
+		    master_reverb_in[c][s] += block[c][s] * running_inst.reverb_level();
+		    master_delay_in[c][s] += block[c][s] * running_inst.delay_level();                    
 		}
-	    }            
+	    }
+	    	    
         }
         
         // sort new events by timestamp, order of already sorted elements doesn't matter
