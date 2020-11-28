@@ -72,11 +72,11 @@ pub trait MonoEffect<const BUFSIZE:usize> {
     fn process_block(&mut self, block: [f32; BUFSIZE], start_sample: usize) -> [f32; BUFSIZE];
 }
 
-pub trait Synth<const BUFSIZE:usize> {
+pub trait Synth<const BUFSIZE:usize, const NCHAN:usize> {
     fn set_parameter(&mut self, par: SynthParameter, value: f32);
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
-    fn get_next_block(&mut self, start_sample: usize) -> [[f32; BUFSIZE]; 2];
+    fn get_next_block(&mut self, start_sample: usize) -> [[f32; BUFSIZE]; NCHAN];
     fn reverb_level(&self) -> f32;
     fn delay_level(&self) -> f32;
 }

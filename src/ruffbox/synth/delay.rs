@@ -3,7 +3,7 @@ use crate::ruffbox::synth::SynthParameter;
 use crate::ruffbox::synth::filters::*;
 
 pub struct MonoDelay<const BUFSIZE:usize> {
-    buffer: Vec<f32>,
+    buffer: [f32; 88200], // max 2 sec for now 
     buffer_idx: usize,
     max_buffer_idx: usize,
     feedback: f32,
@@ -12,14 +12,14 @@ pub struct MonoDelay<const BUFSIZE:usize> {
 }
 
 impl <const BUFSIZE:usize> MonoDelay<BUFSIZE> {
-    pub fn with_max_capacity_sec(capacity_sec: f32, sr: f32) -> Self {
+    pub fn new() -> Self  {
         MonoDelay {
-            buffer: vec![0.0; (sr * capacity_sec) as usize],
+            buffer: [0.0; 88200],
             buffer_idx: 0,
-            max_buffer_idx: (sr * 0.256) as usize, // 512ms default time 
+            max_buffer_idx: (44100.0 * 0.256) as usize, // 512ms default time 
             feedback: 0.5,
-            dampening_filter: Lpf18::new(3000.0, 0.4, 0.3, sr),
-            samplerate: sr,
+            dampening_filter: Lpf18::new(3000.0, 0.4, 0.3, 44100.0),
+            samplerate: 44100.0,
         }
     }
 }
@@ -60,30 +60,37 @@ impl <const BUFSIZE:usize> MonoEffect<BUFSIZE> for MonoDelay<BUFSIZE> {
     }
 }
 
-pub struct StereoDelay<const BUFSIZE:usize> {
-    delay_l: MonoDelay<BUFSIZE>,
-    delay_r: MonoDelay<BUFSIZE>,
+pub struct MultichannelDelay<const BUFSIZE:usize, const NCHAN:usize> {
+    delays: Vec<MonoDelay<BUFSIZE>>,    
 }
 
-impl <const BUFSIZE:usize> StereoDelay<BUFSIZE> {    
-    pub fn with_max_capacity_sec(capacity_sec: f32, sr: f32) -> Self {
-        StereoDelay {
-            delay_l: MonoDelay::with_max_capacity_sec(capacity_sec, sr),
-            delay_r: MonoDelay::with_max_capacity_sec(capacity_sec, sr),
+impl <const BUFSIZE:usize, const NCHAN:usize> MultichannelDelay<BUFSIZE, NCHAN> {    
+    pub fn new() -> Self {
+
+	let mut delays = Vec::new();
+
+	for _ in 0..NCHAN {
+	    delays.push(MonoDelay::<BUFSIZE>::new());
+	}
+	
+        MultichannelDelay {	    
+	    delays: delays 
         }
     }
 
     pub fn set_parameter(&mut self, par: SynthParameter, val: f32) {
-        self.delay_l.set_parameter(par, val);
-        self.delay_r.set_parameter(par, val);
+	for c in 0..NCHAN {
+	    self.delays[c].set_parameter(par, val);
+	}                
     }
     
-    pub fn process(&mut self, block: [[f32; BUFSIZE]; 2]) -> [[f32; BUFSIZE]; 2] {
-        let mut out_buf = [[0.0; BUFSIZE]; 2];
+    pub fn process(&mut self, block: [[f32; BUFSIZE]; NCHAN]) -> [[f32; BUFSIZE]; NCHAN] {
+        let mut out_buf = [[0.0; BUFSIZE]; NCHAN];
 
-        out_buf[0] = self.delay_l.process_block(block[0], 0);
-        out_buf[1] = self.delay_r.process_block(block[1], 0);
-
+	for c in 0..NCHAN {
+	    out_buf[c] = self.delays[c].process_block(block[c], 0);
+	}
+	       
         out_buf
     }
 }

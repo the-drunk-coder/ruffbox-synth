@@ -14,18 +14,18 @@ use crate::ruffbox::synth::Synth;
 use crate::ruffbox::synth::SynthParameter;
 use crate::ruffbox::synth::SourceType;
 use crate::ruffbox::synth::freeverb::StereoFreeverb;
-use crate::ruffbox::synth::delay::StereoDelay;
+use crate::ruffbox::synth::delay::MultichannelDelay;
 use crate::ruffbox::synth::synths::*;
 
 /// timed event, to be created in the trigger method, then 
 /// sent to the event queue to be either dispatched directly
 /// or pushed to the pending queue ...
-struct ScheduledEvent<const BUFSIZE:usize> {
+struct ScheduledEvent<const BUFSIZE:usize, const NCHAN:usize> {
     timestamp: f64,
-    source: Box<dyn Synth<BUFSIZE> + Send>,
+    source: Box<dyn Synth<BUFSIZE, NCHAN> + Send>,
 }
 
-impl <const BUFSIZE:usize> Ord for ScheduledEvent <BUFSIZE> {
+impl <const BUFSIZE:usize, const NCHAN:usize> Ord for ScheduledEvent <BUFSIZE, NCHAN> {
     /// ScheduledEvent implements Ord so the pending events queue
     /// can be ordered by the timestamps ...
     fn cmp(&self, other: &Self) -> Ordering {
@@ -33,7 +33,7 @@ impl <const BUFSIZE:usize> Ord for ScheduledEvent <BUFSIZE> {
     }
 }
 
-impl <const BUFSIZE:usize> PartialOrd for ScheduledEvent <BUFSIZE> {
+impl <const BUFSIZE:usize, const NCHAN:usize> PartialOrd for ScheduledEvent <BUFSIZE, NCHAN> {
     /// ScheduledEvent implements PartialOrd so the pending events queue
     /// can be ordered by the timestamps ...
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
@@ -41,7 +41,7 @@ impl <const BUFSIZE:usize> PartialOrd for ScheduledEvent <BUFSIZE> {
     }
 }
 
-impl <const BUFSIZE:usize> PartialEq for ScheduledEvent <BUFSIZE> {
+impl <const BUFSIZE:usize, const NCHAN:usize> PartialEq for ScheduledEvent <BUFSIZE, NCHAN> {
     /// ScheduledEvent implements PartialEq so the pending events queue
     /// can be ordered by the timestamps ...
     fn eq(&self, other: &Self) -> bool {
@@ -49,11 +49,11 @@ impl <const BUFSIZE:usize> PartialEq for ScheduledEvent <BUFSIZE> {
     }
 }
 
-impl <const BUFSIZE:usize> Eq for ScheduledEvent <BUFSIZE> {}
+impl <const BUFSIZE:usize, const NCHAN:usize> Eq for ScheduledEvent <BUFSIZE, NCHAN> {}
 
 // constructor implementation
-impl <const BUFSIZE:usize> ScheduledEvent <BUFSIZE> {
-    pub fn new(ts: f64, src: Box<dyn Synth<BUFSIZE> + Send>) -> Self {
+impl <const BUFSIZE:usize, const NCHAN:usize> ScheduledEvent <BUFSIZE, NCHAN> {
+    pub fn new(ts: f64, src: Box<dyn Synth<BUFSIZE, NCHAN> + Send>) -> Self {
         ScheduledEvent {
             timestamp: ts,
             source: src,
@@ -66,33 +66,31 @@ impl <const BUFSIZE:usize> ScheduledEvent <BUFSIZE> {
 }
 
 /// the main synth instance
-pub struct Ruffbox<const BUFSIZE:usize> {
-    running_instances: Vec<Box<dyn Synth<BUFSIZE> + Send>>,
-    pending_events: Vec<ScheduledEvent<BUFSIZE>>,
+pub struct Ruffbox<const BUFSIZE:usize, const NCHAN:usize> {
+    running_instances: Vec<Box<dyn Synth<BUFSIZE, NCHAN> + Send>>,
+    pending_events: Vec<ScheduledEvent<BUFSIZE, NCHAN>>,
     buffers: Vec<Arc<Vec<f32>>>,
-    prepared_instance_map: HashMap<usize, ScheduledEvent<BUFSIZE>>,
+    prepared_instance_map: HashMap<usize, ScheduledEvent<BUFSIZE, NCHAN>>,
     instance_counter: AtomicCell<usize>,
-    new_instances_q_send: crossbeam::channel::Sender<ScheduledEvent<BUFSIZE>>,
-    new_instances_q_rec: crossbeam::channel::Receiver<ScheduledEvent<BUFSIZE>>,
+    new_instances_q_send: crossbeam::channel::Sender<ScheduledEvent<BUFSIZE, NCHAN>>,
+    new_instances_q_rec: crossbeam::channel::Receiver<ScheduledEvent<BUFSIZE, NCHAN>>,
     block_duration: f64,
     sec_per_sample: f64,
     now: f64,
     master_reverb: StereoFreeverb<BUFSIZE>,
-    master_delay: StereoDelay<BUFSIZE>,
+    master_delay: MultichannelDelay<BUFSIZE, NCHAN>,
 }
 
-impl <const BUFSIZE: usize> Ruffbox<BUFSIZE> {
-    pub fn new() -> Ruffbox<BUFSIZE> {
-        let (tx, rx): (Sender<ScheduledEvent<BUFSIZE>>, Receiver<ScheduledEvent<BUFSIZE>>) = crossbeam::channel::bounded(1000);
+impl <const BUFSIZE: usize, const NCHAN:usize> Ruffbox<BUFSIZE, NCHAN> {
+    pub fn new() -> Ruffbox<BUFSIZE, NCHAN> {
+        let (tx, rx): (Sender<ScheduledEvent<BUFSIZE, NCHAN>>, Receiver<ScheduledEvent<BUFSIZE, NCHAN>>) = crossbeam::channel::bounded(1000);
 
         // tweak some reverb values ... 
         let mut rev = StereoFreeverb::new();
         rev.set_roomsize(0.65);
         rev.set_damp(0.43);
         rev.set_wet(1.0);
-	
-        let del = StereoDelay::with_max_capacity_sec(2.0, 44100.0);
-        
+	                
         Ruffbox {            
             running_instances: Vec::with_capacity(600),
             pending_events: Vec::with_capacity(600),
@@ -106,14 +104,14 @@ impl <const BUFSIZE: usize> Ruffbox<BUFSIZE> {
             sec_per_sample: 1.0 / 44100.0,
             now: 0.0,
             master_reverb: rev,
-            master_delay: del,
+            master_delay: MultichannelDelay::new(),
         }
     }
            
-    pub fn process(&mut self, stream_time: f64, track_time_internally: bool) -> [[f32; BUFSIZE]; 2] {        
-        let mut out_buf: [[f32; BUFSIZE]; 2] = [[0.0; BUFSIZE]; 2];
+    pub fn process(&mut self, stream_time: f64, track_time_internally: bool) -> [[f32; BUFSIZE]; NCHAN] {        
+        let mut out_buf: [[f32; BUFSIZE]; NCHAN] = [[0.0; BUFSIZE]; NCHAN];
 
-        let mut master_delay_in: [[f32; BUFSIZE]; 2] = [[0.0; BUFSIZE]; 2];        
+        let mut master_delay_in: [[f32; BUFSIZE]; NCHAN] = [[0.0; BUFSIZE]; NCHAN];        
         let mut master_reverb_in: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
 	if !track_time_internally {
@@ -141,14 +139,13 @@ impl <const BUFSIZE: usize> Ruffbox<BUFSIZE> {
         // handle already running instances
         for running_inst in self.running_instances.iter_mut() {
             let block = running_inst.get_next_block(0);
-            for s in 0..BUFSIZE {
-                out_buf[0][s] += block[0][s];
-                out_buf[1][s] += block[1][s];
-
-                master_reverb_in[s] += (block[0][s] + block[1][s]) * running_inst.reverb_level();
-                master_delay_in[0][s] += block[0][s] * running_inst.delay_level();
-                master_delay_in[1][s] += block[1][s] * running_inst.delay_level();
-            }
+	    for c in 0..NCHAN {
+		for s in 0..BUFSIZE {
+                    out_buf[c][s] += block[0][s];                    		    
+                    master_reverb_in[s] += block[c][s] * running_inst.reverb_level();
+                    master_delay_in[c][s] += block[0][s] * running_inst.delay_level();                    
+		}
+	    }            
         }
         
         // sort new events by timestamp, order of already sorted elements doesn't matter
@@ -165,14 +162,13 @@ impl <const BUFSIZE: usize> Ruffbox<BUFSIZE> {
 
             let block = current_event.source.get_next_block(sample_offset.round() as usize);
 	    
-            for s in 0..BUFSIZE {
-                out_buf[0][s] += block[0][s];
-                out_buf[1][s] += block[1][s];
-                
-                master_reverb_in[s] += (block[0][s] + block[1][s]) * current_event.source.reverb_level();
-                master_delay_in[0][s] += block[0][s] * current_event.source.delay_level();
-                master_delay_in[1][s] += block[1][s] * current_event.source.delay_level();
-            }
+            for c in 0..NCHAN {
+		for s in 0..BUFSIZE {
+                    out_buf[c][s] += block[0][s];                    		    
+                    master_reverb_in[s] += block[c][s] * current_event.source.reverb_level();
+                    master_delay_in[c][s] += block[0][s] * current_event.source.delay_level();                    
+		}
+	    } 
             
             // if length of sample event is longer than the rest of the block,
             // add to running instances
@@ -183,11 +179,12 @@ impl <const BUFSIZE: usize> Ruffbox<BUFSIZE> {
 
         let reverb_out = self.master_reverb.process(master_reverb_in);
         let delay_out = self.master_delay.process(master_delay_in);
-        
-        for s in 0..BUFSIZE {
-            out_buf[0][s] += reverb_out[0][s] + delay_out[0][s];
-            out_buf[1][s] += reverb_out[1][s] + delay_out[1][s];
-        }
+                
+	for c in 0..NCHAN {
+	    for s in 0..BUFSIZE {
+                out_buf[c][s] += reverb_out[c][s] + delay_out[c][s];
+	    }
+	} 
 
 	if track_time_internally {
 	    self.now += self.block_duration;
@@ -229,7 +226,7 @@ impl <const BUFSIZE: usize> Ruffbox<BUFSIZE> {
         self.new_instances_q_send.send(scheduled_event).unwrap();
     }
 
-    /// loads a sample and returns the assigned buffer number
+    /// loads a mono sample and returns the assigned buffer number
     pub fn load_sample(&mut self, samples:&[f32]) -> usize {
         self.buffers.push(Arc::new(samples.to_vec()));
         self.buffers.len() - 1
@@ -250,7 +247,7 @@ mod tests {
     
     #[test]
     fn test_sine_synth_at_block_start() {
-        let mut ruff = Ruffbox::<128>::new();
+        let mut ruff = Ruffbox::<128, 2>::new();
 
         let inst = ruff.prepare_instance(SourceType::SineSynth, 0.0, 0);
         ruff.set_instance_parameter(inst, SynthParameter::PitchFrequency, 440.0);
@@ -278,7 +275,7 @@ mod tests {
     #[test]
     fn test_basic_playback() {
         
-        let mut ruff = Ruffbox::<128>::new();
+        let mut ruff = Ruffbox::<128, 2>::new();
 
         // first point and last two points are for eventual interpolation
         let sample1 = [0.0, 0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0, 0.0, 0.0];
@@ -323,7 +320,7 @@ mod tests {
     #[test]
     fn reverb_smoke_test() {
         
-        let mut ruff = Ruffbox::<128>::new();
+        let mut ruff = Ruffbox::<128, 2>::new();
 
         // first point and last two points are for eventual interpolation
         let sample1 = [0.0, 0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0, 0.0, 0.0];
@@ -356,7 +353,7 @@ mod tests {
 
     #[test]
     fn test_scheduled_playback() {
-        let mut ruff = Ruffbox::<128>::new();
+        let mut ruff = Ruffbox::<128, 2>::new();
 
         // block duration in seconds
         let block_duration = 0.00290249433;
@@ -407,7 +404,7 @@ mod tests {
 
     #[test]
     fn test_overlap_playback() {
-        let mut ruff = Ruffbox::<128>::new();
+        let mut ruff = Ruffbox::<128, 2>::new();
 
         // block duration in seconds
         let block_duration = 0.00290249433;
@@ -468,7 +465,7 @@ mod tests {
 
     #[test]
     fn test_disjunct_playback() {
-        let mut ruff = Ruffbox::<128>::new();
+        let mut ruff = Ruffbox::<128, 2>::new();
 
         // block duration in seconds
         let block_duration = 0.00290249433;
@@ -539,7 +536,7 @@ mod tests {
     #[test]
     fn test_late_playback() {
         
-        let mut ruff = Ruffbox::<128>::new();
+        let mut ruff = Ruffbox::<128, 2>::new();
 
         let sample1 = [0.0, 0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0, 0.0, 0.0];
                 
