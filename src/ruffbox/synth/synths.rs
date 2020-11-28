@@ -4,7 +4,7 @@ use crate::ruffbox::synth::envelopes::*;
 use crate::ruffbox::synth::filters::*;
 use crate::ruffbox::synth::routing::Balance2;
 use crate::ruffbox::synth::sampler::Sampler;
-use crate::ruffbox::synth::StereoSynth;
+use crate::ruffbox::synth::Synth;
 use crate::ruffbox::synth::SynthParameter;
 
 use std::sync::Arc;
@@ -30,7 +30,7 @@ impl <const BUFSIZE:usize> SineSynth<BUFSIZE> {
     }
 }
 
-impl <const BUFSIZE:usize> StereoSynth<BUFSIZE> for SineSynth<BUFSIZE> {
+impl <const BUFSIZE:usize> Synth<BUFSIZE> for SineSynth<BUFSIZE> {
     fn set_parameter(&mut self, par: SynthParameter, val: f32) {
         self.oscillator.set_parameter(par, val);
         self.envelope.set_parameter(par, val);
@@ -88,7 +88,7 @@ impl <const BUFSIZE:usize> LFSawSynth<BUFSIZE> {
     }
 }
 
-impl <const BUFSIZE:usize> StereoSynth<BUFSIZE> for LFSawSynth<BUFSIZE> {
+impl <const BUFSIZE:usize> Synth<BUFSIZE> for LFSawSynth<BUFSIZE> {
     fn set_parameter(&mut self, par: SynthParameter, val: f32) {
         self.oscillator.set_parameter(par, val);
         self.filter.set_parameter(par, val);
@@ -149,7 +149,7 @@ impl <const BUFSIZE:usize> LFSquareSynth<BUFSIZE> {
     }
 }
 
-impl <const BUFSIZE:usize> StereoSynth<BUFSIZE> for LFSquareSynth<BUFSIZE> {
+impl <const BUFSIZE:usize> Synth<BUFSIZE> for LFSquareSynth<BUFSIZE> {
     fn set_parameter(&mut self, par: SynthParameter, val: f32) {
         self.oscillator.set_parameter(par, val);
         self.filter.set_parameter(par, val);
@@ -212,7 +212,7 @@ impl <const BUFSIZE:usize> StereoSampler<BUFSIZE> {
     }
 }
 
-impl <const BUFSIZE:usize> StereoSynth<BUFSIZE> for StereoSampler<BUFSIZE> {
+impl <const BUFSIZE:usize> Synth<BUFSIZE> for StereoSampler<BUFSIZE> {
     fn set_parameter(&mut self, par: SynthParameter, val: f32) {
         self.sampler.set_parameter(par, val);        
         self.filter.set_parameter(par, val);

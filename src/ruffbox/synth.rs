@@ -72,7 +72,7 @@ pub trait Effect<const BUFSIZE:usize> {
     fn process_block(&mut self, block: [f32; BUFSIZE], start_sample: usize) -> [f32; BUFSIZE];
 }
 
-pub trait StereoSynth<const BUFSIZE:usize> {
+pub trait Synth<const BUFSIZE:usize> {
     fn set_parameter(&mut self, par: SynthParameter, value: f32);
     fn finish(&mut self);
     fn is_finished(&self) -> bool;

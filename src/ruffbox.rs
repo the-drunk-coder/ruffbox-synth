@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use std::cmp::Ordering;
 use std::sync::Arc;
 
-use crate::ruffbox::synth::StereoSynth;
+use crate::ruffbox::synth::Synth;
 use crate::ruffbox::synth::SynthParameter;
 use crate::ruffbox::synth::SourceType;
 use crate::ruffbox::synth::freeverb::StereoFreeverb;
@@ -22,7 +22,7 @@ use crate::ruffbox::synth::synths::*;
 /// or pushed to the pending queue ...
 struct ScheduledEvent<const BUFSIZE:usize> {
     timestamp: f64,
-    source: Box<dyn StereoSynth<BUFSIZE> + Send>,
+    source: Box<dyn Synth<BUFSIZE> + Send>,
 }
 
 impl <const BUFSIZE:usize> Ord for ScheduledEvent <BUFSIZE> {
@@ -53,7 +53,7 @@ impl <const BUFSIZE:usize> Eq for ScheduledEvent <BUFSIZE> {}
 
 // constructor implementation
 impl <const BUFSIZE:usize> ScheduledEvent <BUFSIZE> {
-    pub fn new(ts: f64, src: Box<dyn StereoSynth<BUFSIZE> + Send>) -> Self {
+    pub fn new(ts: f64, src: Box<dyn Synth<BUFSIZE> + Send>) -> Self {
         ScheduledEvent {
             timestamp: ts,
             source: src,
@@ -67,7 +67,7 @@ impl <const BUFSIZE:usize> ScheduledEvent <BUFSIZE> {
 
 /// the main synth instance
 pub struct Ruffbox<const BUFSIZE:usize> {
-    running_instances: Vec<Box<dyn StereoSynth<BUFSIZE> + Send>>,
+    running_instances: Vec<Box<dyn Synth<BUFSIZE> + Send>>,
     pending_events: Vec<ScheduledEvent<BUFSIZE>>,
     buffers: Vec<Arc<Vec<f32>>>,
     prepared_instance_map: HashMap<usize, ScheduledEvent<BUFSIZE>>,
