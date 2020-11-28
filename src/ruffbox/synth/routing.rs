@@ -28,8 +28,8 @@ impl <const BUFSIZE:usize, const NCHAN:usize> PanChan<BUFSIZE, NCHAN> {
 		
 		lvls[lower as usize % (NCHAN as usize)] = angle_rad.cos();
                 lvls[upper as usize % (NCHAN as usize)] = angle_rad.sin();
-				                                
-		self.levels = lvls;		
+		
+		self.levels = lvls;
             },
             _ => (),
         };
@@ -37,7 +37,7 @@ impl <const BUFSIZE:usize, const NCHAN:usize> PanChan<BUFSIZE, NCHAN> {
     /// pan mono to stereo
     pub fn process_block(&mut self, block: [f32; BUFSIZE]) -> [[f32; BUFSIZE]; NCHAN] {
         let mut out_buf = [[0.0; BUFSIZE]; NCHAN];
-	for c in 0..NCHAN {
+	for c in 0..NCHAN {	    
             for s in 0..BUFSIZE {
 		out_buf[c][s] = block[s] * self.levels[c];		
             }

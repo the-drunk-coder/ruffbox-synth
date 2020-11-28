@@ -141,9 +141,9 @@ impl <const BUFSIZE: usize, const NCHAN:usize> Ruffbox<BUFSIZE, NCHAN> {
             let block = running_inst.get_next_block(0);
 	    for c in 0..NCHAN {		
 		for s in 0..BUFSIZE {
-                    out_buf[c][s] += block[0][s];                    		    
+                    out_buf[c][s] += block[c][s];                    		    
                     master_reverb_in[c][s] += block[c][s] * running_inst.reverb_level();
-                    master_delay_in[c][s] += block[0][s] * running_inst.delay_level();                    
+                    master_delay_in[c][s] += block[c][s] * running_inst.delay_level();                    
 		}
 	    }            
         }
@@ -164,9 +164,9 @@ impl <const BUFSIZE: usize, const NCHAN:usize> Ruffbox<BUFSIZE, NCHAN> {
 	    
             for c in 0..NCHAN {
 		for s in 0..BUFSIZE {
-                    out_buf[c][s] += block[0][s];                    		    
+                    out_buf[c][s] += block[c][s];                    		    
                     master_reverb_in[c][s] += block[c][s] * current_event.source.reverb_level();
-                    master_delay_in[c][s] += block[0][s] * current_event.source.delay_level();                    
+                    master_delay_in[c][s] += block[c][s] * current_event.source.delay_level();                    
 		}
 	    } 
             
