@@ -57,14 +57,13 @@ impl <const BUFSIZE:usize> Sampler <BUFSIZE> {
     }
 
     fn get_next_block_interp(&mut self, start_sample: usize) -> [f32; BUFSIZE] {
-        let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
-
+        let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];	
         for i in start_sample..BUFSIZE {
             // get sample:
             let idx = self.frac_index.floor();
             let frac = self.frac_index - idx;             
             let idx_u = idx as usize;
-
+	    
             // 4-point, 3rd-order Hermite
             let y_m1 = self.buffer_ref[idx_u - 1];
             let y_0 = self.buffer_ref[idx_u];
@@ -100,7 +99,7 @@ impl <const BUFSIZE:usize> MonoSource <BUFSIZE> for Sampler <BUFSIZE> {
         match par {
             SynthParameter::PlaybackStart => {
                 let offset = (self.buffer_len as f32 * value) as usize;
-                self.index = offset;
+                self.index = offset + 1; // start counting at one, due to interpolation
                 self.frac_index = offset as f32;
             },            
             SynthParameter::PlaybackRate => {

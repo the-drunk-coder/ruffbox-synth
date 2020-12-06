@@ -147,8 +147,7 @@ impl <const BUFSIZE: usize, const NCHAN:usize> Ruffbox<BUFSIZE, NCHAN> {
 		    master_reverb_in[c][s] += block[c][s] * running_inst.reverb_level();
 		    master_delay_in[c][s] += block[c][s] * running_inst.delay_level();                    
 		}
-	    }
-	    	    
+	    }	    	    
         }
         
         // sort new events by timestamp, order of already sorted elements doesn't matter
@@ -164,13 +163,13 @@ impl <const BUFSIZE: usize, const NCHAN:usize> Ruffbox<BUFSIZE, NCHAN> {
             let sample_offset = (current_event.timestamp - self.now) / self.sec_per_sample;           
 
             let block = current_event.source.get_next_block(sample_offset.round() as usize);
-	    
-            for c in 0..NCHAN {
+	    	    
+	    for c in 0..NCHAN {
 		for s in 0..BUFSIZE {
-                    out_buf[c][s] += block[c][s];                    		    
-                    master_reverb_in[c][s] += block[c][s] * current_event.source.reverb_level();
-                    master_delay_in[c][s] += block[c][s] * current_event.source.delay_level();                    
-		}
+		    out_buf[c][s] += block[c][s];                    		    
+		    master_reverb_in[c][s] += block[c][s] * current_event.source.reverb_level();
+		    master_delay_in[c][s] += block[c][s] * current_event.source.delay_level();                    
+		}		
 	    } 
             
             // if length of sample event is longer than the rest of the block,
@@ -182,6 +181,8 @@ impl <const BUFSIZE: usize, const NCHAN:usize> Ruffbox<BUFSIZE, NCHAN> {
 
         let reverb_out = self.master_reverb.process(master_reverb_in);
         let delay_out = self.master_delay.process(master_delay_in);
+
+	//println!("{} {}", self.running_instances.len(), self.pending_events.len());
                 
 	for c in 0..NCHAN {
 	    for s in 0..BUFSIZE {
@@ -192,6 +193,7 @@ impl <const BUFSIZE: usize, const NCHAN:usize> Ruffbox<BUFSIZE, NCHAN> {
 	if track_time_internally {
 	    self.now += self.block_duration;
 	}
+	//println!("now {}", self.now);
                               
         out_buf
     }

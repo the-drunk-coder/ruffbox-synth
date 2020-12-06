@@ -14,8 +14,8 @@ pub enum SynthState {
 
 /// a collection of common parameters
 #[allow(dead_code)]
-#[derive(Clone,Copy)]
 #[repr(C)]
+#[derive(Hash, Eq, PartialEq, Clone, Copy)]
 pub enum SynthParameter {
     Attack,                     // 0
     Decay,                      // 1
@@ -45,7 +45,7 @@ pub enum SynthParameter {
     ReverbRoomsize,             // 25
     SampleBufferNumber,         // 26
     Samplerate,                 // 27 
-    ChannelPosition,             // 28
+    ChannelPosition,            // 28
     Sustain,                    // 29
 }
 
