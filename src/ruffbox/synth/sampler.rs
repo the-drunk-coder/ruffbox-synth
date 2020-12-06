@@ -100,7 +100,7 @@ impl <const BUFSIZE:usize> MonoSource <BUFSIZE> for Sampler <BUFSIZE> {
             SynthParameter::PlaybackStart => {
                 let offset = (self.buffer_len as f32 * value) as usize;
                 self.index = offset + 1; // start counting at one, due to interpolation
-                self.frac_index = offset as f32;
+                self.frac_index = self.index as f32;		
             },            
             SynthParameter::PlaybackRate => {
                 self.playback_rate = value;
