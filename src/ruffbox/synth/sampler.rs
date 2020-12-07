@@ -26,7 +26,7 @@ impl <const BUFSIZE:usize> Sampler <BUFSIZE> {
             index: 1, // start with one to account for interpolation
             frac_index: 1.0,
             buffer_ref: buf.clone(), // just the reference is cloned, not the whole buffer !
-            buffer_len: buf.len() - 3, // to account for interpolation
+            buffer_len: buf.len() - 4, // to account for interpolation
             playback_rate: 1.0,
             frac_index_increment: 1.0,
             state: SynthState::Fresh,
