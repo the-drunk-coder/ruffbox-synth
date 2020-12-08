@@ -72,7 +72,10 @@ impl Allpass {
     #[inline(always)]
     pub fn process_sample(&mut self, sample: f32) -> f32 {
 
-        let buf_out: f32 = self.delay_buffer[self.delay_idx];
+        let mut buf_out: f32 = self.delay_buffer[self.delay_idx];
+	if !buf_out.is_normal() {
+	    buf_out = 0.0;
+	}
                
         let out = (-1.0 * sample) + buf_out;
         self.delay_buffer[self.delay_idx] = sample + (buf_out * self.feedback);
@@ -119,8 +122,16 @@ impl Comb {
     #[inline(always)]
     pub fn process_sample(&mut self, sample: f32) -> f32 {
         
-        let out = self.delay_buffer[self.delay_idx];
-        self.filterstore = (out * self.damp2) + (self.filterstore * self.damp1);
+        let mut out = self.delay_buffer[self.delay_idx];
+	if !out.is_normal() {
+	    out = 0.0;
+	}
+
+	self.filterstore = (out * self.damp2) + (self.filterstore * self.damp1);
+	if !self.filterstore.is_normal() {
+	    self.filterstore = 0.0;
+	}
+	
         self.delay_buffer[self.delay_idx] = sample + (self.filterstore * self.feedback);
 
         // increment delay idx
