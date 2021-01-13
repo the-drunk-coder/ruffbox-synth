@@ -205,7 +205,7 @@ impl <const BUFSIZE: usize, const NCHAN:usize> Ruffbox<BUFSIZE, NCHAN> {
         let scheduled_event = match src_type {
             SourceType::SineOsc => ScheduledEvent::new(timestamp, Box::new(SineSynth::new(44100.0))),
             SourceType::SineSynth => ScheduledEvent::new(timestamp, Box::new(SineSynth::new(44100.0))),
-            SourceType::Sampler => ScheduledEvent::new(timestamp, Box::new(StereoSampler::with_buffer_ref(&self.buffers[sample_buf], 44100.0))),
+            SourceType::Sampler => ScheduledEvent::new(timestamp, Box::new(NChannelSampler::with_buffer_ref(&self.buffers[sample_buf], 44100.0))),
             SourceType::LFSawSynth => ScheduledEvent::new(timestamp, Box::new(LFSawSynth::new(44100.0))),
             SourceType::LFSquareSynth => ScheduledEvent::new(timestamp, Box::new(LFSquareSynth::new(44100.0))),
         };

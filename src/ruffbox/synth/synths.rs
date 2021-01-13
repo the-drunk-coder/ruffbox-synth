@@ -187,24 +187,29 @@ impl <const BUFSIZE:usize, const NCHAN:usize> Synth<BUFSIZE, NCHAN> for LFSquare
     }
 }
 
+
 /// a sampler with envelope etc.
-pub struct StereoSampler<const BUFSIZE:usize, const NCHAN:usize> {
+pub struct NChannelSampler<const BUFSIZE:usize, const NCHAN:usize> {
     sampler: Sampler<BUFSIZE>,
     envelope: ASREnvelope<BUFSIZE>,
-    filter: Lpf18<BUFSIZE>,
+    hpf: BiquadHpf<BUFSIZE>,
+    peak_eq: PeakEq<BUFSIZE>,
+    lpf: Lpf18<BUFSIZE>,    
     balance: PanChan<BUFSIZE, NCHAN>,
     reverb: f32,
     delay: f32,
 }
 
-impl <const BUFSIZE:usize, const NCHAN:usize> StereoSampler<BUFSIZE, NCHAN> {
-    pub fn with_buffer_ref(buf: &Arc<Vec<f32>>, sr: f32) -> StereoSampler<BUFSIZE, NCHAN> {
+impl <const BUFSIZE:usize, const NCHAN:usize> NChannelSampler<BUFSIZE, NCHAN> {
+    pub fn with_buffer_ref(buf: &Arc<Vec<f32>>, sr: f32) -> NChannelSampler<BUFSIZE, NCHAN> {
         let dur = (buf.len() as f32 / sr) - 0.0002;
         
-        StereoSampler {
+        NChannelSampler {
             sampler: Sampler::with_buffer_ref(buf, true),
             envelope: ASREnvelope::new(sr, 1.0, 0.0001, dur, 0.0001),
-            filter: Lpf18::new(19500.0, 0.01, 0.01, sr),
+	    hpf: BiquadHpf::new(10.0, 0.01, sr),
+	    peak_eq: PeakEq::new(700.0, 100.0, 0.0, sr),
+	    lpf: Lpf18::new(19500.0, 0.01, 0.01, sr),	    
             balance: PanChan::new(),
             reverb: 0.0,
             delay: 0.0,
@@ -212,10 +217,12 @@ impl <const BUFSIZE:usize, const NCHAN:usize> StereoSampler<BUFSIZE, NCHAN> {
     }
 }
 
-impl <const BUFSIZE:usize, const NCHAN:usize> Synth<BUFSIZE, NCHAN> for StereoSampler<BUFSIZE, NCHAN> {
+impl <const BUFSIZE:usize, const NCHAN:usize> Synth<BUFSIZE, NCHAN> for NChannelSampler<BUFSIZE, NCHAN> {
     fn set_parameter(&mut self, par: SynthParameter, val: f32) {
         self.sampler.set_parameter(par, val);        
-        self.filter.set_parameter(par, val);
+        self.hpf.set_parameter(par, val);
+	self.peak_eq.set_parameter(par, val);
+	self.lpf.set_parameter(par, val);
         self.envelope.set_parameter(par, val);
         self.balance.set_parameter(par, val);
 
@@ -236,7 +243,9 @@ impl <const BUFSIZE:usize, const NCHAN:usize> Synth<BUFSIZE, NCHAN> for StereoSa
 
     fn get_next_block(&mut self, start_sample: usize) -> [[f32; BUFSIZE]; NCHAN] {
         let mut out: [f32; BUFSIZE] = self.sampler.get_next_block(start_sample);
-        out = self.filter.process_block(out, start_sample);
+        out = self.hpf.process_block(out, start_sample);
+	out = self.peak_eq.process_block(out, start_sample);
+	out = self.lpf.process_block(out, start_sample);
         out = self.envelope.process_block(out, start_sample);
         self.balance.process_block(out)
     }
