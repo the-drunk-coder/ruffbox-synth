@@ -42,7 +42,7 @@ impl <const BUFSIZE:usize> EncoderO1<BUFSIZE> {
         self.coefs[3] = self.a_1_1 * cos_a * sin_e;
     }
     
-    pub fn process_block(&mut self, input: &[f32; BUFSIZE]) -> [[f32; BUFSIZE]; 4] {
+    pub fn process_block(&mut self, input: [f32; BUFSIZE]) -> [[f32; BUFSIZE]; 4] {
         let mut enc_block = [[0.0; BUFSIZE]; 4];
 
         for i in 0..BUFSIZE {
