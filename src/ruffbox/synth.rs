@@ -6,6 +6,7 @@ pub mod synths;
 pub mod filters;
 pub mod freeverb;
 pub mod delay;
+pub mod ambisonics;
 
 pub enum SynthState { 
     Fresh,
@@ -46,7 +47,9 @@ pub enum SynthParameter {
     SampleBufferNumber,         // 26
     Samplerate,                 // 27 
     ChannelPosition,            // 28
-    Sustain,                    // 29
+    AmbisonicAzimuth,           // 29
+    AmbisonicElevation,         // 30
+    Sustain,                    // 31
 }
 
 #[repr(C)]
