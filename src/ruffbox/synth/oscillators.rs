@@ -130,7 +130,7 @@ impl <const BUFSIZE:usize> MonoSource<BUFSIZE> for LFSaw<BUFSIZE> {
  * A non-band-limited square-wave oscillator.
  */
 pub struct LFSquare<const BUFSIZE:usize> {
-    freq: f32,
+    //freq: f32,
     lvl: f32,
     samplerate: f32,
     pulsewidth: f32,    
@@ -142,7 +142,7 @@ pub struct LFSquare<const BUFSIZE:usize> {
 impl <const BUFSIZE:usize> LFSquare<BUFSIZE> {    
     pub fn new(freq: f32, pw: f32, lvl: f32, sr: f32) -> Self {
         LFSquare {
-            freq: freq,
+            //freq: freq,
             lvl: lvl,
             samplerate: sr,
             pulsewidth: pw,
@@ -159,7 +159,7 @@ impl <const BUFSIZE:usize> MonoSource<BUFSIZE> for LFSquare<BUFSIZE> {
     fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         match par {
             SynthParameter::PitchFrequency => {
-                self.freq = value;
+                //self.freq = value;
                 self.period_samples = (self.samplerate / value).round() as usize;
                 self.flank_point = (self.period_samples as f32 * self.pulsewidth).round() as usize;
             },
