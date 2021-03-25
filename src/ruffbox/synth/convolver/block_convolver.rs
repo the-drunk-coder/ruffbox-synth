@@ -1,4 +1,4 @@
-use num_complex::Complex;
+use num::*;
 use chfft::RFft1D;
 
 /**
@@ -36,8 +36,10 @@ impl<const BUFSIZE: usize> std::clone::Clone for BlockConvolver<BUFSIZE> {
 impl<const BUFSIZE: usize> BlockConvolver<BUFSIZE> {
 
     // create block convolver from ir
-    pub fn from_ir(ir: &[f32; BUFSIZE]) -> Self {
+    pub fn from_ir(ir: &Vec<f32>) -> Self {
 
+	// check if IR len == BUFSIZE ?
+	
         let mut fft = RFft1D::<f32>::new(ir.len() * 2);
 	
         // zero-pad impulse response (to match IR lenght)
