@@ -1,4 +1,5 @@
 pub mod ambisonics;
+pub mod convolver;
 pub mod delay;
 pub mod envelopes;
 pub mod filters;
