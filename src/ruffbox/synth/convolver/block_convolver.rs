@@ -1,4 +1,4 @@
-use num::*;
+use num_complex::*;
 use chfft::RFft1D;
 
 /**
@@ -92,6 +92,8 @@ impl<const BUFSIZE: usize> BlockConvolver<BUFSIZE> {
     }
 }
 
+// TEST TEST TEST
+#[cfg(test)]
 mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;

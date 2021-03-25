@@ -13,8 +13,8 @@ lazy_static = "1.4.0"
 wee_alloc = { version = "0.4.5", optional = true }
 crossbeam = "0.8"
 parking_lot = "0.11"
-num = "0.3"
-chfft = "0.3"
+num-complex = "0.4"
+chfft = "0.3.4"
 
 [dev-dependencies]
 assert_approx_eq = "1.1.0"
