@@ -1,7 +1,7 @@
+use crate::ruffbox::synth::ambisonics::encoder_o1::EncoderO1;
 use crate::ruffbox::synth::envelopes::*;
 use crate::ruffbox::synth::filters::*;
 use crate::ruffbox::synth::oscillators::*;
-use crate::ruffbox::synth::ambisonics::encoder_o1::EncoderO1;
 use crate::ruffbox::synth::sampler::Sampler;
 use crate::ruffbox::synth::Synth;
 use crate::ruffbox::synth::SynthParameter;
@@ -88,9 +88,7 @@ impl<const BUFSIZE: usize> LFSawSynthAmbiO1<BUFSIZE> {
     }
 }
 
-impl<const BUFSIZE: usize> Synth<BUFSIZE, 4>
-    for LFSawSynthAmbiO1<BUFSIZE>
-{
+impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for LFSawSynthAmbiO1<BUFSIZE> {
     fn set_parameter(&mut self, par: SynthParameter, val: f32) {
         self.oscillator.set_parameter(par, val);
         self.filter.set_parameter(par, val);
@@ -133,7 +131,7 @@ pub struct LFSquareSynthAmbiO1<const BUFSIZE: usize> {
     oscillator: LFSquare<BUFSIZE>,
     filter: Lpf18<BUFSIZE>,
     envelope: ASREnvelope<BUFSIZE>,
-    encoder: EncoderO1<BUFSIZE>,    
+    encoder: EncoderO1<BUFSIZE>,
     reverb: f32,
     delay: f32,
 }
@@ -151,9 +149,7 @@ impl<const BUFSIZE: usize> LFSquareSynthAmbiO1<BUFSIZE> {
     }
 }
 
-impl<const BUFSIZE: usize> Synth<BUFSIZE, 4>
-    for LFSquareSynthAmbiO1<BUFSIZE>
-{
+impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for LFSquareSynthAmbiO1<BUFSIZE> {
     fn set_parameter(&mut self, par: SynthParameter, val: f32) {
         self.oscillator.set_parameter(par, val);
         self.filter.set_parameter(par, val);
@@ -220,9 +216,7 @@ impl<const BUFSIZE: usize> AmbiSamplerO1<BUFSIZE> {
     }
 }
 
-impl<const BUFSIZE: usize> Synth<BUFSIZE, 4>
-    for AmbiSamplerO1<BUFSIZE>
-{
+impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for AmbiSamplerO1<BUFSIZE> {
     fn set_parameter(&mut self, par: SynthParameter, val: f32) {
         self.sampler.set_parameter(par, val);
         self.hpf.set_parameter(par, val);

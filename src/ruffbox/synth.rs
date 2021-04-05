@@ -58,6 +58,7 @@ pub enum SourceType {
     Sampler,
     SineOsc,
     SineSynth,
+    LFCubSynth,
     LFSawSynth,
     LFSquareSynth,
 }

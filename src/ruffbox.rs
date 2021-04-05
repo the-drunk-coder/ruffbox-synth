@@ -239,6 +239,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
             SourceType::LFSquareSynth => {
                 ScheduledEvent::new(timestamp, Box::new(LFSquareSynth::new(44100.0)))
             }
+            SourceType::LFCubSynth => {
+                ScheduledEvent::new(timestamp, Box::new(LFCubSynth::new(44100.0)))
+            }
         };
 
         self.prepared_instance_map

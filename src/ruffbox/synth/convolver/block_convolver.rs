@@ -1,9 +1,9 @@
-use num_complex::*;
 use chfft::RFft1D;
+use num_complex::*;
 
 /**
  * A simple, non-partitioned block convolver.
- * Uses the Overlap-Save method (also called Overlap-Scrap) 
+ * Uses the Overlap-Save method (also called Overlap-Scrap)
  * for block convolution.
  */
 pub struct BlockConvolver<const BUFSIZE: usize> {
@@ -17,8 +17,7 @@ pub struct BlockConvolver<const BUFSIZE: usize> {
 }
 
 impl<const BUFSIZE: usize> std::clone::Clone for BlockConvolver<BUFSIZE> {
-
-    fn clone(&self) -> Self {        
+    fn clone(&self) -> Self {
         let fft = RFft1D::<f32>::new(self.len);
 
         BlockConvolver {
@@ -27,64 +26,61 @@ impl<const BUFSIZE: usize> std::clone::Clone for BlockConvolver<BUFSIZE> {
             fft: fft,
             tmp_in: vec![0.0; 256],
             tmp_out: vec![0.0; 256],
-            remainder: vec![0.0; 128],            
+            remainder: vec![0.0; 128],
             len: self.len,
         }
     }
 }
 
 impl<const BUFSIZE: usize> BlockConvolver<BUFSIZE> {
-
     // create block convolver from ir
     pub fn from_ir(ir: &Vec<f32>) -> Self {
+        // check if IR len == BUFSIZE ?
 
-	// check if IR len == BUFSIZE ?
-	
         let mut fft = RFft1D::<f32>::new(ir.len() * 2);
-	
+
         // zero-pad impulse response (to match IR lenght)
         let mut ir_zeropad = vec![0.0; BUFSIZE * 2];
         for i in 0..BUFSIZE / 2 {
             ir_zeropad[i] = ir[i];
         }
-	
+
         BlockConvolver {
             ir_freq_domain: fft.forward(&ir_zeropad),
-            in_freq_domain: vec![Complex::new(0.0,0.0); ir.len() * 2],       
+            in_freq_domain: vec![Complex::new(0.0, 0.0); ir.len() * 2],
             fft: fft,
             tmp_in: vec![0.0; BUFSIZE * 2],
             tmp_out: vec![0.0; BUFSIZE * 2],
-            remainder: vec![0.0; BUFSIZE],            
-            len: ir.len() * 2,            
+            remainder: vec![0.0; BUFSIZE],
+            len: ir.len() * 2,
         }
     }
-    
-    pub fn convolve(&mut self, input: [f32; BUFSIZE]) -> [f32; BUFSIZE] {
 
+    pub fn convolve(&mut self, input: [f32; BUFSIZE]) -> [f32; BUFSIZE] {
         // assemble input block from remainder part from previous block
         // (in this case, as filter length is always equal to blocksize,
         // the remainder is just the previous block)
         for i in 0..BUFSIZE {
             self.tmp_in[i] = self.remainder[i];
-            self.tmp_in[i + BUFSIZE] = input[i];                
+            self.tmp_in[i + BUFSIZE] = input[i];
         }
 
         // perform fft
         self.in_freq_domain = self.fft.forward(&self.tmp_in);
- 
+
         // pointwise convolution
-        for i in 0..self.in_freq_domain.len(){
+        for i in 0..self.in_freq_domain.len() {
             self.in_freq_domain[i] = self.ir_freq_domain[i] * self.in_freq_domain[i];
         }
 
         // ifft
         self.tmp_out = self.fft.backward(&self.in_freq_domain);
 
-        // copy relevant part from ifft, scrap the rest 
+        // copy relevant part from ifft, scrap the rest
         let mut outarr = [0.0; BUFSIZE];
         for i in 0..128 {
             self.remainder[i] = input[i];
-            outarr[i] = self.tmp_out[i + BUFSIZE]; 
+            outarr[i] = self.tmp_out[i + BUFSIZE];
         }
 
         // return result block ...
@@ -98,7 +94,7 @@ mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
     use std::f32::consts::PI;
-    
+
     #[test]
     fn test_freq_domain_impulse_convolution() {
         // test convolution with impulse ...
@@ -111,8 +107,8 @@ mod tests {
         let mut conv = BlockConvolver::<128>::from_ir(&ir);
 
         let mut dev_accum = 0.0;
-        
-        for b in 0.. 100 {
+
+        for b in 0..100 {
             for i in 0..128 {
                 let pi_idx = ((b * 128 + i) as f32) * PI;
                 signal_in[i] = ((220.0 / 44100.0) * pi_idx).sin();
@@ -124,11 +120,7 @@ mod tests {
                 dev_accum += (signal_out[i] - signal_in[i]) * (signal_out[i] - signal_in[i]);
             }
         }
-        
-        assert_approx_eq::assert_approx_eq!(dev_accum / (100.0 * 128.0) , 0.0, 0.00001);
+
+        assert_approx_eq::assert_approx_eq!(dev_accum / (100.0 * 128.0), 0.0, 0.00001);
     }
 }
-
-
-
-

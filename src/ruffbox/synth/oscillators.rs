@@ -3,6 +3,9 @@ use crate::ruffbox::synth::SynthParameter;
 
 use std::f32::consts::PI;
 
+/// A collection of oscillators, some of which are modeled
+/// after scsynth, csound, etc ...
+
 /**
  * A simple sine oscillator
  */
@@ -120,6 +123,69 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSaw<BUFSIZE> {
             } else {
                 self.cur_lvl += self.lvl_inc;
             }
+        }
+
+        out_buf
+    }
+}
+
+/**
+ * A non-band-limited cubic sine approximation oscillator.
+ */
+pub struct LFCub<const BUFSIZE: usize> {
+    lvl: f32,
+    samplerate: f32,
+    freq: f32,
+    phase: f32,
+}
+
+impl<const BUFSIZE: usize> LFCub<BUFSIZE> {
+    pub fn new(freq: f32, lvl: f32, sr: f32) -> Self {
+        LFCub {
+            //freq: freq,
+            lvl: lvl,
+            samplerate: sr,
+            phase: 0.0,
+            freq: freq,
+        }
+    }
+}
+
+impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFCub<BUFSIZE> {
+    // some parameter limits might be nice ...
+    fn set_parameter(&mut self, par: SynthParameter, value: f32) {
+        match par {
+            SynthParameter::PitchFrequency => {
+                self.freq = value;
+            }
+            SynthParameter::Level => {
+                self.lvl = value;
+            }
+            _ => (),
+        };
+    }
+
+    fn finish(&mut self) {}
+
+    fn is_finished(&self) -> bool {
+        false
+    }
+
+    fn get_next_block(&mut self, start_sample: usize) -> [f32; BUFSIZE] {
+        let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
+
+        let mut z: f32;
+        for i in start_sample..BUFSIZE {
+            if self.phase < 1.0 {
+                z = self.phase;
+            } else if self.phase < 2.0 {
+                z = 2.0 - self.phase;
+            } else {
+                self.phase -= 2.0;
+                z = self.phase;
+            }
+            self.phase += self.freq;
+            out_buf[i] = self.lvl * z * z * (6.0 - 4.0 * z) - 1.0;
         }
 
         out_buf
