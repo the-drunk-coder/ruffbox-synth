@@ -156,7 +156,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFCub<BUFSIZE> {
     fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         match par {
             SynthParameter::PitchFrequency => {
-                self.freq = value;
+                self.freq = value * (1.0 / self.samplerate);
             }
             SynthParameter::Level => {
                 self.lvl = value;
