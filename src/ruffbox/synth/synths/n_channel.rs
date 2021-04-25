@@ -271,7 +271,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> NChannelSampler<BUFSIZE, NCHAN> {
         NChannelSampler {
             sampler: Sampler::with_buffer_ref(buf, true),
             envelope: ASREnvelope::new(sr, 1.0, 0.0001, dur, 0.0001),
-            hpf: BiquadHpf::new(10.0, 0.01, sr),
+            hpf: BiquadHpf::new(20.0, 0.3, sr),
             peak_eq: PeakEq::new(700.0, 100.0, 0.0, sr),
             lpf: Lpf18::new(19500.0, 0.01, 0.01, sr),
             balance: PanChan::new(),
