@@ -97,7 +97,15 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
     fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         match par {
             SynthParameter::PlaybackStart => {
-                let offset = (self.buffer_len as f32 * value) as usize;
+		let mut value_clamped = value;
+		// clamp value
+		if value > 1.0 {
+		    value_clamped = value - ((value as usize) as f32);
+		} else if value < 0.0 {
+		    value_clamped = 1.0 + (value - ((value as i32) as f32));
+		}
+		
+                let offset = (self.buffer_len as f32 * value_clamped) as usize;
                 self.index = offset + 1; // start counting at one, due to interpolation
                 self.frac_index = self.index as f32;
             }
