@@ -82,8 +82,8 @@ pub struct Ruffbox<const BUFSIZE: usize, const NCHAN: usize> {
     master_delay: MultichannelDelay<BUFSIZE, NCHAN>,
 }
 
-impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
-    pub fn new() -> Ruffbox<BUFSIZE, NCHAN> {
+impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {    
+    pub fn new(live_buffer: bool) -> Ruffbox<BUFSIZE, NCHAN> {
         let (tx, rx): (
             Sender<ScheduledEvent<BUFSIZE, NCHAN>>,
             Receiver<ScheduledEvent<BUFSIZE, NCHAN>>,
@@ -98,9 +98,11 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
 	let mut buffers = Vec::with_capacity(2000);
 	let mut buffer_lengths = Vec::with_capacity(2000);
 
-	// create live buffer
-	buffers.push(vec![0.0; (44100 * 3) + 4]);
-	buffer_lengths.push(44100 * 3);
+	if live_buffer {
+	    // create live buffer
+	    buffers.push(vec![0.0; (44100 * 3) + 4]);
+	    buffer_lengths.push(44100 * 3);	
+	}
 	
         Ruffbox {
             running_instances: Vec::with_capacity(600),
