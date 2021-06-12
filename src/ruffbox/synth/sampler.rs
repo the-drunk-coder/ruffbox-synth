@@ -3,16 +3,14 @@ use crate::ruffbox::synth::MonoSource;
 use crate::ruffbox::synth::SynthParameter;
 use crate::ruffbox::synth::SynthState;
 
-use std::sync::Arc;
-
 /**
  * a very simple sample player ...
  */
 pub struct Sampler<const BUFSIZE: usize> {
     index: usize,
     frac_index: f32,
-    buffer_ref: Arc<Vec<f32>>,
-    buffer_len: usize,
+    bufnum: usize,
+    buflen: usize,    
     playback_rate: f32,
     frac_index_increment: f32,
     state: SynthState,
@@ -21,12 +19,12 @@ pub struct Sampler<const BUFSIZE: usize> {
 }
 
 impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
-    pub fn with_buffer_ref(buf: &Arc<Vec<f32>>, repeat: bool) -> Sampler<BUFSIZE> {
+    pub fn with_bufnum_len(bufnum: usize, buflen: usize, repeat: bool) -> Sampler<BUFSIZE> {	
         Sampler {
             index: 1, // start with one to account for interpolation
             frac_index: 1.0,
-            buffer_ref: buf.clone(), // just the reference is cloned, not the whole buffer !
-            buffer_len: buf.len() - 4, // to account for interpolation
+            bufnum: bufnum,
+	    buflen: buflen,
             playback_rate: 1.0,
             frac_index_increment: 1.0,
             state: SynthState::Fresh,
@@ -35,13 +33,13 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
         }
     }
 
-    fn get_next_block_no_interp(&mut self, start_sample: usize) -> [f32; BUFSIZE] {
+    fn get_next_block_no_interp(&mut self, start_sample: usize, sample_buffers: &Vec<Vec<f32>>) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
-
+	
         for i in start_sample..BUFSIZE {
-            out_buf[i] = self.buffer_ref[self.index] * self.level;
+            out_buf[i] = sample_buffers[self.bufnum][self.index] * self.level;
 
-            if self.index < self.buffer_len {
+            if self.index < self.buflen {
                 self.index = self.index + 1;
             } else {
                 if self.repeat {
@@ -56,19 +54,20 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
         out_buf
     }
 
-    fn get_next_block_interp(&mut self, start_sample: usize) -> [f32; BUFSIZE] {
+    fn get_next_block_interp(&mut self, start_sample: usize, sample_buffers: &Vec<Vec<f32>>) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
-        for i in start_sample..BUFSIZE {
+	
+	for i in start_sample..BUFSIZE {
             // get sample:
             let idx = self.frac_index.floor();
             let frac = self.frac_index - idx;
             let idx_u = idx as usize;
 
             // 4-point, 3rd-order Hermite
-            let y_m1 = self.buffer_ref[idx_u - 1];
-            let y_0 = self.buffer_ref[idx_u];
-            let y_1 = self.buffer_ref[idx_u + 1];
-            let y_2 = self.buffer_ref[idx_u + 2];
+            let y_m1 = sample_buffers[self.bufnum][idx_u - 1];
+            let y_0 = sample_buffers[self.bufnum][idx_u];
+            let y_1 = sample_buffers[self.bufnum][idx_u + 1];
+            let y_2 = sample_buffers[self.bufnum][idx_u + 2];
 
             let c0 = y_0;
             let c1 = 0.5 * (y_1 - y_m1);
@@ -77,7 +76,7 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
 
             out_buf[i] = (((c3 * frac + c2) * frac + c1) * frac + c0) * self.level;
 
-            if ((self.frac_index + self.frac_index_increment) as usize) < self.buffer_len {
+            if ((self.frac_index + self.frac_index_increment) as usize) < self.buflen {
                 self.frac_index = self.frac_index + self.frac_index_increment;
             } else {
                 if self.repeat {
@@ -105,7 +104,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
 		    value_clamped = 1.0 + (value - ((value as i32) as f32));
 		}
 		
-                let offset = (self.buffer_len as f32 * value_clamped) as usize;
+                let offset = (self.buflen as f32 * value_clamped) as usize;
                 self.index = offset + 1; // start counting at one, due to interpolation
                 self.frac_index = self.index as f32;
             }
@@ -131,11 +130,11 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
         }
     }
 
-    fn get_next_block(&mut self, start_sample: usize) -> [f32; BUFSIZE] {
+    fn get_next_block(&mut self, start_sample: usize, sample_buffers: &Vec<Vec<f32>>) -> [f32; BUFSIZE] {
         if self.playback_rate == 1.0 {
-            self.get_next_block_no_interp(start_sample)
+            self.get_next_block_no_interp(start_sample, sample_buffers)
         } else {
-            self.get_next_block_interp(start_sample)
+            self.get_next_block_interp(start_sample, sample_buffers)
         }
     }
 }

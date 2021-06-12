@@ -7,8 +7,6 @@ use crate::ruffbox::synth::Synth;
 use crate::ruffbox::synth::SynthParameter;
 use crate::ruffbox::synth::*;
 
-use std::sync::Arc;
-
 /// a sinusoidal synth with envelope etc.
 pub struct SineSynth<const BUFSIZE: usize, const NCHAN: usize> {
     oscillator: SineOsc<BUFSIZE>,
@@ -50,8 +48,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN> for SineSyn
         self.envelope.is_finished()
     }
 
-    fn get_next_block(&mut self, start_sample: usize) -> [[f32; BUFSIZE]; NCHAN] {
-        let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample);
+    fn get_next_block(&mut self, start_sample: usize, sample_buffers: &Vec<Vec<f32>>) -> [[f32; BUFSIZE]; NCHAN] {
+        let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample, sample_buffers);
         out = self.envelope.process_block(out, start_sample);
         self.balance.process_block(out)
     }
@@ -111,8 +109,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
         self.envelope.is_finished()
     }
 
-    fn get_next_block(&mut self, start_sample: usize) -> [[f32; BUFSIZE]; NCHAN] {
-        let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample);
+    fn get_next_block(&mut self, start_sample: usize, sample_buffers: &Vec<Vec<f32>>) -> [[f32; BUFSIZE]; NCHAN] {
+        let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample, sample_buffers);
         out = self.envelope.process_block(out, start_sample);
         self.balance.process_block(out)
     }
@@ -173,8 +171,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
         self.envelope.is_finished()
     }
 
-    fn get_next_block(&mut self, start_sample: usize) -> [[f32; BUFSIZE]; NCHAN] {
-        let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample);
+    fn get_next_block(&mut self, start_sample: usize, sample_buffers: &Vec<Vec<f32>>) -> [[f32; BUFSIZE]; NCHAN] {
+        let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample, sample_buffers);
         out = self.filter.process_block(out, start_sample);
         out = self.envelope.process_block(out, start_sample);
         self.balance.process_block(out)
@@ -236,8 +234,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
         self.envelope.is_finished()
     }
 
-    fn get_next_block(&mut self, start_sample: usize) -> [[f32; BUFSIZE]; NCHAN] {
-        let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample);
+    fn get_next_block(&mut self, start_sample: usize, sample_buffers: &Vec<Vec<f32>>) -> [[f32; BUFSIZE]; NCHAN] {
+        let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample, sample_buffers);
         out = self.filter.process_block(out, start_sample);
         out = self.envelope.process_block(out, start_sample);
         self.balance.process_block(out)
@@ -265,11 +263,11 @@ pub struct NChannelSampler<const BUFSIZE: usize, const NCHAN: usize> {
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> NChannelSampler<BUFSIZE, NCHAN> {
-    pub fn with_buffer_ref(buf: &Arc<Vec<f32>>, sr: f32) -> NChannelSampler<BUFSIZE, NCHAN> {
-        let dur = (buf.len() as f32 / sr) - 0.0002;
+    pub fn with_bufnum_len(bufnum: usize, buflen: usize, sr: f32) -> NChannelSampler<BUFSIZE, NCHAN> {
+        let dur = (buflen as f32 / sr) - 0.0002;
 
         NChannelSampler {
-            sampler: Sampler::with_buffer_ref(buf, true),
+            sampler: Sampler::with_bufnum_len(bufnum, buflen, true),
             envelope: ASREnvelope::new(sr, 1.0, 0.0001, dur, 0.0001),
             hpf: BiquadHpf::new(20.0, 0.3, sr),
             peak_eq: PeakEq::new(700.0, 100.0, 0.0, sr),
@@ -307,8 +305,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
         self.envelope.is_finished()
     }
 
-    fn get_next_block(&mut self, start_sample: usize) -> [[f32; BUFSIZE]; NCHAN] {
-        let mut out: [f32; BUFSIZE] = self.sampler.get_next_block(start_sample);
+    fn get_next_block(&mut self, start_sample: usize, sample_buffers: &Vec<Vec<f32>>) -> [[f32; BUFSIZE]; NCHAN] {
+        let mut out: [f32; BUFSIZE] = self.sampler.get_next_block(start_sample, sample_buffers);
         out = self.hpf.process_block(out, start_sample);
         out = self.peak_eq.process_block(out, start_sample);
         out = self.lpf.process_block(out, start_sample);

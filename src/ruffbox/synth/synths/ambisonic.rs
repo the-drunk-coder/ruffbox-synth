@@ -7,8 +7,6 @@ use crate::ruffbox::synth::Synth;
 use crate::ruffbox::synth::SynthParameter;
 use crate::ruffbox::synth::*;
 
-use std::sync::Arc;
-
 /// a sinusoidal synth with envelope etc.
 pub struct SineSynthAmbiO1<const BUFSIZE: usize> {
     oscillator: SineOsc<BUFSIZE>,
@@ -50,8 +48,8 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for SineSynthAmbiO1<BUFSIZE> {
         self.envelope.is_finished()
     }
 
-    fn get_next_block(&mut self, start_sample: usize) -> [[f32; BUFSIZE]; 4] {
-        let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample);
+    fn get_next_block(&mut self, start_sample: usize, sample_buffers: &Vec<Vec<f32>>) -> [[f32; BUFSIZE]; 4] {
+        let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample, sample_buffers);
         out = self.envelope.process_block(out, start_sample);
         self.encoder.process_block(out)
     }
@@ -110,8 +108,8 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for LFSawSynthAmbiO1<BUFSIZE> {
         self.envelope.is_finished()
     }
 
-    fn get_next_block(&mut self, start_sample: usize) -> [[f32; BUFSIZE]; 4] {
-        let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample);
+    fn get_next_block(&mut self, start_sample: usize, sample_buffers: &Vec<Vec<f32>>) -> [[f32; BUFSIZE]; 4] {
+        let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample, sample_buffers);
         out = self.filter.process_block(out, start_sample);
         out = self.envelope.process_block(out, start_sample);
         self.encoder.process_block(out)
@@ -171,8 +169,8 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for LFSquareSynthAmbiO1<BUFSIZE> {
         self.envelope.is_finished()
     }
 
-    fn get_next_block(&mut self, start_sample: usize) -> [[f32; BUFSIZE]; 4] {
-        let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample);
+    fn get_next_block(&mut self, start_sample: usize, sample_buffers: &Vec<Vec<f32>>) -> [[f32; BUFSIZE]; 4] {
+        let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample, sample_buffers);
         out = self.filter.process_block(out, start_sample);
         out = self.envelope.process_block(out, start_sample);
         self.encoder.process_block(out)
@@ -200,11 +198,11 @@ pub struct AmbiSamplerO1<const BUFSIZE: usize> {
 }
 
 impl<const BUFSIZE: usize> AmbiSamplerO1<BUFSIZE> {
-    pub fn with_buffer_ref(buf: &Arc<Vec<f32>>, sr: f32) -> AmbiSamplerO1<BUFSIZE> {
-        let dur = (buf.len() as f32 / sr) - 0.0002;
+    pub fn with_bufnum_len(bufnum: usize, buflen: usize, sr: f32) -> AmbiSamplerO1<BUFSIZE> {
+	let dur = (buflen as f32 / sr) - 0.0002;
 
         AmbiSamplerO1 {
-            sampler: Sampler::with_buffer_ref(buf, true),
+            sampler: Sampler::with_bufnum_len(bufnum, buflen, true),
             envelope: ASREnvelope::new(sr, 1.0, 0.0001, dur, 0.0001),
             hpf: BiquadHpf::new(10.0, 0.01, sr),
             peak_eq: PeakEq::new(700.0, 100.0, 0.0, sr),
@@ -240,8 +238,8 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for AmbiSamplerO1<BUFSIZE> {
         self.envelope.is_finished()
     }
 
-    fn get_next_block(&mut self, start_sample: usize) -> [[f32; BUFSIZE]; 4] {
-        let mut out: [f32; BUFSIZE] = self.sampler.get_next_block(start_sample);
+    fn get_next_block(&mut self, start_sample: usize, sample_buffers: &Vec<Vec<f32>>) -> [[f32; BUFSIZE]; 4] {
+        let mut out: [f32; BUFSIZE] = self.sampler.get_next_block(start_sample, sample_buffers);
         out = self.hpf.process_block(out, start_sample);
         out = self.peak_eq.process_block(out, start_sample);
         out = self.lpf.process_block(out, start_sample);

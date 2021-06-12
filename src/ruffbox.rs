@@ -8,7 +8,6 @@ use crossbeam::channel::Sender;
 use std::collections::HashMap;
 
 use std::cmp::Ordering;
-use std::sync::Arc;
 
 use crate::ruffbox::synth::delay::MultichannelDelay;
 use crate::ruffbox::synth::freeverb::MultichannelFreeverb;
@@ -69,7 +68,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> ScheduledEvent<BUFSIZE, NCHAN> {
 pub struct Ruffbox<const BUFSIZE: usize, const NCHAN: usize> {
     running_instances: Vec<Box<dyn Synth<BUFSIZE, NCHAN> + Send>>,
     pending_events: Vec<ScheduledEvent<BUFSIZE, NCHAN>>,
-    buffers: Vec<Arc<Vec<f32>>>,
+    buffers: Vec<Vec<f32>>,
+    buffer_lengths: Vec<usize>,
+    live_buffer_idx: usize,
     prepared_instance_map: HashMap<usize, ScheduledEvent<BUFSIZE, NCHAN>>,
     instance_counter: AtomicCell<usize>,
     new_instances_q_send: crossbeam::channel::Sender<ScheduledEvent<BUFSIZE, NCHAN>>,
@@ -94,11 +95,20 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
         rev.set_damp(0.43);
         rev.set_wet(1.0);
 
+	let mut buffers = Vec::with_capacity(2000);
+	let mut buffer_lengths = Vec::with_capacity(2000);
+
+	// create live buffer
+	buffers.push(vec![0.0; (44100 * 3) + 4]);
+	buffer_lengths.push(44100 * 3);
+	
         Ruffbox {
             running_instances: Vec::with_capacity(600),
             pending_events: Vec::with_capacity(600),
-            buffers: Vec::with_capacity(20),
-            prepared_instance_map: HashMap::with_capacity(600),
+            buffers: buffers,
+	    buffer_lengths: buffer_lengths,
+	    live_buffer_idx: 1,
+            prepared_instance_map: HashMap::with_capacity(1200),
             instance_counter: AtomicCell::new(0),
             new_instances_q_send: tx,
             new_instances_q_rec: rx,
@@ -111,6 +121,24 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
         }
     }
 
+    pub fn write_samples_to_live_buffer(&mut self, samples: &[f32]) {
+	for s in samples.iter() {
+	    self.buffers[0][self.live_buffer_idx] = *s;
+	    self.live_buffer_idx += 1;
+	    if self.live_buffer_idx >= self.buffer_lengths[0] {
+		self.live_buffer_idx = 1;
+	    }
+ 	}
+    }
+
+    pub fn write_sample_to_live_buffer(&mut self, sample: f32) {	
+	self.buffers[0][self.live_buffer_idx] = sample;
+	self.live_buffer_idx += 1;
+	if self.live_buffer_idx >= self.buffer_lengths[0] {
+	    self.live_buffer_idx = 1;
+	} 	
+    }
+    
     pub fn process(
         &mut self,
         stream_time: f64,
@@ -147,7 +175,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
 
         // handle already running instances
         for running_inst in self.running_instances.iter_mut() {
-            let block = running_inst.get_next_block(0);
+            let block = running_inst.get_next_block(0, &self.buffers);
 
             // this should benefit from unrolling outer loop with macro ...
             for c in 0..NCHAN {
@@ -174,7 +202,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
 
             let block = current_event
                 .source
-                .get_next_block(sample_offset.round() as usize);
+                .get_next_block(sample_offset.round() as usize, &self.buffers);
 
             for c in 0..NCHAN {
                 for s in 0..BUFSIZE {
@@ -228,8 +256,17 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
             }
             SourceType::Sampler => ScheduledEvent::new(
                 timestamp,
-                Box::new(NChannelSampler::with_buffer_ref(
-                    &self.buffers[sample_buf],
+                Box::new(NChannelSampler::with_bufnum_len(		    
+                    sample_buf,
+		    self.buffer_lengths[sample_buf],
+                    44100.0,
+                )),
+            ),
+	    SourceType::LiveSampler => ScheduledEvent::new(
+                timestamp,
+                Box::new(NChannelSampler::with_bufnum_len(
+		    0,
+		    self.buffer_lengths[0],
                     44100.0,
                 )),
             ),
@@ -271,7 +308,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
 
     /// loads a mono sample and returns the assigned buffer number
     pub fn load_sample(&mut self, samples: &[f32]) -> usize {
-        self.buffers.push(Arc::new(samples.to_vec()));
+	self.buffer_lengths.push(samples.len() - 4);
+	self.buffers.push(samples.to_vec());
         self.buffers.len() - 1
     }
 
