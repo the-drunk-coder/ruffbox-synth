@@ -76,7 +76,7 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
 
             out_buf[i] = (((c3 * frac + c2) * frac + c1) * frac + c0) * self.level;
 
-            if ((self.frac_index + self.frac_index_increment) as usize) < self.buflen - 1 {
+            if ((self.frac_index + self.frac_index_increment) as usize) < self.buflen {
                 self.frac_index = self.frac_index + self.frac_index_increment;
             } else {
                 if self.repeat {
@@ -104,7 +104,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
 		    value_clamped = 1.0 + (value - ((value as i32) as f32));
 		}
 		
-                let offset = (self.buflen as f32 * value_clamped) as usize;
+                let offset = ((self.buflen - 1) as f32 * value_clamped) as usize;
                 self.index = offset + 1; // start counting at one, due to interpolation
                 self.frac_index = self.index as f32;
             }
