@@ -107,12 +107,12 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
 	
 	if live_buffer {
 	    // create live buffer
-	    buffers.push(vec![0.0; (44100 * 3) + 4]);
+	    buffers.push(vec![0.0; (44100 * 3) + 3]);
 	    buffer_lengths.push(44100 * 3);
 
 	    for _ in 0..10 {
 		// create freeze buffers
-		buffers.push(vec![0.0; (44100 * 3) + 4]);
+		buffers.push(vec![0.0; (44100 * 3) + 3]);
 		buffer_lengths.push(44100 * 3);
 	    }	    
 	}
@@ -197,7 +197,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
 	self.live_buffer_idx += 1;	
 	self.live_buffer_current_block += 1;
 
-	if self.live_buffer_idx > self.buffer_lengths[0] {
+	if self.live_buffer_idx >= self.buffer_lengths[0] {
 	    self.live_buffer_idx = 1;
 	}
 
@@ -386,7 +386,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
 
     /// loads a mono sample and returns the assigned buffer number
     pub fn load_sample(&mut self, samples: &[f32]) -> usize {
-	self.buffer_lengths.push(samples.len() - 4);
+	self.buffer_lengths.push(samples.len() - 3); // account for interpolation samples
 	self.buffers.push(samples.to_vec());
         self.buffers.len() - 1
     }
@@ -441,9 +441,27 @@ mod tests {
 	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][44100], 1.0, 0.0002);
 	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][ruff.buffer_lengths[0]], 1.0, 0.0002);
 	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][ruff.buffer_lengths[0] + 1], 0.0, 0.0002);
-	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][ruff.buffer_lengths[0] + 2], 0.0, 0.0002);
-	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][ruff.buffer_lengths[0] + 3], 0.0, 0.0002);
+	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][ruff.buffer_lengths[0] + 2], 0.0, 0.0002);	
+    }
+
+    #[test]
+    fn test_load_sample() {
+	let mut ruff = Ruffbox::<512, 2>::new(false);
 	
+	let mut sample = vec![1.0; 503];
+	sample[0] = 0.0;
+	sample[501] = 0.0;
+	sample[502] = 0.0;
+
+	ruff.load_sample(&sample);
+	
+	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][0], 0.0, 0.0002);
+	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][1], 1.0, 0.0002);
+	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][2], 1.0, 0.0002);
+	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][3], 1.0, 0.0002);
+	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][500], 1.0, 0.0002);
+	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][501], 0.0, 0.0002);
+	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][502], 0.0, 0.0002);	
     }
     
     #[test]
