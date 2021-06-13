@@ -276,7 +276,7 @@ mod tests {
     fn sine_osc_test_at_block_start() {
         let mut osc = SineOsc::<128>::new(440.0, 1.0, 44100.0);
 
-        let out_1 = osc.get_next_block(0);
+        let out_1 = osc.get_next_block(0, &Vec::new());
         let mut comp_1 = [0.0; 128];
 
         for i in 0..128 {
@@ -297,7 +297,7 @@ mod tests {
 
         let sample_offset = (44100.0 * start_time).round() as usize;
 
-        let out_1 = osc.get_next_block(sample_offset);
+        let out_1 = osc.get_next_block(sample_offset, &Vec::new());
 
         let mut comp_1 = [0.0; 128];
 
@@ -315,12 +315,12 @@ mod tests {
     fn sine_osc_test_multiple_blocks() {
         let mut osc = SineOsc::<128>::new(440.0, 1.0, 44100.0);
 
-        let out_1 = osc.get_next_block(0);
-        let out_2 = osc.get_next_block(0);
-        let out_3 = osc.get_next_block(0);
-        let out_4 = osc.get_next_block(0);
-        let out_5 = osc.get_next_block(0);
-        let out_6 = osc.get_next_block(0);
+        let out_1 = osc.get_next_block(0, &Vec::new());
+        let out_2 = osc.get_next_block(0, &Vec::new());
+        let out_3 = osc.get_next_block(0, &Vec::new());
+        let out_4 = osc.get_next_block(0, &Vec::new());
+        let out_5 = osc.get_next_block(0, &Vec::new());
+        let out_6 = osc.get_next_block(0, &Vec::new());
 
         let mut comp_1 = [0.0; 128];
         let mut comp_2 = [0.0; 128];

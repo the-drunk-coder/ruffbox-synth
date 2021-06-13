@@ -98,11 +98,10 @@ mod tests {
     #[test]
     fn test_freq_domain_impulse_convolution() {
         // test convolution with impulse ...
-        let mut ir = [0.0; 128];
+        let mut ir = vec![0.0; 128];
         ir[0] = 1.0;
 
         let mut signal_in = [0.0; 128];
-        let mut signal_out = [0.0; 128];
 
         let mut conv = BlockConvolver::<128>::from_ir(&ir);
 
@@ -115,7 +114,7 @@ mod tests {
                 signal_in[i] += ((432.0 / 44100.0) * pi_idx).sin();
                 signal_in[i] += ((648.0 / 44100.0) * pi_idx).sin();
             }
-            let mut signal_out = conv.convolve(&signal_in);
+            let signal_out = conv.convolve(signal_in);
             for i in 0..128 {
                 dev_accum += (signal_out[i] - signal_in[i]) * (signal_out[i] - signal_in[i]);
             }

@@ -71,6 +71,13 @@ pub struct Ruffbox<const BUFSIZE: usize, const NCHAN: usize> {
     buffers: Vec<Vec<f32>>,
     buffer_lengths: Vec<usize>,
     live_buffer_idx: usize,
+    live_buffer_current_block: usize,
+    live_buffer_stitch_size: usize,
+    non_stitch_size: usize,
+    fade_stitch_idx: usize,
+    fade_curve: Vec<f32>,
+    stitch_buffer: Vec<f32>,
+    bufsize: usize,
     prepared_instance_map: HashMap<usize, ScheduledEvent<BUFSIZE, NCHAN>>,
     instance_counter: AtomicCell<usize>,
     new_instances_q_send: crossbeam::channel::Sender<ScheduledEvent<BUFSIZE, NCHAN>>,
@@ -97,12 +104,33 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
 
 	let mut buffers = Vec::with_capacity(2000);
 	let mut buffer_lengths = Vec::with_capacity(2000);
-
+	
 	if live_buffer {
 	    // create live buffer
 	    buffers.push(vec![0.0; (44100 * 3) + 4]);
-	    buffer_lengths.push(44100 * 3);	
+	    buffer_lengths.push(44100 * 3);
+
+	    for _ in 0..10 {
+		// create freeze buffers
+		buffers.push(vec![0.0; (44100 * 3) + 4]);
+		buffer_lengths.push(44100 * 3);
+	    }	    
 	}
+
+	// pre-calculate a fade curve for live buffer stitching
+	let bufsize = BUFSIZE;
+	let stitch_size = bufsize / 4;
+	let mut stitch_buffer = Vec::new();
+	let mut fade_curve = Vec::new();
+
+	let pi_inc = std::f32::consts::PI / stitch_size as f32;
+        let mut pi_idx:f32 = 0.0;
+
+	for _ in 0..stitch_size {
+	    stitch_buffer.push(0.0);	    
+	    fade_curve.push((-pi_idx.cos() + 1.0) / 2.0); 
+	    pi_idx += pi_inc;
+        }			
 	
         Ruffbox {
             running_instances: Vec::with_capacity(600),
@@ -110,6 +138,13 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
             buffers: buffers,
 	    buffer_lengths: buffer_lengths,
 	    live_buffer_idx: 1,
+	    live_buffer_current_block: 0,
+	    live_buffer_stitch_size: stitch_size,
+	    stitch_buffer: stitch_buffer,
+	    fade_curve: fade_curve,
+	    non_stitch_size: bufsize - stitch_size,
+	    fade_stitch_idx: 0,
+	    bufsize: bufsize,	    
             prepared_instance_map: HashMap::with_capacity(1200),
             instance_counter: AtomicCell::new(0),
             new_instances_q_send: tx,
@@ -132,15 +167,56 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
 	    }
  	}
     }
-
-    pub fn write_sample_to_live_buffer(&mut self, sample: f32) {	
-	self.buffers[0][self.live_buffer_idx] = sample;
-	self.live_buffer_idx += 1;
-	if self.live_buffer_idx >= self.buffer_lengths[0] {
-	    self.live_buffer_idx = 1;
-	} 	
-    }
     
+    // there HAS to be a more elegant solution for this ...
+    pub fn write_sample_to_live_buffer(&mut self, sample: f32) {
+	// first, overwrite old stitch region if we're at the beginning of a new block
+	if self.live_buffer_current_block == 0 {
+	    let mut count_back_idx = self.live_buffer_idx - 1;
+	    for s in (0..128).rev() {
+		if count_back_idx < 1 {
+		    count_back_idx = self.buffer_lengths[0]; // live buffer length
+		}
+		self.buffers[0][count_back_idx] = self.stitch_buffer[s];
+		count_back_idx -= 1;
+	    }
+	}
+		
+	if self.live_buffer_current_block < self.non_stitch_size {
+	    self.buffers[0][self.live_buffer_idx] = sample;
+	} else if self.live_buffer_current_block < self.bufsize {
+	    self.stitch_buffer[self.fade_stitch_idx] = sample;
+
+	    // stitch by fading ... 
+	    self.buffers[0][self.live_buffer_idx]
+		= self.buffers[0][self.live_buffer_idx] * self.fade_curve[self.fade_stitch_idx]
+		+ sample * (1.0 - self.fade_curve[self.fade_stitch_idx]);
+	    self.fade_stitch_idx += 1;
+	} 
+
+	self.live_buffer_idx += 1;	
+	self.live_buffer_current_block += 1;
+
+	if self.live_buffer_idx > self.buffer_lengths[0] {
+	    self.live_buffer_idx = 1;
+	}
+
+	if self.live_buffer_current_block >= self.bufsize {
+	    self.live_buffer_current_block = 0;
+	}
+
+	if self.fade_stitch_idx >= self.live_buffer_stitch_size {
+	    self.fade_stitch_idx = 0;
+	}		
+    }
+
+    /// transfer contents of live buffer to freeze buffer
+    pub fn freeze_buffer(&mut self, freezbuf: usize) {
+	for i in 0..self.buffer_lengths[0] {
+	    self.buffers[freezbuf][i] = self.buffers[0][i];
+	}
+    }
+        
     pub fn process(
         &mut self,
         stream_time: f64,
@@ -328,8 +404,51 @@ mod tests {
     use std::f32::consts::PI;
 
     #[test]
+    fn test_stitch_stuff() {
+	let mut ruff = Ruffbox::<512, 2>::new(true);
+	assert_approx_eq::assert_approx_eq!(ruff.fade_curve[0], 0.0, 0.00001);
+	assert_approx_eq::assert_approx_eq!(ruff.fade_curve[127], 1.0, 0.0002);
+
+	for _ in 0..512 {
+	    ruff.write_sample_to_live_buffer(1.0);
+	}
+
+	for s in 0..128 {
+	    assert_approx_eq::assert_approx_eq!(ruff.stitch_buffer[s], 1.0, 0.0002);
+	}
+	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][1], 1.0, 0.0002);
+	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][513], 0.0, 0.0002);
+	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][385], 1.0, 0.0002);
+	
+	for _ in 0..512 {
+	    ruff.write_sample_to_live_buffer(1.0);
+	}
+
+	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][513], 1.0, 0.0002);
+	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][385], 1.0, 0.0002);
+	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][1024], 0.0, 0.0002);
+	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][896], 1.0, 0.0002);
+
+	// write some seconds
+	for _ in 0..2000 {
+	    for _ in 0..512 {
+		ruff.write_sample_to_live_buffer(1.0);
+	    }
+	}
+
+	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][0], 0.0, 0.0002);
+	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][1], 1.0, 0.0002);
+	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][44100], 1.0, 0.0002);
+	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][ruff.buffer_lengths[0]], 1.0, 0.0002);
+	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][ruff.buffer_lengths[0] + 1], 0.0, 0.0002);
+	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][ruff.buffer_lengths[0] + 2], 0.0, 0.0002);
+	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][ruff.buffer_lengths[0] + 3], 0.0, 0.0002);
+	
+    }
+    
+    #[test]
     fn test_sine_synth_at_block_start() {
-        let mut ruff = Ruffbox::<128, 2>::new();
+        let mut ruff = Ruffbox::<128, 2>::new(true);
 
         let inst = ruff.prepare_instance(SourceType::SineSynth, 0.0, 0);
         ruff.set_instance_parameter(inst, SynthParameter::PitchFrequency, 440.0);
@@ -352,11 +471,12 @@ mod tests {
             //println!("{} {} {}; ", i, out_1[0][i], comp_1[i]);
             assert_approx_eq::assert_approx_eq!(out_1[0][i], comp_1[i], 0.00001);
         }
+	    
     }
 
     #[test]
     fn test_basic_playback() {
-        let mut ruff = Ruffbox::<128, 2>::new();
+        let mut ruff = Ruffbox::<128, 2>::new(true);
 
         // first point and last two points are for eventual interpolation
         let sample1 = [0.0, 0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0, 0.0, 0.0];
@@ -406,7 +526,7 @@ mod tests {
 
     #[test]
     fn reverb_smoke_test() {
-        let mut ruff = Ruffbox::<128, 2>::new();
+        let mut ruff = Ruffbox::<128, 2>::new(true);
 
         // first point and last two points are for eventual interpolation
         let sample1 = [0.0, 0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0, 0.0, 0.0];
@@ -439,7 +559,7 @@ mod tests {
 
     #[test]
     fn test_scheduled_playback() {
-        let mut ruff = Ruffbox::<128, 2>::new();
+        let mut ruff = Ruffbox::<128, 2>::new(true);
 
         // block duration in seconds
         let block_duration = 0.00290249433;
@@ -496,7 +616,7 @@ mod tests {
 
     #[test]
     fn test_overlap_playback() {
-        let mut ruff = Ruffbox::<128, 2>::new();
+        let mut ruff = Ruffbox::<128, 2>::new(true);
 
         // block duration in seconds
         let block_duration = 0.00290249433;
@@ -564,7 +684,7 @@ mod tests {
 
     #[test]
     fn test_disjunct_playback() {
-        let mut ruff = Ruffbox::<128, 2>::new();
+        let mut ruff = Ruffbox::<128, 2>::new(true);
 
         // block duration in seconds
         let block_duration = 0.00290249433;
@@ -636,7 +756,7 @@ mod tests {
 
     #[test]
     fn test_late_playback() {
-        let mut ruff = Ruffbox::<128, 2>::new();
+        let mut ruff = Ruffbox::<128, 2>::new(true);
 
         let sample1 = [0.0, 0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0, 0.0, 0.0];
 
