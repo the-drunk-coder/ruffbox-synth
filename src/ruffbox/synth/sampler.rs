@@ -76,7 +76,7 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
 
             out_buf[i] = (((c3 * frac + c2) * frac + c1) * frac + c0) * self.level;
 
-            if ((self.frac_index + self.frac_index_increment) as usize) <= self.buflen {
+            if ((self.frac_index + self.frac_index_increment) as usize) < self.buflen {
                 self.frac_index = self.frac_index + self.frac_index_increment;
             } else {
                 if self.repeat {
