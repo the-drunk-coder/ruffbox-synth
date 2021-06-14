@@ -212,7 +212,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
 
     /// transfer contents of live buffer to freeze buffer
     pub fn freeze_buffer(&mut self, freezbuf: usize) {
-	for i in 0..self.buffer_lengths[0] {
+	for i in 1..self.buffer_lengths[0] + 1 {
 	    self.buffers[freezbuf][i] = self.buffers[0][i];
 	}
     }
