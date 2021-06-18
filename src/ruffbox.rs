@@ -90,7 +90,7 @@ pub struct Ruffbox<const BUFSIZE: usize, const NCHAN: usize> {
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {    
-    pub fn new(live_buffer: bool) -> Ruffbox<BUFSIZE, NCHAN> {
+    pub fn new(live_buffer: bool, life_buffer_time: f32) -> Ruffbox<BUFSIZE, NCHAN> {
         let (tx, rx): (
             Sender<ScheduledEvent<BUFSIZE, NCHAN>>,
             Receiver<ScheduledEvent<BUFSIZE, NCHAN>>,
@@ -107,13 +107,13 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
 	
 	if live_buffer {
 	    // create live buffer
-	    buffers.push(vec![0.0; (44100 * 3) + 3]);
-	    buffer_lengths.push(44100 * 3);
+	    buffers.push(vec![0.0; (44100.0 * life_buffer_time) as usize + 3]);
+	    buffer_lengths.push((44100.0 * life_buffer_time) as usize);
 
 	    for _ in 0..10 {
 		// create freeze buffers
-		buffers.push(vec![0.0; (44100 * 3) + 3]);
-		buffer_lengths.push(44100 * 3);
+		buffers.push(vec![0.0; (44100.0 * life_buffer_time) as usize + 3]);
+		buffer_lengths.push((44100.0 * life_buffer_time) as usize);
 	    }	    
 	}
 
@@ -544,7 +544,7 @@ mod tests {
 
     #[test]
     fn reverb_smoke_test() {
-        let mut ruff = Ruffbox::<128, 2>::new(true);
+        let mut ruff = Ruffbox::<128, 2>::new(true, 3.0);
 
         // first point and last two points are for eventual interpolation
         let sample1 = [0.0, 0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0, 0.0, 0.0];
@@ -634,7 +634,7 @@ mod tests {
 
     #[test]
     fn test_overlap_playback() {
-        let mut ruff = Ruffbox::<128, 2>::new(true);
+        let mut ruff = Ruffbox::<128, 2>::new(true, 3.0);
 
         // block duration in seconds
         let block_duration = 0.00290249433;
@@ -702,7 +702,7 @@ mod tests {
 
     #[test]
     fn test_disjunct_playback() {
-        let mut ruff = Ruffbox::<128, 2>::new(true);
+        let mut ruff = Ruffbox::<128, 2>::new(true, 3.0);
 
         // block duration in seconds
         let block_duration = 0.00290249433;
