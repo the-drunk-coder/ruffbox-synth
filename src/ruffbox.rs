@@ -89,7 +89,7 @@ pub struct Ruffbox<const BUFSIZE: usize, const NCHAN: usize> {
     master_delay: MultichannelDelay<BUFSIZE, NCHAN>,
 }
 
-impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {    
+impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
     pub fn new(live_buffer: bool, life_buffer_time: f32) -> Ruffbox<BUFSIZE, NCHAN> {
         let (tx, rx): (
             Sender<ScheduledEvent<BUFSIZE, NCHAN>>,
@@ -102,49 +102,49 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
         rev.set_damp(0.43);
         rev.set_wet(1.0);
 
-	let mut buffers = Vec::with_capacity(2000);
-	let mut buffer_lengths = Vec::with_capacity(2000);
-	
-	if live_buffer {
-	    // create live buffer
-	    buffers.push(vec![0.0; (44100.0 * life_buffer_time) as usize + 3]);
-	    buffer_lengths.push((44100.0 * life_buffer_time) as usize);
-	    println!("live buf time samples: {}", buffer_lengths[0]);
-	    for _ in 0..10 {
-		// create freeze buffers
-		buffers.push(vec![0.0; (44100.0 * life_buffer_time) as usize + 3]);
-		buffer_lengths.push((44100.0 * life_buffer_time) as usize);
-	    }	    
-	}
+        let mut buffers = Vec::with_capacity(2000);
+        let mut buffer_lengths = Vec::with_capacity(2000);
 
-	// pre-calculate a fade curve for live buffer stitching
-	let bufsize = BUFSIZE;
-	let stitch_size = bufsize / 4;
-	let mut stitch_buffer = Vec::new();
-	let mut fade_curve = Vec::new();
+        if live_buffer {
+            // create live buffer
+            buffers.push(vec![0.0; (44100.0 * life_buffer_time) as usize + 3]);
+            buffer_lengths.push((44100.0 * life_buffer_time) as usize);
+            println!("live buf time samples: {}", buffer_lengths[0]);
+            for _ in 0..10 {
+                // create freeze buffers
+                buffers.push(vec![0.0; (44100.0 * life_buffer_time) as usize + 3]);
+                buffer_lengths.push((44100.0 * life_buffer_time) as usize);
+            }
+        }
 
-	let pi_inc = std::f32::consts::PI / stitch_size as f32;
-        let mut pi_idx:f32 = 0.0;
+        // pre-calculate a fade curve for live buffer stitching
+        let bufsize = BUFSIZE;
+        let stitch_size = bufsize / 4;
+        let mut stitch_buffer = Vec::new();
+        let mut fade_curve = Vec::new();
 
-	for _ in 0..stitch_size {
-	    stitch_buffer.push(0.0);	    
-	    fade_curve.push((-pi_idx.cos() + 1.0) / 2.0); 
-	    pi_idx += pi_inc;
-        }			
-	
+        let pi_inc = std::f32::consts::PI / stitch_size as f32;
+        let mut pi_idx: f32 = 0.0;
+
+        for _ in 0..stitch_size {
+            stitch_buffer.push(0.0);
+            fade_curve.push((-pi_idx.cos() + 1.0) / 2.0);
+            pi_idx += pi_inc;
+        }
+
         Ruffbox {
             running_instances: Vec::with_capacity(600),
             pending_events: Vec::with_capacity(600),
             buffers: buffers,
-	    buffer_lengths: buffer_lengths,
-	    live_buffer_idx: 1,
-	    live_buffer_current_block: 0,
-	    live_buffer_stitch_size: stitch_size,
-	    stitch_buffer: stitch_buffer,
-	    fade_curve: fade_curve,
-	    non_stitch_size: bufsize - stitch_size,
-	    fade_stitch_idx: 0,
-	    bufsize: bufsize,	    
+            buffer_lengths: buffer_lengths,
+            live_buffer_idx: 1,
+            live_buffer_current_block: 0,
+            live_buffer_stitch_size: stitch_size,
+            stitch_buffer: stitch_buffer,
+            fade_curve: fade_curve,
+            non_stitch_size: bufsize - stitch_size,
+            fade_stitch_idx: 0,
+            bufsize: bufsize,
             prepared_instance_map: HashMap::with_capacity(1200),
             instance_counter: AtomicCell::new(0),
             new_instances_q_send: tx,
@@ -159,64 +159,64 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
     }
 
     pub fn write_samples_to_live_buffer(&mut self, samples: &[f32]) {
-	for s in samples.iter() {
-	    self.buffers[0][self.live_buffer_idx] = *s;
-	    self.live_buffer_idx += 1;
-	    if self.live_buffer_idx >= self.buffer_lengths[0] {
-		self.live_buffer_idx = 1;
-	    }
- 	}
+        for s in samples.iter() {
+            self.buffers[0][self.live_buffer_idx] = *s;
+            self.live_buffer_idx += 1;
+            if self.live_buffer_idx >= self.buffer_lengths[0] {
+                self.live_buffer_idx = 1;
+            }
+        }
     }
-    
+
     // there HAS to be a more elegant solution for this ...
     pub fn write_sample_to_live_buffer(&mut self, sample: f32) {
-	// first, overwrite old stitch region if we're at the beginning of a new block
-	if self.live_buffer_current_block == 0 {
-	    let mut count_back_idx = self.live_buffer_idx - 1;
-	    for s in (0..128).rev() {
-		if count_back_idx < 1 {
-		    count_back_idx = self.buffer_lengths[0]; // live buffer length
-		}
-		self.buffers[0][count_back_idx] = self.stitch_buffer[s];
-		count_back_idx -= 1;
-	    }
-	}
-		
-	if self.live_buffer_current_block < self.non_stitch_size {
-	    self.buffers[0][self.live_buffer_idx] = sample;
-	} else if self.live_buffer_current_block < self.bufsize {
-	    self.stitch_buffer[self.fade_stitch_idx] = sample;
+        // first, overwrite old stitch region if we're at the beginning of a new block
+        if self.live_buffer_current_block == 0 {
+            let mut count_back_idx = self.live_buffer_idx - 1;
+            for s in (0..128).rev() {
+                if count_back_idx < 1 {
+                    count_back_idx = self.buffer_lengths[0]; // live buffer length
+                }
+                self.buffers[0][count_back_idx] = self.stitch_buffer[s];
+                count_back_idx -= 1;
+            }
+        }
 
-	    // stitch by fading ... 
-	    self.buffers[0][self.live_buffer_idx]
-		= self.buffers[0][self.live_buffer_idx] * self.fade_curve[self.fade_stitch_idx]
-		+ sample * (1.0 - self.fade_curve[self.fade_stitch_idx]);
-	    self.fade_stitch_idx += 1;
-	} 
+        if self.live_buffer_current_block < self.non_stitch_size {
+            self.buffers[0][self.live_buffer_idx] = sample;
+        } else if self.live_buffer_current_block < self.bufsize {
+            self.stitch_buffer[self.fade_stitch_idx] = sample;
 
-	self.live_buffer_idx += 1;	
-	self.live_buffer_current_block += 1;
+            // stitch by fading ...
+            self.buffers[0][self.live_buffer_idx] = self.buffers[0][self.live_buffer_idx]
+                * self.fade_curve[self.fade_stitch_idx]
+                + sample * (1.0 - self.fade_curve[self.fade_stitch_idx]);
+            self.fade_stitch_idx += 1;
+        }
 
-	if self.live_buffer_idx >= self.buffer_lengths[0] {
-	    self.live_buffer_idx = 1;
-	}
+        self.live_buffer_idx += 1;
+        self.live_buffer_current_block += 1;
 
-	if self.live_buffer_current_block >= self.bufsize {
-	    self.live_buffer_current_block = 0;
-	}
+        if self.live_buffer_idx >= self.buffer_lengths[0] {
+            self.live_buffer_idx = 1;
+        }
 
-	if self.fade_stitch_idx >= self.live_buffer_stitch_size {
-	    self.fade_stitch_idx = 0;
-	}		
+        if self.live_buffer_current_block >= self.bufsize {
+            self.live_buffer_current_block = 0;
+        }
+
+        if self.fade_stitch_idx >= self.live_buffer_stitch_size {
+            self.fade_stitch_idx = 0;
+        }
     }
 
     /// transfer contents of live buffer to freeze buffer
     pub fn freeze_buffer(&mut self, freezbuf: usize) {
-	for i in 1..self.buffer_lengths[0] + 1 {
-	    self.buffers[freezbuf][i] = self.buffers[0][i];
-	}
+        for i in 1..self.buffer_lengths[0] + 1 {
+            self.buffers[freezbuf][i] = self.buffers[0][i];
+        }
     }
-        
+
     pub fn process(
         &mut self,
         stream_time: f64,
@@ -334,17 +334,17 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
             }
             SourceType::Sampler => ScheduledEvent::new(
                 timestamp,
-                Box::new(NChannelSampler::with_bufnum_len(		    
+                Box::new(NChannelSampler::with_bufnum_len(
                     sample_buf,
-		    self.buffer_lengths[sample_buf],
+                    self.buffer_lengths[sample_buf],
                     44100.0,
                 )),
             ),
-	    SourceType::LiveSampler => ScheduledEvent::new(
+            SourceType::LiveSampler => ScheduledEvent::new(
                 timestamp,
                 Box::new(NChannelSampler::with_bufnum_len(
-		    0,
-		    self.buffer_lengths[0],
+                    0,
+                    self.buffer_lengths[0],
                     44100.0,
                 )),
             ),
@@ -386,8 +386,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
 
     /// loads a mono sample and returns the assigned buffer number
     pub fn load_sample(&mut self, samples: &[f32]) -> usize {
-	self.buffer_lengths.push(samples.len() - 3); // account for interpolation samples
-	self.buffers.push(samples.to_vec());
+        self.buffer_lengths.push(samples.len() - 3); // account for interpolation samples
+        self.buffers.push(samples.to_vec());
         self.buffers.len() - 1
     }
 
@@ -405,65 +405,73 @@ mod tests {
 
     #[test]
     fn test_stitch_stuff() {
-	let mut ruff = Ruffbox::<512, 2>::new(true);
-	assert_approx_eq::assert_approx_eq!(ruff.fade_curve[0], 0.0, 0.00001);
-	assert_approx_eq::assert_approx_eq!(ruff.fade_curve[127], 1.0, 0.0002);
+        let mut ruff = Ruffbox::<512, 2>::new(true);
+        assert_approx_eq::assert_approx_eq!(ruff.fade_curve[0], 0.0, 0.00001);
+        assert_approx_eq::assert_approx_eq!(ruff.fade_curve[127], 1.0, 0.0002);
 
-	for _ in 0..512 {
-	    ruff.write_sample_to_live_buffer(1.0);
-	}
+        for _ in 0..512 {
+            ruff.write_sample_to_live_buffer(1.0);
+        }
 
-	for s in 0..128 {
-	    assert_approx_eq::assert_approx_eq!(ruff.stitch_buffer[s], 1.0, 0.0002);
-	}
-	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][1], 1.0, 0.0002);
-	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][513], 0.0, 0.0002);
-	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][385], 1.0, 0.0002);
-	
-	for _ in 0..512 {
-	    ruff.write_sample_to_live_buffer(1.0);
-	}
+        for s in 0..128 {
+            assert_approx_eq::assert_approx_eq!(ruff.stitch_buffer[s], 1.0, 0.0002);
+        }
+        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][1], 1.0, 0.0002);
+        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][513], 0.0, 0.0002);
+        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][385], 1.0, 0.0002);
 
-	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][513], 1.0, 0.0002);
-	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][385], 1.0, 0.0002);
-	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][1024], 0.0, 0.0002);
-	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][896], 1.0, 0.0002);
+        for _ in 0..512 {
+            ruff.write_sample_to_live_buffer(1.0);
+        }
 
-	// write some seconds
-	for _ in 0..2000 {
-	    for _ in 0..512 {
-		ruff.write_sample_to_live_buffer(1.0);
-	    }
-	}
+        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][513], 1.0, 0.0002);
+        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][385], 1.0, 0.0002);
+        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][1024], 0.0, 0.0002);
+        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][896], 1.0, 0.0002);
 
-	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][0], 0.0, 0.0002);
-	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][1], 1.0, 0.0002);
-	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][44100], 1.0, 0.0002);
-	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][ruff.buffer_lengths[0]], 1.0, 0.0002);
-	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][ruff.buffer_lengths[0] + 1], 0.0, 0.0002);
-	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][ruff.buffer_lengths[0] + 2], 0.0, 0.0002);	
+        // write some seconds
+        for _ in 0..2000 {
+            for _ in 0..512 {
+                ruff.write_sample_to_live_buffer(1.0);
+            }
+        }
+
+        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][0], 0.0, 0.0002);
+        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][1], 1.0, 0.0002);
+        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][44100], 1.0, 0.0002);
+        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][ruff.buffer_lengths[0]], 1.0, 0.0002);
+        assert_approx_eq::assert_approx_eq!(
+            ruff.buffers[0][ruff.buffer_lengths[0] + 1],
+            0.0,
+            0.0002
+        );
+        assert_approx_eq::assert_approx_eq!(
+            ruff.buffers[0][ruff.buffer_lengths[0] + 2],
+            0.0,
+            0.0002
+        );
     }
 
     #[test]
     fn test_load_sample() {
-	let mut ruff = Ruffbox::<512, 2>::new(false);
-	
-	let mut sample = vec![1.0; 503];
-	sample[0] = 0.0;
-	sample[501] = 0.0;
-	sample[502] = 0.0;
+        let mut ruff = Ruffbox::<512, 2>::new(false);
 
-	ruff.load_sample(&sample);
-	
-	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][0], 0.0, 0.0002);
-	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][1], 1.0, 0.0002);
-	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][2], 1.0, 0.0002);
-	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][3], 1.0, 0.0002);
-	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][500], 1.0, 0.0002);
-	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][501], 0.0, 0.0002);
-	assert_approx_eq::assert_approx_eq!(ruff.buffers[0][502], 0.0, 0.0002);	
+        let mut sample = vec![1.0; 503];
+        sample[0] = 0.0;
+        sample[501] = 0.0;
+        sample[502] = 0.0;
+
+        ruff.load_sample(&sample);
+
+        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][0], 0.0, 0.0002);
+        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][1], 1.0, 0.0002);
+        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][2], 1.0, 0.0002);
+        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][3], 1.0, 0.0002);
+        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][500], 1.0, 0.0002);
+        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][501], 0.0, 0.0002);
+        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][502], 0.0, 0.0002);
     }
-    
+
     #[test]
     fn test_sine_synth_at_block_start() {
         let mut ruff = Ruffbox::<128, 2>::new(true);
@@ -489,7 +497,6 @@ mod tests {
             //println!("{} {} {}; ", i, out_1[0][i], comp_1[i]);
             assert_approx_eq::assert_approx_eq!(out_1[0][i], comp_1[i], 0.00001);
         }
-	    
     }
 
     #[test]

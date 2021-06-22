@@ -68,7 +68,8 @@ pub trait MonoSource<const BUFSIZE: usize> {
     fn set_parameter(&mut self, par: SynthParameter, value: f32);
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
-    fn get_next_block(&mut self, start_sample: usize, in_buffers: &Vec<Vec<f32>>) -> [f32; BUFSIZE];
+    fn get_next_block(&mut self, start_sample: usize, in_buffers: &Vec<Vec<f32>>)
+        -> [f32; BUFSIZE];
 }
 
 pub trait MonoEffect<const BUFSIZE: usize> {
@@ -82,7 +83,11 @@ pub trait Synth<const BUFSIZE: usize, const NCHAN: usize> {
     fn set_parameter(&mut self, par: SynthParameter, value: f32);
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
-    fn get_next_block(&mut self, start_sample: usize, in_buffers: &Vec<Vec<f32>>) -> [[f32; BUFSIZE]; NCHAN];
+    fn get_next_block(
+        &mut self,
+        start_sample: usize,
+        in_buffers: &Vec<Vec<f32>>,
+    ) -> [[f32; BUFSIZE]; NCHAN];
     fn reverb_level(&self) -> f32;
     fn delay_level(&self) -> f32;
 }

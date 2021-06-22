@@ -48,7 +48,11 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for SineSynthAmbiO1<BUFSIZE> {
         self.envelope.is_finished()
     }
 
-    fn get_next_block(&mut self, start_sample: usize, sample_buffers: &Vec<Vec<f32>>) -> [[f32; BUFSIZE]; 4] {
+    fn get_next_block(
+        &mut self,
+        start_sample: usize,
+        sample_buffers: &Vec<Vec<f32>>,
+    ) -> [[f32; BUFSIZE]; 4] {
         let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample, sample_buffers);
         out = self.envelope.process_block(out, start_sample);
         self.encoder.process_block(out)
@@ -108,7 +112,11 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for LFSawSynthAmbiO1<BUFSIZE> {
         self.envelope.is_finished()
     }
 
-    fn get_next_block(&mut self, start_sample: usize, sample_buffers: &Vec<Vec<f32>>) -> [[f32; BUFSIZE]; 4] {
+    fn get_next_block(
+        &mut self,
+        start_sample: usize,
+        sample_buffers: &Vec<Vec<f32>>,
+    ) -> [[f32; BUFSIZE]; 4] {
         let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample, sample_buffers);
         out = self.filter.process_block(out, start_sample);
         out = self.envelope.process_block(out, start_sample);
@@ -169,7 +177,11 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for LFSquareSynthAmbiO1<BUFSIZE> {
         self.envelope.is_finished()
     }
 
-    fn get_next_block(&mut self, start_sample: usize, sample_buffers: &Vec<Vec<f32>>) -> [[f32; BUFSIZE]; 4] {
+    fn get_next_block(
+        &mut self,
+        start_sample: usize,
+        sample_buffers: &Vec<Vec<f32>>,
+    ) -> [[f32; BUFSIZE]; 4] {
         let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample, sample_buffers);
         out = self.filter.process_block(out, start_sample);
         out = self.envelope.process_block(out, start_sample);
@@ -199,7 +211,7 @@ pub struct AmbiSamplerO1<const BUFSIZE: usize> {
 
 impl<const BUFSIZE: usize> AmbiSamplerO1<BUFSIZE> {
     pub fn with_bufnum_len(bufnum: usize, buflen: usize, sr: f32) -> AmbiSamplerO1<BUFSIZE> {
-	let dur = (buflen as f32 / sr) - 0.0002;
+        let dur = (buflen as f32 / sr) - 0.0002;
 
         AmbiSamplerO1 {
             sampler: Sampler::with_bufnum_len(bufnum, buflen, true),
@@ -238,7 +250,11 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for AmbiSamplerO1<BUFSIZE> {
         self.envelope.is_finished()
     }
 
-    fn get_next_block(&mut self, start_sample: usize, sample_buffers: &Vec<Vec<f32>>) -> [[f32; BUFSIZE]; 4] {
+    fn get_next_block(
+        &mut self,
+        start_sample: usize,
+        sample_buffers: &Vec<Vec<f32>>,
+    ) -> [[f32; BUFSIZE]; 4] {
         let mut out: [f32; BUFSIZE] = self.sampler.get_next_block(start_sample, sample_buffers);
         out = self.hpf.process_block(out, start_sample);
         out = self.peak_eq.process_block(out, start_sample);

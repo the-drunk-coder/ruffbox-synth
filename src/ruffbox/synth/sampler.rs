@@ -10,7 +10,7 @@ pub struct Sampler<const BUFSIZE: usize> {
     index: usize,
     frac_index: f32,
     bufnum: usize,
-    buflen: usize,    
+    buflen: usize,
     playback_rate: f32,
     frac_index_increment: f32,
     state: SynthState,
@@ -19,12 +19,12 @@ pub struct Sampler<const BUFSIZE: usize> {
 }
 
 impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
-    pub fn with_bufnum_len(bufnum: usize, buflen: usize, repeat: bool) -> Sampler<BUFSIZE> {	
+    pub fn with_bufnum_len(bufnum: usize, buflen: usize, repeat: bool) -> Sampler<BUFSIZE> {
         Sampler {
             index: 1, // start with one to account for interpolation
             frac_index: 1.0,
             bufnum: bufnum,
-	    buflen: buflen,
+            buflen: buflen,
             playback_rate: 1.0,
             frac_index_increment: 1.0,
             state: SynthState::Fresh,
@@ -33,9 +33,13 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
         }
     }
 
-    fn get_next_block_no_interp(&mut self, start_sample: usize, sample_buffers: &Vec<Vec<f32>>) -> [f32; BUFSIZE] {
+    fn get_next_block_no_interp(
+        &mut self,
+        start_sample: usize,
+        sample_buffers: &Vec<Vec<f32>>,
+    ) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
-	
+
         for i in start_sample..BUFSIZE {
             out_buf[i] = sample_buffers[self.bufnum][self.index] * self.level;
 
@@ -54,10 +58,14 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
         out_buf
     }
 
-    fn get_next_block_interp(&mut self, start_sample: usize, sample_buffers: &Vec<Vec<f32>>) -> [f32; BUFSIZE] {
+    fn get_next_block_interp(
+        &mut self,
+        start_sample: usize,
+        sample_buffers: &Vec<Vec<f32>>,
+    ) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
-	
-	for i in start_sample..BUFSIZE {
+
+        for i in start_sample..BUFSIZE {
             // get sample:
             let idx = self.frac_index.floor();
             let frac = self.frac_index - idx;
@@ -96,17 +104,17 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
     fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         match par {
             SynthParameter::PlaybackStart => {
-		let mut value_clamped = value;
-		// clamp value
-		if value > 1.0 {
-		    value_clamped = value - ((value as usize) as f32);
-		} else if value < 0.0 {
-		    value_clamped = 1.0 + (value - ((value as i32) as f32));
-		}
-		
+                let mut value_clamped = value;
+                // clamp value
+                if value > 1.0 {
+                    value_clamped = value - ((value as usize) as f32);
+                } else if value < 0.0 {
+                    value_clamped = 1.0 + (value - ((value as i32) as f32));
+                }
+
                 let offset = ((self.buflen - 1) as f32 * value_clamped) as usize;
                 self.index = offset + 1; // start counting at one, due to interpolation
-		//println!("setting starting point to sample {}", self.index);
+                                         //println!("setting starting point to sample {}", self.index);
                 self.frac_index = self.index as f32;
             }
             SynthParameter::PlaybackRate => {
@@ -131,7 +139,11 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
         }
     }
 
-    fn get_next_block(&mut self, start_sample: usize, sample_buffers: &Vec<Vec<f32>>) -> [f32; BUFSIZE] {
+    fn get_next_block(
+        &mut self,
+        start_sample: usize,
+        sample_buffers: &Vec<Vec<f32>>,
+    ) -> [f32; BUFSIZE] {
         if self.playback_rate == 1.0 {
             self.get_next_block_no_interp(start_sample, sample_buffers)
         } else {

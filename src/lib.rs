@@ -16,7 +16,8 @@ pub extern "C" fn alloc(size: usize) -> *mut f32 {
 pub mod ruffbox;
 
 lazy_static! {
-    static ref RUFF: Mutex<ruffbox::Ruffbox<128, 2>> = Mutex::new(ruffbox::Ruffbox::new(false, 0.0));
+    static ref RUFF: Mutex<ruffbox::Ruffbox<128, 2>> =
+        Mutex::new(ruffbox::Ruffbox::new(false, 0.0));
 }
 
 #[no_mangle]
