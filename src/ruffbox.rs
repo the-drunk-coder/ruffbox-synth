@@ -109,7 +109,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
 	    // create live buffer
 	    buffers.push(vec![0.0; (44100.0 * life_buffer_time) as usize + 3]);
 	    buffer_lengths.push((44100.0 * life_buffer_time) as usize);
-
+	    println!("live buf time samples: {}", buffer_lengths[0]);
 	    for _ in 0..10 {
 		// create freeze buffers
 		buffers.push(vec![0.0; (44100.0 * life_buffer_time) as usize + 3]);

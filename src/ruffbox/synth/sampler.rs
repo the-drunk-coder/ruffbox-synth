@@ -106,6 +106,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
 		
                 let offset = ((self.buflen - 1) as f32 * value_clamped) as usize;
                 self.index = offset + 1; // start counting at one, due to interpolation
+		//println!("setting starting point to sample {}", self.index);
                 self.frac_index = self.index as f32;
             }
             SynthParameter::PlaybackRate => {
