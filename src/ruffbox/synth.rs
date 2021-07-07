@@ -62,6 +62,7 @@ pub enum SourceType {
     LFCubSynth,
     LFSawSynth,
     LFSquareSynth,
+    LFTriangleSynth,
 }
 
 pub trait MonoSource<const BUFSIZE: usize> {

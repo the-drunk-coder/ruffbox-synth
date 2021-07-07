@@ -132,6 +132,66 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
     }
 }
 
+/// a triangle synth with envelope etc.
+pub struct LFTriSynth<const BUFSIZE: usize, const NCHAN: usize> {
+    oscillator: LFTri<BUFSIZE>,
+    envelope: ASREnvelope<BUFSIZE>,
+    balance: PanChan<BUFSIZE, NCHAN>,
+    reverb: f32,
+    delay: f32,
+}
+
+impl<const BUFSIZE: usize, const NCHAN: usize> LFTriSynth<BUFSIZE, NCHAN> {
+    pub fn new(sr: f32) -> Self {
+        LFTriSynth {
+            oscillator: LFTri::new(440.0, 0.5, sr),
+            envelope: ASREnvelope::new(sr, 0.3, 0.05, 0.1, 0.05),
+            balance: PanChan::new(),
+            reverb: 0.0,
+            delay: 0.0,
+        }
+    }
+}
+
+impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN> for LFTriSynth<BUFSIZE, NCHAN> {
+    fn set_parameter(&mut self, par: SynthParameter, val: f32) {
+        self.oscillator.set_parameter(par, val);
+        self.envelope.set_parameter(par, val);
+        self.balance.set_parameter(par, val);
+        match par {
+            SynthParameter::ReverbMix => self.reverb = val,
+            SynthParameter::DelayMix => self.delay = val,
+            _ => (),
+        };
+    }
+
+    fn finish(&mut self) {
+        self.envelope.finish();
+    }
+
+    fn is_finished(&self) -> bool {
+        self.envelope.is_finished()
+    }
+
+    fn get_next_block(
+        &mut self,
+        start_sample: usize,
+        sample_buffers: &Vec<Vec<f32>>,
+    ) -> [[f32; BUFSIZE]; NCHAN] {
+        let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample, sample_buffers);
+        out = self.envelope.process_block(out, start_sample);
+        self.balance.process_block(out)
+    }
+
+    fn reverb_level(&self) -> f32 {
+        self.reverb
+    }
+
+    fn delay_level(&self) -> f32 {
+        self.delay
+    }
+}
+
 /// a low-frequency sawtooth synth with envelope and lpf18 filter
 pub struct LFSawSynth<const BUFSIZE: usize, const NCHAN: usize> {
     oscillator: LFSaw<BUFSIZE>,
