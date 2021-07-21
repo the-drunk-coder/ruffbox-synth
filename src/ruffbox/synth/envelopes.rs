@@ -2,7 +2,7 @@ use crate::ruffbox::synth::MonoEffect;
 use crate::ruffbox::synth::SynthParameter;
 use crate::ruffbox::synth::SynthState;
 
-/// simple attack-sustain-release envelope
+/// simple linear attack-sustain-release envelope
 pub struct ASREnvelope<const BUFSIZE: usize> {
     samplerate: f32,
     atk: f32,
@@ -133,6 +133,137 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for ASREnvelope<BUFSIZE> {
     }
 }
 
+
+/// Exponential/Linear Percussion Envelope (currently with fixed curve value)
+pub struct ExpPercEnvelope<const BUFSIZE: usize> {
+    samplerate: f32,    
+    atk: f32,
+    sus: f32,
+    rel: f32,
+    atk_samples: usize,
+    sus_samples: usize,
+    rel_samples: usize,
+    atk_inc: f32,
+    rel_inc: f32,
+    time_count: f32,
+    curve: f32,
+    sample_count: usize,
+    max_lvl: f32,    
+    state: SynthState,
+}
+
+impl<const BUFSIZE: usize> ExpPercEnvelope<BUFSIZE> {
+    pub fn new(samplerate: f32, lvl: f32, atk: f32, sus: f32, rel: f32) -> Self {
+        let atk_samples = (samplerate * atk).round() as usize;
+        let sus_samples = atk_samples + (samplerate * sus).round() as usize;
+        let rel_samples = (samplerate * rel).round() as usize;
+	
+	let atk_inc = 1.0 / atk_samples as f32;
+	let rel_inc = 1.0 / rel_samples as f32;
+
+	//println!("atk sam: {} sus sam: {} rel sam: {}", atk_samples, sus_samples, rel_samples );
+					
+        ExpPercEnvelope {
+            samplerate: samplerate,
+            atk: atk,
+            sus: sus,
+            rel: rel,
+            atk_samples: atk_samples,
+            sus_samples: sus_samples,
+            rel_samples: sus_samples + rel_samples,
+            sample_count: 0,
+	    atk_inc: atk_inc,
+	    rel_inc: rel_inc,
+	    curve: -4.5,
+	    time_count: 0.0,
+            max_lvl: lvl,            
+            state: SynthState::Fresh,
+        }
+    }
+}
+
+impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for ExpPercEnvelope<BUFSIZE> {
+    fn finish(&mut self) {
+        self.state = SynthState::Finished;
+    }
+
+    fn is_finished(&self) -> bool {
+        match self.state {
+            SynthState::Finished => true,
+            _ => false,
+        }
+    }
+
+    fn set_parameter(&mut self, par: SynthParameter, value: f32) {
+        let mut update_internals = false;
+        match par {
+            SynthParameter::Attack => {
+                self.atk = value;
+                update_internals = true;
+            }
+            SynthParameter::Sustain => {
+                self.sus = value;
+                update_internals = true;
+            }
+            SynthParameter::Release => {
+                self.rel = value;
+                update_internals = true;
+            }
+            SynthParameter::Level => {
+                self.max_lvl = value;             
+            }
+            SynthParameter::Samplerate => {
+                self.samplerate = value;
+                update_internals = true;
+            }
+            _ => (),
+        };
+
+        if update_internals {
+            self.atk_samples = (self.samplerate * self.atk).round() as usize;
+            self.sus_samples = self.atk_samples + (self.samplerate * self.sus).round() as usize;
+            self.rel_samples = (self.samplerate * self.rel).round() as usize;
+
+	    self.atk_inc = 1.0 / self.atk_samples as f32;
+	    self.rel_inc = 1.0 / self.rel_samples as f32;
+	    
+            self.rel_samples += self.sus_samples;
+        }
+    }
+
+    fn process_block(&mut self, block: [f32; BUFSIZE], start_sample: usize) -> [f32; BUFSIZE] {
+        let mut out: [f32; BUFSIZE] = [0.0; BUFSIZE];
+
+	for i in start_sample..BUFSIZE {
+	    
+            let env = if self.sample_count < self.atk_samples {
+		let env = ((self.curve * self.time_count).exp() - 1.0) / (self.curve.exp() - 1.0);
+		self.time_count += self.atk_inc;
+		env		    
+            } else if self.sample_count >= self.atk_samples && self.sample_count <= self.sus_samples
+            {
+		self.time_count = 0.0; // this is a bit redundant ...
+		1.0
+            } else if self.sample_count > self.sus_samples
+                && self.sample_count < self.rel_samples - 1
+            {
+                let env = ((self.curve * self.time_count).exp() - 1.0) / (self.curve.exp() - 1.0);
+		self.time_count += self.rel_inc;
+		1.0 - env
+            } else {
+                self.finish();
+		0.0
+            };
+
+	    out[i] = block[i] * env * self.max_lvl;
+
+            self.sample_count += 1;	    
+        }
+        
+        out
+    }
+}
+
 // TEST TEST TEST
 #[cfg(test)]
 mod tests {
@@ -246,9 +377,9 @@ mod tests {
         let test_block: [f32; 128] = [1.0; 128];
 
         // let this one start at the beginning of a block
-        let mut env_at_start = ASREnvelope::new(44100.0, 0.0, 0.0, 0.0, 0.0);
+        let mut env_at_start = ASREnvelope::<128>::new(44100.0, 0.0, 0.0, 0.0, 0.0);
         // let this one start somewhere in the block
-        let mut env_with_offset = ASREnvelope::new(44100.0, 0.0, 0.0, 0.0, 0.0);
+        let mut env_with_offset = ASREnvelope::<128>::new(44100.0, 0.0, 0.0, 0.0, 0.0);
 
         // use paramter setter to set parameters ...
         println!("Set parameters for env at start:");
@@ -286,5 +417,25 @@ mod tests {
             //println!{" block {}.2 done \n", i};
             out_start = env_at_start.process_block(test_block, 0);
         }
+    }
+
+    #[test]
+    fn perc_exp_smoke_test() {
+	let mut exp_env = ExpPercEnvelope::<128>::new(16000.0, 1.0, 0.05, 0.0, 1.0);
+	let test_block: [f32; 128] = [1.0; 128];
+	let mut out = Vec::new();
+	for _ in 0..132 {
+	    let env_out = exp_env.process_block(test_block, 0);
+	    out.extend_from_slice(&env_out);
+	}
+		
+	assert_approx_eq::assert_approx_eq!(out[0], 0.0, 0.00001);
+	assert_approx_eq::assert_approx_eq!(out[800], 1.0, 0.00001);
+	assert_approx_eq::assert_approx_eq!(out[16800], 0.0, 0.00001);
+
+	for sample in out.iter() {
+	    assert!(*sample >= 0.0);
+	    assert!(*sample <= 1.0);
+	}
     }
 }
