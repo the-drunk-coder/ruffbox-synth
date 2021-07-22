@@ -9,6 +9,7 @@ use std::f32::consts::PI;
 /**
  * A simple sine oscillator
  */
+#[derive(Clone,Copy)]
 pub struct SineOsc<const BUFSIZE: usize> {
     lvl: f32,
     sin_time: f32,

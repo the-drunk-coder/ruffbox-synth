@@ -9,6 +9,7 @@ pub mod routing;
 pub mod sampler;
 pub mod synths;
 
+#[derive(Clone,Copy)]
 pub enum SynthState {
     Fresh,
     Finished,
@@ -63,6 +64,7 @@ pub enum SourceType {
     LFSawSynth,
     LFSquareSynth,
     LFTriangleSynth,
+    RissetBell,
 }
 
 pub trait MonoSource<const BUFSIZE: usize> {

@@ -335,6 +335,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
 	    SourceType::LFTriangleSynth => {
                 ScheduledEvent::new(timestamp, Box::new(LFTriSynth::new(44100.0)))
             }
+	    SourceType::RissetBell => {
+                ScheduledEvent::new(timestamp, Box::new(RissetBell::new(44100.0)))
+            }
             SourceType::Sampler => ScheduledEvent::new(
                 timestamp,
                 Box::new(NChannelSampler::with_bufnum_len(

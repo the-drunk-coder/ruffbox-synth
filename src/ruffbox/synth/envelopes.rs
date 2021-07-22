@@ -3,6 +3,7 @@ use crate::ruffbox::synth::SynthParameter;
 use crate::ruffbox::synth::SynthState;
 
 /// simple linear attack-sustain-release envelope
+#[derive(Clone,Copy)]
 pub struct ASREnvelope<const BUFSIZE: usize> {
     samplerate: f32,
     atk: f32,
@@ -135,6 +136,7 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for ASREnvelope<BUFSIZE> {
 
 
 /// Exponential/Linear Percussion Envelope (currently with fixed curve value)
+#[derive(Clone,Copy)]
 pub struct ExpPercEnvelope<const BUFSIZE: usize> {
     samplerate: f32,    
     atk: f32,
