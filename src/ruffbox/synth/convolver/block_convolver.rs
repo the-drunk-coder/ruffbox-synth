@@ -96,7 +96,7 @@ mod tests {
     use std::f32::consts::PI;
 
     #[test]
-    fn test_freq_domain_impulse_convolution() {
+    fn test_block_convolver_freq_domain_impulse_convolution() {
         // test convolution with impulse ...
         let mut ir = vec![0.0; 128];
         ir[0] = 1.0;
