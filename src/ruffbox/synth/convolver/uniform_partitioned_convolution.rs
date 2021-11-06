@@ -20,6 +20,12 @@ pub struct UniformPartitionedConvolution<const BUFSIZE: usize> {
 /// UPOLS (Uniform Partitioned OverLap-Save), following Wefers, 2014
 impl <const BUFSIZE: usize> UniformPartitionedConvolution<BUFSIZE> {
 
+    pub fn with_ir(ir: Vec<f32>) -> UniformPartitionedConvolution<BUFSIZE> {
+	let mut convolver = UniformPartitionedConvolution::with_max_filter_length(ir.len());
+	convolver.set(ir);
+	convolver	
+    }
+
     /// prepare uniform partitioned convolution for specified filter length
     pub fn with_max_filter_length(mut max_filter_length: usize) -> UniformPartitionedConvolution<BUFSIZE> {
 

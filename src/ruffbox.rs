@@ -11,6 +11,7 @@ use std::cmp::Ordering;
 
 use crate::ruffbox::synth::delay::MultichannelDelay;
 use crate::ruffbox::synth::freeverb::MultichannelFreeverb;
+use crate::ruffbox::synth::MultichannelReverb;
 use crate::ruffbox::synth::synths::*;
 use crate::ruffbox::synth::SourceType;
 use crate::ruffbox::synth::Synth;
@@ -85,7 +86,7 @@ pub struct Ruffbox<const BUFSIZE: usize, const NCHAN: usize> {
     block_duration: f64,
     sec_per_sample: f64,
     now: f64,
-    master_reverb: MultichannelFreeverb<BUFSIZE, NCHAN>,
+    master_reverb: Box<dyn MultichannelReverb<BUFSIZE, NCHAN> + Send>,
     master_delay: MultichannelDelay<BUFSIZE, NCHAN>,
 }
 
@@ -153,7 +154,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
             block_duration: BUFSIZE as f64 / 44100.0,
             sec_per_sample: 1.0 / 44100.0,
             now: 0.0,
-            master_reverb: rev,
+            master_reverb: Box::new(rev),
             master_delay: MultichannelDelay::new(),
         }
     }

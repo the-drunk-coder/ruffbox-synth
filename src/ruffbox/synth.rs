@@ -4,6 +4,7 @@ pub mod delay;
 pub mod envelopes;
 pub mod filters;
 pub mod freeverb;
+pub mod convolution_reverb;
 pub mod oscillators;
 pub mod routing;
 pub mod sampler;
@@ -80,6 +81,11 @@ pub trait MonoEffect<const BUFSIZE: usize> {
     fn is_finished(&self) -> bool;
     fn set_parameter(&mut self, par: SynthParameter, value: f32);
     fn process_block(&mut self, block: [f32; BUFSIZE], start_sample: usize) -> [f32; BUFSIZE];
+}
+
+pub trait MultichannelReverb<const BUFSIZE: usize, const NCHAN: usize> {
+    fn set_parameter(&mut self, par: SynthParameter, value: f32);
+    fn process(&mut self, block: [[f32; BUFSIZE]; NCHAN]) -> [[f32; BUFSIZE]; NCHAN];
 }
 
 pub trait Synth<const BUFSIZE: usize, const NCHAN: usize> {
