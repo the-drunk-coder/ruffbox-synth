@@ -1,28 +1,27 @@
-use crate::ruffbox::synth::SynthParameter;
-use crate::ruffbox::synth::MultichannelReverb;
 use crate::ruffbox::synth::convolver::uniform_partitioned_convolution::UniformPartitionedConvolution;
+use crate::ruffbox::synth::MultichannelReverb;
+use crate::ruffbox::synth::SynthParameter;
 
 pub struct MultichannelConvolutionReverb<const BUFSIZE: usize, const NCHAN: usize> {
     channel_convolvers: Vec<UniformPartitionedConvolution<BUFSIZE>>,
 }
 
-impl <const BUFSIZE: usize, const NCHAN: usize> MultichannelConvolutionReverb<BUFSIZE, NCHAN> {
+impl<const BUFSIZE: usize, const NCHAN: usize> MultichannelConvolutionReverb<BUFSIZE, NCHAN> {
     pub fn with_ir(ir: &Vec<f32>) -> MultichannelConvolutionReverb<BUFSIZE, NCHAN> {
-	let mut channel_convolvers = Vec::new();
-	for _ in 0..NCHAN {
-	    channel_convolvers.push(UniformPartitionedConvolution::with_ir(ir.to_vec()));
-	}
-	MultichannelConvolutionReverb {
-	    channel_convolvers
-	}
+        let mut channel_convolvers = Vec::new();
+        for _ in 0..NCHAN {
+            channel_convolvers.push(UniformPartitionedConvolution::with_ir(ir.to_vec()));
+        }
+        MultichannelConvolutionReverb { channel_convolvers }
     }
 }
 
-impl <const BUFSIZE: usize, const NCHAN: usize> MultichannelReverb<BUFSIZE, NCHAN> for MultichannelConvolutionReverb<BUFSIZE, NCHAN> {
-
+impl<const BUFSIZE: usize, const NCHAN: usize> MultichannelReverb<BUFSIZE, NCHAN>
+    for MultichannelConvolutionReverb<BUFSIZE, NCHAN>
+{
     fn set_parameter(&mut self, _par: SynthParameter, _val: f32) {
-	// nothing to do here ...
-    } 
+        // nothing to do here ...
+    }
 
     /**
      * Main processing routine.
@@ -32,8 +31,8 @@ impl <const BUFSIZE: usize, const NCHAN: usize> MultichannelReverb<BUFSIZE, NCHA
         let mut out_buf = [[0.0; BUFSIZE]; NCHAN];
 
         for c in 0..NCHAN {
-	    out_buf[c] = self.channel_convolvers[c].convolve(block[c]);
-	}
+            out_buf[c] = self.channel_convolvers[c].convolve(block[c]);
+        }
 
         out_buf
     }

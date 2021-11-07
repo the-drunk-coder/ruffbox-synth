@@ -153,7 +153,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> LFTriSynth<BUFSIZE, NCHAN> {
     }
 }
 
-impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN> for LFTriSynth<BUFSIZE, NCHAN> {
+impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
+    for LFTriSynth<BUFSIZE, NCHAN>
+{
     fn set_parameter(&mut self, par: SynthParameter, val: f32) {
         self.oscillator.set_parameter(par, val);
         self.envelope.set_parameter(par, val);
@@ -333,7 +335,7 @@ pub struct NChannelSampler<const BUFSIZE: usize, const NCHAN: usize> {
     hpf: BiquadHpf<BUFSIZE>,
     peak_eq: PeakEq<BUFSIZE>,
     lpf: Lpf18<BUFSIZE>,
-    balance: PanChan<BUFSIZE, NCHAN>,    
+    balance: PanChan<BUFSIZE, NCHAN>,
     reverb: f32,
     delay: f32,
 }
@@ -407,7 +409,6 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
     }
 }
 
-
 /// 11-partial risset bell, modeled after Frederik Oloffson's Supercollider port
 pub struct RissetBell<const BUFSIZE: usize, const NCHAN: usize> {
     oscillators: [SineOsc<BUFSIZE>; 11],
@@ -429,40 +430,46 @@ pub struct RissetBell<const BUFSIZE: usize, const NCHAN: usize> {
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> RissetBell<BUFSIZE, NCHAN> {
-    pub fn new(sr: f32) -> RissetBell<BUFSIZE, NCHAN> {        
-
-	let mut bell = RissetBell {
+    pub fn new(sr: f32) -> RissetBell<BUFSIZE, NCHAN> {
+        let mut bell = RissetBell {
             oscillators: [SineOsc::new(440.0, 1.0, sr); 11],
             envelopes: [ExpPercEnvelope::new(sr, 1.0, 0.005, 0.0, 0.05); 11],
-	    main_envelope: ASREnvelope::new(sr, 1.0, 0.05, 0.5, 0.05),
-	    amps: [1.0, 0.67, 1.0, 1.8, 2.67, 1.67, 1.46, 1.33, 1.33, 1.0, 1.33],
-	    durs: [1.0, 0.9, 0.65, 0.55, 0.325, 0.35, 0.25, 0.2, 0.15, 0.1, 0.075],
-	    freqs: [0.56, 0.56, 0.92, 0.92, 1.19, 1.7, 2.0, 2.74, 3.0, 3.76, 4.07],
-	    dets: [0.0, 1.0, 0.0, 1.7, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            main_envelope: ASREnvelope::new(sr, 1.0, 0.05, 0.5, 0.05),
+            amps: [1.0, 0.67, 1.0, 1.8, 2.67, 1.67, 1.46, 1.33, 1.33, 1.0, 1.33],
+            durs: [
+                1.0, 0.9, 0.65, 0.55, 0.325, 0.35, 0.25, 0.2, 0.15, 0.1, 0.075,
+            ],
+            freqs: [
+                0.56, 0.56, 0.92, 0.92, 1.19, 1.7, 2.0, 2.74, 3.0, 3.76, 4.07,
+            ],
+            dets: [0.0, 1.0, 0.0, 1.7, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
             lpf: Lpf18::new(19500.0, 0.01, 0.01, sr),
             balance: PanChan::new(),
-	    atk: 0.05,
-	    sus: 0.7,
-	    rel: 0.05,
-	    main_level: 0.7,
-	    freq: 1000.0,
+            atk: 0.05,
+            sus: 0.7,
+            rel: 0.05,
+            main_level: 0.7,
+            freq: 1000.0,
             reverb: 0.0,
             delay: 0.0,
         };
 
-	// init with some default frequency
-	let freq = 1000.0;
-	let length = 0.8;
-	for i in 0..11 {
-	    // set envelope params
-	    bell.envelopes[i].set_parameter(SynthParameter::Level, bell.amps[i] * bell.main_level);
-	    bell.envelopes[i].set_parameter(SynthParameter::Release, bell.durs[i] * length);
+        // init with some default frequency
+        let freq = 1000.0;
+        let length = 0.8;
+        for i in 0..11 {
+            // set envelope params
+            bell.envelopes[i].set_parameter(SynthParameter::Level, bell.amps[i] * bell.main_level);
+            bell.envelopes[i].set_parameter(SynthParameter::Release, bell.durs[i] * length);
 
-	    // set oscillator params
-	    bell.oscillators[i].set_parameter(SynthParameter::PitchFrequency, freq * bell.freqs[i] + bell.dets[i]);			    
-	}
-	
-	bell
+            // set oscillator params
+            bell.oscillators[i].set_parameter(
+                SynthParameter::PitchFrequency,
+                freq * bell.freqs[i] + bell.dets[i],
+            );
+        }
+
+        bell
     }
 }
 
@@ -470,49 +477,52 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
     for RissetBell<BUFSIZE, NCHAN>
 {
     fn set_parameter(&mut self, par: SynthParameter, val: f32) {
-
         self.lpf.set_parameter(par, val);
-	self.main_envelope.set_parameter(par, val);        
+        self.main_envelope.set_parameter(par, val);
         self.balance.set_parameter(par, val);
 
-	let mut update_internals = false;
+        let mut update_internals = false;
         match par {
             SynthParameter::ReverbMix => self.reverb = val,
             SynthParameter::DelayMix => self.delay = val,
-	    SynthParameter::PitchFrequency => {
-		self.freq = val;
-		update_internals = true;
-	    },
-	    SynthParameter::Attack => {
-		self.atk = val;
-		update_internals = true;
-	    },
-	    SynthParameter::Sustain => {
-		self.sus = val;
-		update_internals = true;
-	    },
-	    SynthParameter::Release => {
-		self.rel = val;
-		update_internals = true;
-	    },
-	    SynthParameter::Level => {
-		self.main_level = val;
-		update_internals = true;
-	    },	
+            SynthParameter::PitchFrequency => {
+                self.freq = val;
+                update_internals = true;
+            }
+            SynthParameter::Attack => {
+                self.atk = val;
+                update_internals = true;
+            }
+            SynthParameter::Sustain => {
+                self.sus = val;
+                update_internals = true;
+            }
+            SynthParameter::Release => {
+                self.rel = val;
+                update_internals = true;
+            }
+            SynthParameter::Level => {
+                self.main_level = val;
+                update_internals = true;
+            }
             _ => (),
         };
 
-	if update_internals {
-	    let length = self.atk + self.sus + self.rel;
-	    for i in 0..11 {
-		// set envelope params
-		self.envelopes[i].set_parameter(SynthParameter::Level, self.amps[i] * self.main_level);
-		self.envelopes[i].set_parameter(SynthParameter::Release, self.durs[i] * length);
-		
-		// set oscillator params
-		self.oscillators[i].set_parameter(SynthParameter::PitchFrequency, self.freq * self.freqs[i] + self.dets[i]);			    
-	    }
-	}
+        if update_internals {
+            let length = self.atk + self.sus + self.rel;
+            for i in 0..11 {
+                // set envelope params
+                self.envelopes[i]
+                    .set_parameter(SynthParameter::Level, self.amps[i] * self.main_level);
+                self.envelopes[i].set_parameter(SynthParameter::Release, self.durs[i] * length);
+
+                // set oscillator params
+                self.oscillators[i].set_parameter(
+                    SynthParameter::PitchFrequency,
+                    self.freq * self.freqs[i] + self.dets[i],
+                );
+            }
+        }
     }
 
     fn finish(&mut self) {
@@ -528,22 +538,24 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
         start_sample: usize,
         sample_buffers: &Vec<Vec<f32>>,
     ) -> [[f32; BUFSIZE]; NCHAN] {
-	// first osc
-	let mut out: [f32; BUFSIZE] = self.oscillators[0].get_next_block(start_sample, sample_buffers);
-	out = self.envelopes[0].process_block(out, start_sample);
+        // first osc
+        let mut out: [f32; BUFSIZE] =
+            self.oscillators[0].get_next_block(start_sample, sample_buffers);
+        out = self.envelopes[0].process_block(out, start_sample);
 
-	// rest	
-	for i in 1..11 {
-	    let mut tmp_out: [f32; BUFSIZE] = self.oscillators[i].get_next_block(start_sample, sample_buffers);
-	    tmp_out = self.envelopes[i].process_block(tmp_out, start_sample);
+        // rest
+        for i in 1..11 {
+            let mut tmp_out: [f32; BUFSIZE] =
+                self.oscillators[i].get_next_block(start_sample, sample_buffers);
+            tmp_out = self.envelopes[i].process_block(tmp_out, start_sample);
 
-	    for s in 0..BUFSIZE {
-		out[s] += tmp_out[s];
-	    }	    
-	}
+            for s in 0..BUFSIZE {
+                out[s] += tmp_out[s];
+            }
+        }
 
-	out = self.lpf.process_block(out, start_sample);
-	out = self.main_envelope.process_block(out, start_sample);
+        out = self.lpf.process_block(out, start_sample);
+        out = self.main_envelope.process_block(out, start_sample);
         self.balance.process_block(out)
     }
 

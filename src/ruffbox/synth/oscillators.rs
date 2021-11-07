@@ -9,7 +9,7 @@ use std::f32::consts::PI;
 /**
  * A simple sine oscillator
  */
-#[derive(Clone,Copy)]
+#[derive(Clone, Copy)]
 pub struct SineOsc<const BUFSIZE: usize> {
     lvl: f32,
     sin_time: f32,
@@ -406,17 +406,17 @@ pub struct LFTri<const BUFSIZE: usize> {
 
 impl<const BUFSIZE: usize> LFTri<BUFSIZE> {
     pub fn new(freq: f32, lvl: f32, sr: f32) -> Self {
-	let period_samples = (sr / freq).round() as usize;		
-	let segment_samples = period_samples / 4;
-        LFTri {            
+        let period_samples = (sr / freq).round() as usize;
+        let segment_samples = period_samples / 4;
+        LFTri {
             lvl: lvl,
             samplerate: sr,
             segment_samples: segment_samples,
-	    period_first_ascent_samples: period_samples - (3 * segment_samples),
-	    period_second_ascent_samples: period_samples,
-	    period_descent_samples: period_samples - segment_samples,
-	    lvl_first_inc: lvl / (period_samples - (3 * segment_samples)) as f32, 
-	    lvl_inc_dec: lvl / segment_samples as f32,
+            period_first_ascent_samples: period_samples - (3 * segment_samples),
+            period_second_ascent_samples: period_samples,
+            period_descent_samples: period_samples - segment_samples,
+            lvl_first_inc: lvl / (period_samples - (3 * segment_samples)) as f32,
+            lvl_inc_dec: lvl / segment_samples as f32,
             cur_lvl: 0.0,
             period_count: 0,
         }
@@ -428,19 +428,20 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFTri<BUFSIZE> {
     fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         match par {
             SynthParameter::PitchFrequency => {
-		let period_samples = (self.samplerate / value).round() as usize;		
-		// the segment-wise implementation is a bit strange but works for now ...
-		self.segment_samples = period_samples / 4;		
-		self.period_second_ascent_samples = period_samples;
-		self.period_descent_samples = period_samples - self.segment_samples;
-		self.period_first_ascent_samples = self.period_descent_samples - (2 * self.segment_samples);		
+                let period_samples = (self.samplerate / value).round() as usize;
+                // the segment-wise implementation is a bit strange but works for now ...
+                self.segment_samples = period_samples / 4;
+                self.period_second_ascent_samples = period_samples;
+                self.period_descent_samples = period_samples - self.segment_samples;
+                self.period_first_ascent_samples =
+                    self.period_descent_samples - (2 * self.segment_samples);
                 self.lvl_inc_dec = self.lvl / self.segment_samples as f32;
-		self.lvl_first_inc = self.lvl / self.period_first_ascent_samples as f32;		
+                self.lvl_first_inc = self.lvl / self.period_first_ascent_samples as f32;
             }
             SynthParameter::Level => {
                 self.lvl = value;
-		self.lvl_inc_dec = self.lvl / self.segment_samples as f32;
-		self.lvl_first_inc = self.lvl / self.period_first_ascent_samples as f32;
+                self.lvl_inc_dec = self.lvl / self.segment_samples as f32;
+                self.lvl_first_inc = self.lvl / self.period_first_ascent_samples as f32;
             }
             _ => (),
         };
@@ -459,15 +460,17 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFTri<BUFSIZE> {
             out_buf[i] = self.cur_lvl;
             self.period_count += 1;
             if self.period_count < self.period_first_ascent_samples {
-		self.cur_lvl += self.lvl_first_inc;		
-            } else if self.period_count > self.period_first_ascent_samples && self.period_count < self.period_descent_samples {
-                self.cur_lvl -= self.lvl_inc_dec;		
-	    } else if self.period_count < self.period_second_ascent_samples {
-		self.cur_lvl += self.lvl_inc_dec;		
-	    } else {
-		self.period_count = 0;
-		self.cur_lvl = 0.0;
-	    }
+                self.cur_lvl += self.lvl_first_inc;
+            } else if self.period_count > self.period_first_ascent_samples
+                && self.period_count < self.period_descent_samples
+            {
+                self.cur_lvl -= self.lvl_inc_dec;
+            } else if self.period_count < self.period_second_ascent_samples {
+                self.cur_lvl += self.lvl_inc_dec;
+            } else {
+                self.period_count = 0;
+                self.cur_lvl = 0.0;
+            }
         }
 
         out_buf

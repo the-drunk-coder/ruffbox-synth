@@ -1,16 +1,16 @@
 pub mod ambisonics;
+pub mod convolution_reverb;
 pub mod convolver;
 pub mod delay;
 pub mod envelopes;
 pub mod filters;
 pub mod freeverb;
-pub mod convolution_reverb;
 pub mod oscillators;
 pub mod routing;
 pub mod sampler;
 pub mod synths;
 
-#[derive(Clone,Copy)]
+#[derive(Clone, Copy)]
 pub enum SynthState {
     Fresh,
     Finished,

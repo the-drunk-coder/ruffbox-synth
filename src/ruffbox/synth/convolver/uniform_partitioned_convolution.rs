@@ -7,7 +7,7 @@ pub struct UniformPartitionedConvolution<const BUFSIZE: usize> {
     max_filter_length: usize,
     input_size: usize,
     num_sub_filters: usize,
-    precomputed_sub_filters: Vec<PrecomputedFilter>,    
+    precomputed_sub_filters: Vec<PrecomputedFilter>,
     frequency_delay_line: Vec<Vec<Complex<f32>>>,
     frequency_delay_line_idx: usize,
     output_accumulator: Vec<Complex<f32>>,
@@ -18,70 +18,72 @@ pub struct UniformPartitionedConvolution<const BUFSIZE: usize> {
 }
 
 /// UPOLS (Uniform Partitioned OverLap-Save), following Wefers, 2014
-impl <const BUFSIZE: usize> UniformPartitionedConvolution<BUFSIZE> {
-
+impl<const BUFSIZE: usize> UniformPartitionedConvolution<BUFSIZE> {
     pub fn with_ir(ir: Vec<f32>) -> UniformPartitionedConvolution<BUFSIZE> {
-	let mut convolver = UniformPartitionedConvolution::with_max_filter_length(ir.len());
-	convolver.set(ir);
-	convolver	
+        let mut convolver = UniformPartitionedConvolution::with_max_filter_length(ir.len());
+        convolver.set(ir);
+        convolver
     }
 
     /// prepare uniform partitioned convolution for specified filter length
-    pub fn with_max_filter_length(mut max_filter_length: usize) -> UniformPartitionedConvolution<BUFSIZE> {
+    pub fn with_max_filter_length(
+        mut max_filter_length: usize,
+    ) -> UniformPartitionedConvolution<BUFSIZE> {
+        // pad to next power of two:
+        if !max_filter_length.is_power_of_two() {
+            max_filter_length = max_filter_length.next_power_of_two();
+        }
 
-	// pad to next power of two:
-	if !max_filter_length.is_power_of_two() {
-	    max_filter_length = max_filter_length.next_power_of_two();
-	}
+        // calculate the number of needed sub-filters
+        let num_sub_filters = max_filter_length / BUFSIZE;
+        let mut precomputed_sub_filters = Vec::new();
 
-	// calculate the number of needed sub-filters
-	let num_sub_filters = max_filter_length / BUFSIZE;
-	let mut precomputed_sub_filters = Vec::new();
+        for _ in 0..num_sub_filters {
+            // sub-filter length is always the buffer size in this case
+            precomputed_sub_filters.push(PrecomputedFilter::with_max_filter_length(BUFSIZE));
+        }
 
-	for _ in 0..num_sub_filters {
-	    // sub-filter length is always the buffer size in this case
-	    precomputed_sub_filters.push(PrecomputedFilter::with_max_filter_length(BUFSIZE));
-	}
+        let fft = RFft1D::<f32>::new(BUFSIZE * 2);
 
-	let fft = RFft1D::<f32>::new(BUFSIZE * 2);
-	
-	UniformPartitionedConvolution {
-	    max_filter_length,
-	    input_size: BUFSIZE,
-	    num_sub_filters,
-	    precomputed_sub_filters,
-	    frequency_delay_line: vec![vec![Complex::new(0.0, 0.0); BUFSIZE + 1]; num_sub_filters],
-	    frequency_delay_line_idx: 0,
-	    output_accumulator: vec![Complex::new(0.0, 0.0); BUFSIZE + 1],
-	    fft,
-	    tmp_in: vec![0.0; 2 * BUFSIZE],
+        UniformPartitionedConvolution {
+            max_filter_length,
+            input_size: BUFSIZE,
+            num_sub_filters,
+            precomputed_sub_filters,
+            frequency_delay_line: vec![vec![Complex::new(0.0, 0.0); BUFSIZE + 1]; num_sub_filters],
+            frequency_delay_line_idx: 0,
+            output_accumulator: vec![Complex::new(0.0, 0.0); BUFSIZE + 1],
+            fft,
+            tmp_in: vec![0.0; 2 * BUFSIZE],
             tmp_out: vec![0.0; 2 * BUFSIZE],
             remainder: vec![0.0; BUFSIZE],
-	}
+        }
     }
 
     /// add a filter (impulse response) to this convolution
     /// the filter is passed by value so we can eventually pad it.
     /// if the filter is too long, it will be cut to size
     pub fn add(&mut self, mut filter: Vec<f32>) {
-	// extend or truncate to size
-	filter.resize(self.max_filter_length, 0.0);
-	// fft is done in precomputed filter
-	for i in 0..self.num_sub_filters {
-	    self.precomputed_sub_filters[i].add(&filter[(i * self.input_size)..((i+1) * self.input_size)]);	    
-	}	
+        // extend or truncate to size
+        filter.resize(self.max_filter_length, 0.0);
+        // fft is done in precomputed filter
+        for i in 0..self.num_sub_filters {
+            self.precomputed_sub_filters[i]
+                .add(&filter[(i * self.input_size)..((i + 1) * self.input_size)]);
+        }
     }
 
     /// add filter (impulse response) to this convolution, overwrite existing filter
-    /// the filter is passed by value so we can eventually pad it. 
+    /// the filter is passed by value so we can eventually pad it.
     /// if the filter is too long, it will be cut to size
     pub fn set(&mut self, mut filter: Vec<f32>) {
-	// extend or truncate to size
-	filter.resize(self.max_filter_length, 0.0);
-	// fft is done in precomputed filter
-	for i in 0..self.precomputed_sub_filters.len() {
-	    self.precomputed_sub_filters[i].set(&filter[(i * self.input_size)..((i+1) * self.input_size)]);	    
-	}
+        // extend or truncate to size
+        filter.resize(self.max_filter_length, 0.0);
+        // fft is done in precomputed filter
+        for i in 0..self.precomputed_sub_filters.len() {
+            self.precomputed_sub_filters[i]
+                .set(&filter[(i * self.input_size)..((i + 1) * self.input_size)]);
+        }
     }
 
     /// perform the convolution
@@ -95,34 +97,37 @@ impl <const BUFSIZE: usize> UniformPartitionedConvolution<BUFSIZE> {
         }
 
         // perform fft
-	self.frequency_delay_line[self.frequency_delay_line_idx] = self.fft.forward(&self.tmp_in);
+        self.frequency_delay_line[self.frequency_delay_line_idx] = self.fft.forward(&self.tmp_in);
 
-	let mut current_idx = self.frequency_delay_line_idx;
+        let mut current_idx = self.frequency_delay_line_idx;
 
-	// clear output accum
-	for c in &mut self.output_accumulator {
-	    c.re = 0.0;
-	    c.im = 0.0;
-	}
-	
-	// process the frequency delay line
-	for f in 0..self.num_sub_filters {
-	    self.precomputed_sub_filters[f].apply_add(&self.frequency_delay_line[current_idx], &mut self.output_accumulator);
-	    if current_idx > 0 {
-		current_idx -= 1;
-	    } else {
-		current_idx = self.num_sub_filters - 1;
-	    }
-	}
+        // clear output accum
+        for c in &mut self.output_accumulator {
+            c.re = 0.0;
+            c.im = 0.0;
+        }
 
-	self.frequency_delay_line_idx += 1;
-	if self.frequency_delay_line_idx >= self.num_sub_filters {
-	    self.frequency_delay_line_idx = 0;
-	}
+        // process the frequency delay line
+        for f in 0..self.num_sub_filters {
+            self.precomputed_sub_filters[f].apply_add(
+                &self.frequency_delay_line[current_idx],
+                &mut self.output_accumulator,
+            );
+            if current_idx > 0 {
+                current_idx -= 1;
+            } else {
+                current_idx = self.num_sub_filters - 1;
+            }
+        }
 
-	self.tmp_out = self.fft.backward(&self.output_accumulator);
-	
-	// copy relevant part from ifft, scrap the rest
+        self.frequency_delay_line_idx += 1;
+        if self.frequency_delay_line_idx >= self.num_sub_filters {
+            self.frequency_delay_line_idx = 0;
+        }
+
+        self.tmp_out = self.fft.backward(&self.output_accumulator);
+
+        // copy relevant part from ifft, scrap the rest
         let mut outarr = [0.0; BUFSIZE];
         for i in 0..self.input_size {
             self.remainder[i] = input[i];
@@ -131,7 +136,7 @@ impl <const BUFSIZE: usize> UniformPartitionedConvolution<BUFSIZE> {
 
         // return result block ...
         outarr
-    }            
+    }
 }
 
 // TEST TEST TEST
@@ -150,7 +155,7 @@ mod tests {
         let mut signal_in = [0.0; 128];
 
         let mut conv = UniformPartitionedConvolution::<128>::with_max_filter_length(512);
-	conv.set(ir);
+        conv.set(ir);
 
         let mut dev_accum = 0.0;
 
@@ -170,4 +175,3 @@ mod tests {
         assert_approx_eq::assert_approx_eq!(dev_accum / (100.0 * 128.0), 0.0, 0.00001);
     }
 }
-
