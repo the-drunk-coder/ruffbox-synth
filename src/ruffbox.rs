@@ -9,10 +9,11 @@ use std::collections::HashMap;
 
 use std::cmp::Ordering;
 
+use crate::ruffbox::synth::convolution_reverb::MultichannelConvolutionReverb;
 use crate::ruffbox::synth::delay::MultichannelDelay;
 use crate::ruffbox::synth::freeverb::MultichannelFreeverb;
-use crate::ruffbox::synth::MultichannelReverb;
 use crate::ruffbox::synth::synths::*;
+use crate::ruffbox::synth::MultichannelReverb;
 use crate::ruffbox::synth::SourceType;
 use crate::ruffbox::synth::Synth;
 use crate::ruffbox::synth::SynthParameter;
@@ -65,6 +66,12 @@ impl<const BUFSIZE: usize, const NCHAN: usize> ScheduledEvent<BUFSIZE, NCHAN> {
     }
 }
 
+///
+pub enum ReverbMode {
+    FreeVerb,
+    Convolution(Vec<f32>),
+}
+
 /// the main synth instance
 pub struct Ruffbox<const BUFSIZE: usize, const NCHAN: usize> {
     running_instances: Vec<Box<dyn Synth<BUFSIZE, NCHAN> + Send>>,
@@ -91,17 +98,28 @@ pub struct Ruffbox<const BUFSIZE: usize, const NCHAN: usize> {
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
-    pub fn new(live_buffer: bool, life_buffer_time: f32) -> Ruffbox<BUFSIZE, NCHAN> {
+    pub fn new(
+        live_buffer: bool,
+        life_buffer_time: f32,
+        reverb_mode: &ReverbMode,
+    ) -> Ruffbox<BUFSIZE, NCHAN> {
         let (tx, rx): (
             Sender<ScheduledEvent<BUFSIZE, NCHAN>>,
             Receiver<ScheduledEvent<BUFSIZE, NCHAN>>,
         ) = crossbeam::channel::bounded(1000);
 
-        // tweak some reverb values ...
-        let mut rev = MultichannelFreeverb::new();
-        rev.set_roomsize(0.65);
-        rev.set_damp(0.43);
-        rev.set_wet(1.0);
+        // create reverb
+        let rev: Box<dyn MultichannelReverb<BUFSIZE, NCHAN> + Send> = match reverb_mode {
+            ReverbMode::FreeVerb => {
+                let mut mrev = MultichannelFreeverb::new();
+                // tweak some reverb values for freeverb
+                mrev.set_roomsize(0.65);
+                mrev.set_damp(0.43);
+                mrev.set_wet(1.0);
+                Box::new(mrev)
+            }
+            ReverbMode::Convolution(ir) => Box::new(MultichannelConvolutionReverb::with_ir(ir)),
+        };
 
         let mut buffers = Vec::with_capacity(2000);
         let mut buffer_lengths = Vec::with_capacity(2000);
@@ -154,7 +172,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
             block_duration: BUFSIZE as f64 / 44100.0,
             sec_per_sample: 1.0 / 44100.0,
             now: 0.0,
-            master_reverb: Box::new(rev),
+            master_reverb: rev,
             master_delay: MultichannelDelay::new(),
         }
     }
@@ -333,10 +351,10 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
             SourceType::SineSynth => {
                 ScheduledEvent::new(timestamp, Box::new(SineSynth::new(44100.0)))
             }
-	    SourceType::LFTriangleSynth => {
+            SourceType::LFTriangleSynth => {
                 ScheduledEvent::new(timestamp, Box::new(LFTriSynth::new(44100.0)))
             }
-	    SourceType::RissetBell => {
+            SourceType::RissetBell => {
                 ScheduledEvent::new(timestamp, Box::new(RissetBell::new(44100.0)))
             }
             SourceType::Sampler => ScheduledEvent::new(
