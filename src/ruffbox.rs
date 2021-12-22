@@ -192,7 +192,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
         // first, overwrite old stitch region if we're at the beginning of a new block
         if self.live_buffer_current_block == 0 {
             let mut count_back_idx = self.live_buffer_idx - 1;
-            for s in (0..128).rev() {
+            for s in (0..self.stitch_buffer.len()).rev() {
                 if count_back_idx < 1 {
                     count_back_idx = self.buffer_lengths[0]; // live buffer length
                 }
