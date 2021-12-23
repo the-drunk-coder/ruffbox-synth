@@ -10,7 +10,5 @@ That is, you can throw it events with certain parameters and it'll turn them int
 but there's no inlets, outlets or anything that you could freely connect. If you want new sounds,
 as of now you'd have to implement them yourself.
 
-This also might lead to constraints that seem odd, like, the only available samplerate being 44100.
-That's what I work in all the time, so I never put any priority on making more samplerates available.
-
-The philosophy is to determine as much as possible at compile-time, using const generics.
+The philosophy is to determine as much as possible (such as blocksize and channel numbers)
+at compile-time, using const generics.
