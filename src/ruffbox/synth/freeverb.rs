@@ -86,42 +86,50 @@ struct FreeverbTuning {
 
 impl FreeverbTuning {
     pub fn new(sr: f32) -> FreeverbTuning {
-	let scale_factor = sr / 44100.0; // original values are for 44.1kHz, so we need to scale.
-	FreeverbTuning {
-	    fixed_gain: FreeverbDefaultTuning::FIXED_GAIN,
-	    scale_wet: FreeverbDefaultTuning::SCALE_WET,
-	    scale_damp: FreeverbDefaultTuning::SCALE_DAMP,
-	    scale_room: FreeverbDefaultTuning::SCALE_ROOM,
-	    offset_room: FreeverbDefaultTuning::OFFSET_ROOM,
-	    initial_room: FreeverbDefaultTuning::INITIAL_ROOM,
-	    initial_damp: FreeverbDefaultTuning::INITIAL_DAMP,
-	    initial_wet: FreeverbDefaultTuning::INITIAL_WET,
-	    initial_width: FreeverbDefaultTuning::INITIAL_WIDTH,
-	    comb_tuning_l1: (FreeverbDefaultTuning::COMB_TUNING_L1 as f32 * scale_factor) as usize,
-	    comb_tuning_r1: (FreeverbDefaultTuning::COMB_TUNING_R1 as f32 * scale_factor) as usize,
-	    comb_tuning_l2: (FreeverbDefaultTuning::COMB_TUNING_L2 as f32 * scale_factor) as usize,
-	    comb_tuning_r2: (FreeverbDefaultTuning::COMB_TUNING_R2 as f32 * scale_factor) as usize,
-	    comb_tuning_l3: (FreeverbDefaultTuning::COMB_TUNING_L3 as f32 * scale_factor) as usize,
-	    comb_tuning_r3: (FreeverbDefaultTuning::COMB_TUNING_R3 as f32 * scale_factor) as usize,
-	    comb_tuning_l4: (FreeverbDefaultTuning::COMB_TUNING_L4 as f32 * scale_factor) as usize,
-	    comb_tuning_r4: (FreeverbDefaultTuning::COMB_TUNING_R4 as f32 * scale_factor) as usize,
-	    comb_tuning_l5: (FreeverbDefaultTuning::COMB_TUNING_L5 as f32 * scale_factor) as usize,
-	    comb_tuning_r5: (FreeverbDefaultTuning::COMB_TUNING_R5 as f32 * scale_factor) as usize,
-	    comb_tuning_l6: (FreeverbDefaultTuning::COMB_TUNING_L6 as f32 * scale_factor) as usize,
-	    comb_tuning_r6: (FreeverbDefaultTuning::COMB_TUNING_R6 as f32 * scale_factor) as usize,
-	    comb_tuning_l7: (FreeverbDefaultTuning::COMB_TUNING_L7 as f32 * scale_factor) as usize,
-	    comb_tuning_r7: (FreeverbDefaultTuning::COMB_TUNING_R7 as f32 * scale_factor) as usize,
-	    comb_tuning_l8: (FreeverbDefaultTuning::COMB_TUNING_L8 as f32 * scale_factor) as usize,
-	    comb_tuning_r8: (FreeverbDefaultTuning::COMB_TUNING_R8 as f32 * scale_factor) as usize,
-	    allpass_tuning_l1: (FreeverbDefaultTuning::ALLPASS_TUNING_L1 as f32 * scale_factor) as usize,
-	    allpass_tuning_r1: (FreeverbDefaultTuning::ALLPASS_TUNING_R1 as f32 * scale_factor) as usize,
-	    allpass_tuning_l2: (FreeverbDefaultTuning::ALLPASS_TUNING_L2 as f32 * scale_factor) as usize,
-	    allpass_tuning_r2: (FreeverbDefaultTuning::ALLPASS_TUNING_R2 as f32 * scale_factor) as usize,
-	    allpass_tuning_l3: (FreeverbDefaultTuning::ALLPASS_TUNING_L3 as f32 * scale_factor) as usize,
-	    allpass_tuning_r3: (FreeverbDefaultTuning::ALLPASS_TUNING_R3 as f32 * scale_factor) as usize,
-	    allpass_tuning_l4: (FreeverbDefaultTuning::ALLPASS_TUNING_L4 as f32 * scale_factor) as usize,
-	    allpass_tuning_r4: (FreeverbDefaultTuning::ALLPASS_TUNING_R4 as f32 * scale_factor) as usize,
-	}
+        let scale_factor = sr / 44100.0; // original values are for 44.1kHz, so we need to scale.
+        FreeverbTuning {
+            fixed_gain: FreeverbDefaultTuning::FIXED_GAIN,
+            scale_wet: FreeverbDefaultTuning::SCALE_WET,
+            scale_damp: FreeverbDefaultTuning::SCALE_DAMP,
+            scale_room: FreeverbDefaultTuning::SCALE_ROOM,
+            offset_room: FreeverbDefaultTuning::OFFSET_ROOM,
+            initial_room: FreeverbDefaultTuning::INITIAL_ROOM,
+            initial_damp: FreeverbDefaultTuning::INITIAL_DAMP,
+            initial_wet: FreeverbDefaultTuning::INITIAL_WET,
+            initial_width: FreeverbDefaultTuning::INITIAL_WIDTH,
+            comb_tuning_l1: (FreeverbDefaultTuning::COMB_TUNING_L1 as f32 * scale_factor) as usize,
+            comb_tuning_r1: (FreeverbDefaultTuning::COMB_TUNING_R1 as f32 * scale_factor) as usize,
+            comb_tuning_l2: (FreeverbDefaultTuning::COMB_TUNING_L2 as f32 * scale_factor) as usize,
+            comb_tuning_r2: (FreeverbDefaultTuning::COMB_TUNING_R2 as f32 * scale_factor) as usize,
+            comb_tuning_l3: (FreeverbDefaultTuning::COMB_TUNING_L3 as f32 * scale_factor) as usize,
+            comb_tuning_r3: (FreeverbDefaultTuning::COMB_TUNING_R3 as f32 * scale_factor) as usize,
+            comb_tuning_l4: (FreeverbDefaultTuning::COMB_TUNING_L4 as f32 * scale_factor) as usize,
+            comb_tuning_r4: (FreeverbDefaultTuning::COMB_TUNING_R4 as f32 * scale_factor) as usize,
+            comb_tuning_l5: (FreeverbDefaultTuning::COMB_TUNING_L5 as f32 * scale_factor) as usize,
+            comb_tuning_r5: (FreeverbDefaultTuning::COMB_TUNING_R5 as f32 * scale_factor) as usize,
+            comb_tuning_l6: (FreeverbDefaultTuning::COMB_TUNING_L6 as f32 * scale_factor) as usize,
+            comb_tuning_r6: (FreeverbDefaultTuning::COMB_TUNING_R6 as f32 * scale_factor) as usize,
+            comb_tuning_l7: (FreeverbDefaultTuning::COMB_TUNING_L7 as f32 * scale_factor) as usize,
+            comb_tuning_r7: (FreeverbDefaultTuning::COMB_TUNING_R7 as f32 * scale_factor) as usize,
+            comb_tuning_l8: (FreeverbDefaultTuning::COMB_TUNING_L8 as f32 * scale_factor) as usize,
+            comb_tuning_r8: (FreeverbDefaultTuning::COMB_TUNING_R8 as f32 * scale_factor) as usize,
+            allpass_tuning_l1: (FreeverbDefaultTuning::ALLPASS_TUNING_L1 as f32 * scale_factor)
+                as usize,
+            allpass_tuning_r1: (FreeverbDefaultTuning::ALLPASS_TUNING_R1 as f32 * scale_factor)
+                as usize,
+            allpass_tuning_l2: (FreeverbDefaultTuning::ALLPASS_TUNING_L2 as f32 * scale_factor)
+                as usize,
+            allpass_tuning_r2: (FreeverbDefaultTuning::ALLPASS_TUNING_R2 as f32 * scale_factor)
+                as usize,
+            allpass_tuning_l3: (FreeverbDefaultTuning::ALLPASS_TUNING_L3 as f32 * scale_factor)
+                as usize,
+            allpass_tuning_r3: (FreeverbDefaultTuning::ALLPASS_TUNING_R3 as f32 * scale_factor)
+                as usize,
+            allpass_tuning_l4: (FreeverbDefaultTuning::ALLPASS_TUNING_L4 as f32 * scale_factor)
+                as usize,
+            allpass_tuning_r4: (FreeverbDefaultTuning::ALLPASS_TUNING_R4 as f32 * scale_factor)
+                as usize,
+        }
     }
 }
 
@@ -134,7 +142,7 @@ struct Allpass {
     delay_buffer: Vec<f32>,
     delay_buffer_size: usize,
     delay_idx: usize,
-    feedback: f32,    
+    feedback: f32,
 }
 
 impl Allpass {
@@ -248,7 +256,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> MultichannelFreeverb<BUFSIZE, NCH
     pub fn new(sr: f32) -> Self {
         let mut combs = Vec::new();
         let mut allpasses = Vec::new();
-	let tuning = FreeverbTuning::new(sr);
+        let tuning = FreeverbTuning::new(sr);
         for i in 0..NCHAN {
             combs.push(Vec::new());
             allpasses.push(Vec::new());
@@ -318,13 +326,12 @@ impl<const BUFSIZE: usize, const NCHAN: usize> MultichannelFreeverb<BUFSIZE, NCH
             wet1: wet1,
             wet2: wet2,
             width: tuning.initial_width,
-	    tuning: tuning,
+            tuning: tuning,
         }
     }
 
     pub fn set_roomsize(&mut self, value: f32) {
-        self.roomsize =
-            (value * self.tuning.scale_room) + self.tuning.offset_room;
+        self.roomsize = (value * self.tuning.scale_room) + self.tuning.offset_room;
         // accumulate comb filters in parallel
         for comb in self.combs.iter_mut() {
             for (c_l, c_r) in comb.iter_mut() {
