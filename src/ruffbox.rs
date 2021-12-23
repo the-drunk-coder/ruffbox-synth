@@ -420,12 +420,14 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
     pub fn load_sample(&mut self, samples: &mut Vec<f32>, sr: f32, resample: bool) -> usize {
         if resample && (self.samplerate != sr) {
             // zero-pad for resampling blocks
-            if (samples.len() as f32 / 1024.0) < 0.0 {
+            if (samples.len() as f32 % 1024.0) > 0.0 {
                 let diff = 1024 - (samples.len() % 1024);
                 samples.append(&mut vec![0.0; diff]);
                 println!("append padding {}", diff);
             }
 
+	    println!("resample");
+	    
             let mut samples_resampled: Vec<f32> = Vec::new();
 
             let params = InterpolationParameters {
@@ -436,7 +438,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
                 window: WindowFunction::BlackmanHarris2,
             };
             let mut resampler =
-                SincFixedIn::<f32>::new(sr as f64 / self.samplerate as f64, params, 1024, 1);
+                SincFixedIn::<f32>::new(self.samplerate as f64 / sr as f64, params, 1024, 1);
 
             // interpolation samples
             samples_resampled.push(0.0);
