@@ -1,6 +1,6 @@
 pub mod synth;
 
-use rubato::{Resampler, SincFixedIn, InterpolationType, InterpolationParameters, WindowFunction};
+use rubato::{InterpolationParameters, InterpolationType, Resampler, SincFixedIn, WindowFunction};
 
 // crossbeam for the event queue
 use crossbeam::atomic::AtomicCell;
@@ -418,51 +418,47 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
     /// resample to current samplerate if necessary
     /// adds interpolation samples to buffer
     pub fn load_sample(&mut self, samples: &mut Vec<f32>, sr: f32, resample: bool) -> usize {
-	if resample && (self.samplerate != sr) {
-	    // zero-pad for resampling blocks
-	    if (samples.len() as f32/ 1024.0) < 0.0 {
-		let diff = 1024 - (samples.len() % 1024);
-		samples.append(&mut vec![0.0; diff]);
-		println!("append padding {}", diff);
-	    }
-	    
-	    let mut samples_resampled:Vec<f32> = Vec::new();
+        if resample && (self.samplerate != sr) {
+            // zero-pad for resampling blocks
+            if (samples.len() as f32 / 1024.0) < 0.0 {
+                let diff = 1024 - (samples.len() % 1024);
+                samples.append(&mut vec![0.0; diff]);
+                println!("append padding {}", diff);
+            }
 
-	    let params = InterpolationParameters {
-		sinc_len: 256,
-		f_cutoff: 0.95,
-		interpolation: InterpolationType::Nearest,
-		oversampling_factor: 160,
-		window: WindowFunction::BlackmanHarris2,
-	    };
-	    let mut resampler = SincFixedIn::<f32>::new(
-		sr as f64 / self.samplerate as f64,
-		params,
-		1024,
-		1,
-	    );
+            let mut samples_resampled: Vec<f32> = Vec::new();
 
-	    // interpolation samples
-	    samples_resampled.push(0.0);
-	    let num_chunks = samples.len() / 1024;
-	    for chunk in 0..num_chunks {
-		let chunk = vec![samples[(1024 * chunk)..(1024 * (chunk + 1))].to_vec()];
-		let mut waves_out = resampler.process(&chunk).unwrap();
-		samples_resampled.append(&mut waves_out[0]);
-	    }
-	    // interpolation samples
-	    samples_resampled.push(0.0);
-	    samples_resampled.push(0.0);
-	    self.buffer_lengths.push(samples_resampled.len() - 3); // account for interpolation samples
+            let params = InterpolationParameters {
+                sinc_len: 256,
+                f_cutoff: 0.95,
+                interpolation: InterpolationType::Nearest,
+                oversampling_factor: 160,
+                window: WindowFunction::BlackmanHarris2,
+            };
+            let mut resampler =
+                SincFixedIn::<f32>::new(sr as f64 / self.samplerate as f64, params, 1024, 1);
+
+            // interpolation samples
+            samples_resampled.push(0.0);
+            let num_chunks = samples.len() / 1024;
+            for chunk in 0..num_chunks {
+                let chunk = vec![samples[(1024 * chunk)..(1024 * (chunk + 1))].to_vec()];
+                let mut waves_out = resampler.process(&chunk).unwrap();
+                samples_resampled.append(&mut waves_out[0]);
+            }
+            // interpolation samples
+            samples_resampled.push(0.0);
+            samples_resampled.push(0.0);
+            self.buffer_lengths.push(samples_resampled.len() - 3); // account for interpolation samples
             self.buffers.push(samples_resampled);
-	} else {
-	    samples.insert(0, 0.0); // interpolation sample
-	    samples.push(0.0);
-	    samples.push(0.0);
-	    self.buffer_lengths.push(samples.len() - 3); // account for interpolation samples
+        } else {
+            samples.insert(0, 0.0); // interpolation sample
+            samples.push(0.0);
+            samples.push(0.0);
+            self.buffer_lengths.push(samples.len() - 3); // account for interpolation samples
             self.buffers.push(samples.to_vec());
-	}
-	// return bufnum
+        }
+        // return bufnum
         self.buffers.len() - 1
     }
 
