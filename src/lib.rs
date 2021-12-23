@@ -16,11 +16,11 @@ pub extern "C" fn alloc(size: usize) -> *mut f32 {
 pub mod ruffbox;
 
 lazy_static! {
-    static ref RUFF: Mutex<ruffbox::Ruffbox<128, 2>> = Mutex::new(ruffbox::Ruffbox::new(
-        44100.0,
-        false,
+    static ref RUFF: Mutex<ruffbox::Ruffbox<128, 2>> = Mutex::new(ruffbox::Ruffbox::new(	
+	false,
         0.0,
-        &ruffbox::ReverbMode::FreeVerb
+        &ruffbox::ReverbMode::FreeVerb,
+	44100.0
     ));
 }
 
@@ -75,5 +75,5 @@ pub extern "C" fn trigger(instance_id: usize) {
 pub extern "C" fn load(sample_ptr: *mut f32, size: usize) -> usize {
     let mut ruff = RUFF.lock();
     let in_buf: &mut [f32] = unsafe { std::slice::from_raw_parts_mut(sample_ptr, size) };
-    ruff.load_sample(&mut in_buf.to_vec(), 44100.0, false)
+    ruff.load_sample(&mut in_buf.to_vec(), false, 44100.0)
 }

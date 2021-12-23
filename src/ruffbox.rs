@@ -101,11 +101,11 @@ pub struct Ruffbox<const BUFSIZE: usize, const NCHAN: usize> {
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
-    pub fn new(
-        samplerate: f64,
+    pub fn new(        
         live_buffer: bool,
         life_buffer_time: f64,
         reverb_mode: &ReverbMode,
+	samplerate: f64
     ) -> Ruffbox<BUFSIZE, NCHAN> {
         let (tx, rx): (
             Sender<ScheduledEvent<BUFSIZE, NCHAN>>,
@@ -441,7 +441,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
     /// loads a mono sample and returns the assigned buffer number
     /// resample to current samplerate if necessary
     /// adds interpolation samples to buffer
-    pub fn load_sample(&mut self, samples: &mut Vec<f32>, sr: f32, resample: bool) -> usize {
+    pub fn load_sample(&mut self, samples: &mut Vec<f32>, resample: bool, sr: f32) -> usize {
         if resample && (self.samplerate != sr) {
             // zero-pad for resampling blocks
             if (samples.len() as f32 % 1024.0) > 0.0 {
