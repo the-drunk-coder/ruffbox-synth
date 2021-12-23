@@ -113,7 +113,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
         // create reverb
         let rev: Box<dyn MultichannelReverb<BUFSIZE, NCHAN> + Send> = match reverb_mode {
             ReverbMode::FreeVerb => {
-                let mut mrev = MultichannelFreeverb::new();
+                let mut mrev = MultichannelFreeverb::new(samplerate as f32);
                 // tweak some reverb values for freeverb
                 mrev.set_roomsize(0.65);
                 mrev.set_damp(0.43);

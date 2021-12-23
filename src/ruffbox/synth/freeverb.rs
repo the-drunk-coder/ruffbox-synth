@@ -48,6 +48,83 @@ impl FreeverbDefaultTuning {
     const ALLPASS_TUNING_R4: usize = 225 + FreeverbDefaultTuning::STEREO_SPREAD;
 }
 
+struct FreeverbTuning {
+    pub fixed_gain: f32,
+    pub scale_wet: f32,
+    pub scale_damp: f32,
+    pub scale_room: f32,
+    pub offset_room: f32,
+    pub initial_room: f32,
+    pub initial_damp: f32,
+    pub initial_wet: f32,
+    pub initial_width: f32,
+    pub comb_tuning_l1: usize,
+    pub comb_tuning_r1: usize,
+    pub comb_tuning_l2: usize,
+    pub comb_tuning_r2: usize,
+    pub comb_tuning_l3: usize,
+    pub comb_tuning_r3: usize,
+    pub comb_tuning_l4: usize,
+    pub comb_tuning_r4: usize,
+    pub comb_tuning_l5: usize,
+    pub comb_tuning_r5: usize,
+    pub comb_tuning_l6: usize,
+    pub comb_tuning_r6: usize,
+    pub comb_tuning_l7: usize,
+    pub comb_tuning_r7: usize,
+    pub comb_tuning_l8: usize,
+    pub comb_tuning_r8: usize,
+    pub allpass_tuning_l1: usize,
+    pub allpass_tuning_r1: usize,
+    pub allpass_tuning_l2: usize,
+    pub allpass_tuning_r2: usize,
+    pub allpass_tuning_l3: usize,
+    pub allpass_tuning_r3: usize,
+    pub allpass_tuning_l4: usize,
+    pub allpass_tuning_r4: usize,
+}
+
+impl FreeverbTuning {
+    pub fn new(sr: f32) -> FreeverbTuning {
+	let scale_factor = sr / 44100.0; // original values are for 44.1kHz, so we need to scale.
+	FreeverbTuning {
+	    fixed_gain: FreeverbDefaultTuning::FIXED_GAIN,
+	    scale_wet: FreeverbDefaultTuning::SCALE_WET,
+	    scale_damp: FreeverbDefaultTuning::SCALE_DAMP,
+	    scale_room: FreeverbDefaultTuning::SCALE_ROOM,
+	    offset_room: FreeverbDefaultTuning::OFFSET_ROOM,
+	    initial_room: FreeverbDefaultTuning::INITIAL_ROOM,
+	    initial_damp: FreeverbDefaultTuning::INITIAL_DAMP,
+	    initial_wet: FreeverbDefaultTuning::INITIAL_WET,
+	    initial_width: FreeverbDefaultTuning::INITIAL_WIDTH,
+	    comb_tuning_l1: (FreeverbDefaultTuning::COMB_TUNING_L1 as f32 * scale_factor) as usize,
+	    comb_tuning_r1: (FreeverbDefaultTuning::COMB_TUNING_R1 as f32 * scale_factor) as usize,
+	    comb_tuning_l2: (FreeverbDefaultTuning::COMB_TUNING_L2 as f32 * scale_factor) as usize,
+	    comb_tuning_r2: (FreeverbDefaultTuning::COMB_TUNING_R2 as f32 * scale_factor) as usize,
+	    comb_tuning_l3: (FreeverbDefaultTuning::COMB_TUNING_L3 as f32 * scale_factor) as usize,
+	    comb_tuning_r3: (FreeverbDefaultTuning::COMB_TUNING_R3 as f32 * scale_factor) as usize,
+	    comb_tuning_l4: (FreeverbDefaultTuning::COMB_TUNING_L4 as f32 * scale_factor) as usize,
+	    comb_tuning_r4: (FreeverbDefaultTuning::COMB_TUNING_R4 as f32 * scale_factor) as usize,
+	    comb_tuning_l5: (FreeverbDefaultTuning::COMB_TUNING_L5 as f32 * scale_factor) as usize,
+	    comb_tuning_r5: (FreeverbDefaultTuning::COMB_TUNING_R5 as f32 * scale_factor) as usize,
+	    comb_tuning_l6: (FreeverbDefaultTuning::COMB_TUNING_L6 as f32 * scale_factor) as usize,
+	    comb_tuning_r6: (FreeverbDefaultTuning::COMB_TUNING_R6 as f32 * scale_factor) as usize,
+	    comb_tuning_l7: (FreeverbDefaultTuning::COMB_TUNING_L7 as f32 * scale_factor) as usize,
+	    comb_tuning_r7: (FreeverbDefaultTuning::COMB_TUNING_R7 as f32 * scale_factor) as usize,
+	    comb_tuning_l8: (FreeverbDefaultTuning::COMB_TUNING_L8 as f32 * scale_factor) as usize,
+	    comb_tuning_r8: (FreeverbDefaultTuning::COMB_TUNING_R8 as f32 * scale_factor) as usize,
+	    allpass_tuning_l1: (FreeverbDefaultTuning::ALLPASS_TUNING_L1 as f32 * scale_factor) as usize,
+	    allpass_tuning_r1: (FreeverbDefaultTuning::ALLPASS_TUNING_R1 as f32 * scale_factor) as usize,
+	    allpass_tuning_l2: (FreeverbDefaultTuning::ALLPASS_TUNING_L2 as f32 * scale_factor) as usize,
+	    allpass_tuning_r2: (FreeverbDefaultTuning::ALLPASS_TUNING_R2 as f32 * scale_factor) as usize,
+	    allpass_tuning_l3: (FreeverbDefaultTuning::ALLPASS_TUNING_L3 as f32 * scale_factor) as usize,
+	    allpass_tuning_r3: (FreeverbDefaultTuning::ALLPASS_TUNING_R3 as f32 * scale_factor) as usize,
+	    allpass_tuning_l4: (FreeverbDefaultTuning::ALLPASS_TUNING_L4 as f32 * scale_factor) as usize,
+	    allpass_tuning_r4: (FreeverbDefaultTuning::ALLPASS_TUNING_R4 as f32 * scale_factor) as usize,
+	}
+    }
+}
+
 /**
  * A sample-wise allpass filter to be used with the reverb effect.
  *
@@ -57,7 +134,7 @@ struct Allpass {
     delay_buffer: Vec<f32>,
     delay_buffer_size: usize,
     delay_idx: usize,
-    feedback: f32,
+    feedback: f32,    
 }
 
 impl Allpass {
@@ -164,87 +241,90 @@ pub struct MultichannelFreeverb<const BUFSIZE: usize, const NCHAN: usize> {
     wet1: f32,
     wet2: f32,
     width: f32,
+    tuning: FreeverbTuning,
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> MultichannelFreeverb<BUFSIZE, NCHAN> {
-    pub fn new() -> Self {
+    pub fn new(sr: f32) -> Self {
         let mut combs = Vec::new();
         let mut allpasses = Vec::new();
+	let tuning = FreeverbTuning::new(sr);
         for i in 0..NCHAN {
             combs.push(Vec::new());
             allpasses.push(Vec::new());
 
             combs[i].push((
-                Comb::with_buffer_size(FreeverbDefaultTuning::COMB_TUNING_L1),
-                Comb::with_buffer_size(FreeverbDefaultTuning::COMB_TUNING_R1),
+                Comb::with_buffer_size(tuning.comb_tuning_l1),
+                Comb::with_buffer_size(tuning.comb_tuning_r1),
             ));
             combs[i].push((
-                Comb::with_buffer_size(FreeverbDefaultTuning::COMB_TUNING_L2),
-                Comb::with_buffer_size(FreeverbDefaultTuning::COMB_TUNING_R2),
+                Comb::with_buffer_size(tuning.comb_tuning_l2),
+                Comb::with_buffer_size(tuning.comb_tuning_r2),
             ));
             combs[i].push((
-                Comb::with_buffer_size(FreeverbDefaultTuning::COMB_TUNING_L3),
-                Comb::with_buffer_size(FreeverbDefaultTuning::COMB_TUNING_R3),
+                Comb::with_buffer_size(tuning.comb_tuning_l3),
+                Comb::with_buffer_size(tuning.comb_tuning_r3),
             ));
             combs[i].push((
-                Comb::with_buffer_size(FreeverbDefaultTuning::COMB_TUNING_L4),
-                Comb::with_buffer_size(FreeverbDefaultTuning::COMB_TUNING_R4),
+                Comb::with_buffer_size(tuning.comb_tuning_l4),
+                Comb::with_buffer_size(tuning.comb_tuning_r4),
             ));
             combs[i].push((
-                Comb::with_buffer_size(FreeverbDefaultTuning::COMB_TUNING_L5),
-                Comb::with_buffer_size(FreeverbDefaultTuning::COMB_TUNING_R5),
+                Comb::with_buffer_size(tuning.comb_tuning_l5),
+                Comb::with_buffer_size(tuning.comb_tuning_r5),
             ));
             combs[i].push((
-                Comb::with_buffer_size(FreeverbDefaultTuning::COMB_TUNING_L6),
-                Comb::with_buffer_size(FreeverbDefaultTuning::COMB_TUNING_R6),
+                Comb::with_buffer_size(tuning.comb_tuning_l6),
+                Comb::with_buffer_size(tuning.comb_tuning_r6),
             ));
             combs[i].push((
-                Comb::with_buffer_size(FreeverbDefaultTuning::COMB_TUNING_L7),
-                Comb::with_buffer_size(FreeverbDefaultTuning::COMB_TUNING_R7),
+                Comb::with_buffer_size(tuning.comb_tuning_l7),
+                Comb::with_buffer_size(tuning.comb_tuning_r7),
             ));
             combs[i].push((
-                Comb::with_buffer_size(FreeverbDefaultTuning::COMB_TUNING_L8),
-                Comb::with_buffer_size(FreeverbDefaultTuning::COMB_TUNING_R8),
+                Comb::with_buffer_size(tuning.comb_tuning_l8),
+                Comb::with_buffer_size(tuning.comb_tuning_r8),
             ));
 
             allpasses[i].push((
-                Allpass::with_buffer_size(FreeverbDefaultTuning::ALLPASS_TUNING_L1),
-                Allpass::with_buffer_size(FreeverbDefaultTuning::ALLPASS_TUNING_R1),
+                Allpass::with_buffer_size(tuning.allpass_tuning_l1),
+                Allpass::with_buffer_size(tuning.allpass_tuning_r1),
             ));
             allpasses[i].push((
-                Allpass::with_buffer_size(FreeverbDefaultTuning::ALLPASS_TUNING_L2),
-                Allpass::with_buffer_size(FreeverbDefaultTuning::ALLPASS_TUNING_R2),
+                Allpass::with_buffer_size(tuning.allpass_tuning_l2),
+                Allpass::with_buffer_size(tuning.allpass_tuning_r2),
             ));
             allpasses[i].push((
-                Allpass::with_buffer_size(FreeverbDefaultTuning::ALLPASS_TUNING_L3),
-                Allpass::with_buffer_size(FreeverbDefaultTuning::ALLPASS_TUNING_R3),
+                Allpass::with_buffer_size(tuning.allpass_tuning_l3),
+                Allpass::with_buffer_size(tuning.allpass_tuning_r3),
             ));
             allpasses[i].push((
-                Allpass::with_buffer_size(FreeverbDefaultTuning::ALLPASS_TUNING_L4),
-                Allpass::with_buffer_size(FreeverbDefaultTuning::ALLPASS_TUNING_R4),
+                Allpass::with_buffer_size(tuning.allpass_tuning_l4),
+                Allpass::with_buffer_size(tuning.allpass_tuning_r4),
             ));
         }
 
-        let wet = FreeverbDefaultTuning::INITIAL_WET * FreeverbDefaultTuning::SCALE_WET;
-        let wet1 = wet * ((FreeverbDefaultTuning::INITIAL_WIDTH / 2.0) + 0.5);
-        let wet2 = wet * ((1.0 - FreeverbDefaultTuning::INITIAL_WIDTH) / 2.0);
+        let wet = tuning.initial_wet * tuning.scale_wet;
+        let wet1 = wet * ((tuning.initial_width / 2.0) + 0.5);
+        let wet2 = wet * ((1.0 - tuning.initial_width) / 2.0);
 
         MultichannelFreeverb {
             combs: combs,
             allpasses: allpasses,
-            gain: FreeverbDefaultTuning::FIXED_GAIN,
-            roomsize: FreeverbDefaultTuning::INITIAL_ROOM,
-            damp: FreeverbDefaultTuning::INITIAL_DAMP,
-            wet: FreeverbDefaultTuning::INITIAL_WET,
+            gain: tuning.fixed_gain,
+            roomsize: tuning.initial_room,
+            damp: tuning.initial_damp,
+            wet: tuning.initial_wet,
             wet1: wet1,
             wet2: wet2,
-            width: FreeverbDefaultTuning::INITIAL_WIDTH,
+            width: tuning.initial_width,
+	    tuning: tuning,
         }
     }
 
     pub fn set_roomsize(&mut self, value: f32) {
         self.roomsize =
-            (value * FreeverbDefaultTuning::SCALE_ROOM) + FreeverbDefaultTuning::OFFSET_ROOM;
+            (value * self.tuning.scale_room) + self.tuning.offset_room;
         // accumulate comb filters in parallel
         for comb in self.combs.iter_mut() {
             for (c_l, c_r) in comb.iter_mut() {
@@ -255,7 +335,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> MultichannelFreeverb<BUFSIZE, NCH
     }
 
     pub fn set_damp(&mut self, value: f32) {
-        self.damp = value * FreeverbDefaultTuning::SCALE_DAMP;
+        self.damp = value * self.tuning.scale_damp;
         for comb in self.combs.iter_mut() {
             for (c_l, c_r) in comb.iter_mut() {
                 c_l.damp1 = self.damp;
@@ -267,7 +347,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> MultichannelFreeverb<BUFSIZE, NCH
     }
 
     pub fn set_wet(&mut self, value: f32) {
-        self.wet = value * FreeverbDefaultTuning::SCALE_WET;
+        self.wet = value * self.tuning.scale_wet;
         self.wet1 = self.wet * ((self.width / 2.0) + 0.5);
         self.wet2 = self.wet * ((1.0 - self.width) / 2.0);
     }
