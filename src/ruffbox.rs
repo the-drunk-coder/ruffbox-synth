@@ -95,12 +95,14 @@ pub struct Ruffbox<const BUFSIZE: usize, const NCHAN: usize> {
     now: f64,
     master_reverb: Box<dyn MultichannelReverb<BUFSIZE, NCHAN> + Send>,
     master_delay: MultichannelDelay<BUFSIZE, NCHAN>,
+    samplerate: f32, // finally after all those years ...
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
     pub fn new(
+	samplerate: f64, 
         live_buffer: bool,
-        life_buffer_time: f32,
+        life_buffer_time: f64,
         reverb_mode: &ReverbMode,
     ) -> Ruffbox<BUFSIZE, NCHAN> {
         let (tx, rx): (
@@ -126,13 +128,13 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
 
         if live_buffer {
             // create live buffer
-            buffers.push(vec![0.0; (44100.0 * life_buffer_time) as usize + 3]);
-            buffer_lengths.push((44100.0 * life_buffer_time) as usize);
+            buffers.push(vec![0.0; (samplerate * life_buffer_time) as usize + 3]);
+            buffer_lengths.push((samplerate * life_buffer_time) as usize);
             println!("live buf time samples: {}", buffer_lengths[0]);
             for _ in 0..10 {
                 // create freeze buffers
-                buffers.push(vec![0.0; (44100.0 * life_buffer_time) as usize + 3]);
-                buffer_lengths.push((44100.0 * life_buffer_time) as usize);
+                buffers.push(vec![0.0; (samplerate * life_buffer_time) as usize + 3]);
+                buffer_lengths.push((samplerate * life_buffer_time) as usize);
             }
         }
 
@@ -169,11 +171,12 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
             new_instances_q_send: tx,
             new_instances_q_rec: rx,
             // timing stuff
-            block_duration: BUFSIZE as f64 / 44100.0,
-            sec_per_sample: 1.0 / 44100.0,
+            block_duration: BUFSIZE as f64 / samplerate,
+            sec_per_sample: 1.0 / samplerate,
             now: 0.0,
             master_reverb: rev,
-            master_delay: MultichannelDelay::new(),
+            master_delay: MultichannelDelay::new(samplerate as f32),
+	    samplerate: samplerate as f32
         }
     }
 
@@ -346,23 +349,23 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
 
         let scheduled_event = match src_type {
             SourceType::SineOsc => {
-                ScheduledEvent::new(timestamp, Box::new(SineSynth::new(44100.0)))
+                ScheduledEvent::new(timestamp, Box::new(SineSynth::new(self.samplerate)))
             }
             SourceType::SineSynth => {
-                ScheduledEvent::new(timestamp, Box::new(SineSynth::new(44100.0)))
+                ScheduledEvent::new(timestamp, Box::new(SineSynth::new(self.samplerate)))
             }
             SourceType::LFTriangleSynth => {
-                ScheduledEvent::new(timestamp, Box::new(LFTriSynth::new(44100.0)))
+                ScheduledEvent::new(timestamp, Box::new(LFTriSynth::new(self.samplerate)))
             }
             SourceType::RissetBell => {
-                ScheduledEvent::new(timestamp, Box::new(RissetBell::new(44100.0)))
+                ScheduledEvent::new(timestamp, Box::new(RissetBell::new(self.samplerate)))
             }
             SourceType::Sampler => ScheduledEvent::new(
                 timestamp,
                 Box::new(NChannelSampler::with_bufnum_len(
                     sample_buf,
                     self.buffer_lengths[sample_buf],
-                    44100.0,
+                    self.samplerate,
                 )),
             ),
             SourceType::LiveSampler => ScheduledEvent::new(
@@ -370,17 +373,17 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
                 Box::new(NChannelSampler::with_bufnum_len(
                     0,
                     self.buffer_lengths[0],
-                    44100.0,
+                    self.samplerate,
                 )),
             ),
             SourceType::LFSawSynth => {
-                ScheduledEvent::new(timestamp, Box::new(LFSawSynth::new(44100.0)))
+                ScheduledEvent::new(timestamp, Box::new(LFSawSynth::new(self.samplerate)))
             }
             SourceType::LFSquareSynth => {
-                ScheduledEvent::new(timestamp, Box::new(LFSquareSynth::new(44100.0)))
+                ScheduledEvent::new(timestamp, Box::new(LFSquareSynth::new(self.samplerate)))
             }
             SourceType::LFCubSynth => {
-                ScheduledEvent::new(timestamp, Box::new(LFCubSynth::new(44100.0)))
+                ScheduledEvent::new(timestamp, Box::new(LFCubSynth::new(self.samplerate)))
             }
         };
 
@@ -430,7 +433,7 @@ mod tests {
 
     #[test]
     fn test_stitch_stuff() {
-        let mut ruff = Ruffbox::<512, 2>::new(true, 2.0);
+        let mut ruff = Ruffbox::<512, 2>::new(44100.0, true, 2.0, &ReverbMode::FreeVerb);
         assert_approx_eq::assert_approx_eq!(ruff.fade_curve[0], 0.0, 0.00001);
         assert_approx_eq::assert_approx_eq!(ruff.fade_curve[127], 1.0, 0.0002);
 
@@ -479,7 +482,8 @@ mod tests {
 
     #[test]
     fn test_load_sample() {
-        let mut ruff = Ruffbox::<512, 2>::new(false, 2.0);
+	// don't use life buffer here ...
+        let mut ruff = Ruffbox::<512, 2>::new(44100.0, false, 2.0, &ReverbMode::FreeVerb);
 
         let mut sample = vec![1.0; 503];
         sample[0] = 0.0;
@@ -499,7 +503,7 @@ mod tests {
 
     #[test]
     fn test_sine_synth_at_block_start() {
-        let mut ruff = Ruffbox::<128, 2>::new(true, 2.0);
+        let mut ruff = Ruffbox::<128, 2>::new(44100.0, true, 2.0, &ReverbMode::FreeVerb);
 
         let inst = ruff.prepare_instance(SourceType::SineSynth, 0.0, 0);
         ruff.set_instance_parameter(inst, SynthParameter::PitchFrequency, 440.0);
@@ -526,7 +530,7 @@ mod tests {
 
     #[test]
     fn test_basic_playback() {
-        let mut ruff = Ruffbox::<128, 2>::new(true, 2.0);
+        let mut ruff = Ruffbox::<128, 2>::new(44100.0, true, 2.0, &ReverbMode::FreeVerb);
 
         // first point and last two points are for eventual interpolation
         let sample1 = [0.0, 0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0, 0.0, 0.0];
@@ -576,7 +580,7 @@ mod tests {
 
     #[test]
     fn reverb_smoke_test() {
-        let mut ruff = Ruffbox::<128, 2>::new(true, 3.0);
+        let mut ruff = Ruffbox::<128, 2>::new(44100.0, true, 2.0, &ReverbMode::FreeVerb);
 
         // first point and last two points are for eventual interpolation
         let sample1 = [0.0, 0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0, 0.0, 0.0];
@@ -609,7 +613,7 @@ mod tests {
 
     #[test]
     fn test_scheduled_playback() {
-        let mut ruff = Ruffbox::<128, 2>::new(true, 2.0);
+        let mut ruff = Ruffbox::<128, 2>::new(44100.0, true, 2.0, &ReverbMode::FreeVerb);
 
         // block duration in seconds
         let block_duration = 0.00290249433;
@@ -666,7 +670,7 @@ mod tests {
 
     #[test]
     fn test_overlap_playback() {
-        let mut ruff = Ruffbox::<128, 2>::new(true, 3.0);
+        let mut ruff = Ruffbox::<128, 2>::new(44100.0, true, 2.0, &ReverbMode::FreeVerb);
 
         // block duration in seconds
         let block_duration = 0.00290249433;
@@ -734,7 +738,7 @@ mod tests {
 
     #[test]
     fn test_disjunct_playback() {
-        let mut ruff = Ruffbox::<128, 2>::new(true, 3.0);
+        let mut ruff = Ruffbox::<128, 2>::new(44100.0, true, 2.0, &ReverbMode::FreeVerb);
 
         // block duration in seconds
         let block_duration = 0.00290249433;
@@ -806,7 +810,7 @@ mod tests {
 
     #[test]
     fn test_late_playback() {
-        let mut ruff = Ruffbox::<128, 2>::new(true, 2.0);
+        let mut ruff = Ruffbox::<128, 2>::new(44100.0, true, 2.0, &ReverbMode::FreeVerb);
 
         let sample1 = [0.0, 0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0, 0.0, 0.0];
 

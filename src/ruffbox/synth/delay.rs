@@ -3,7 +3,7 @@ use crate::ruffbox::synth::MonoEffect;
 use crate::ruffbox::synth::SynthParameter;
 
 pub struct MonoDelay<const BUFSIZE: usize> {
-    buffer: [f32; 88200], // max 2 sec for now
+    buffer: Vec<f32>, // max 2 sec for now
     buffer_idx: usize,
     max_buffer_idx: usize,
     feedback: f32,
@@ -12,14 +12,14 @@ pub struct MonoDelay<const BUFSIZE: usize> {
 }
 
 impl<const BUFSIZE: usize> MonoDelay<BUFSIZE> {
-    pub fn new() -> Self {
+    pub fn new(sr: f32) -> Self {
         MonoDelay {
-            buffer: [0.0; 88200],
+            buffer: vec![0.0; sr as usize * 2],
             buffer_idx: 0,
-            max_buffer_idx: (44100.0 * 0.256) as usize, // 512ms default time
+            max_buffer_idx: (sr * 0.256) as usize, // 512ms default time
             feedback: 0.5,
             dampening_filter: Lpf18::new(3000.0, 0.4, 0.3, 44100.0),
-            samplerate: 44100.0,
+            samplerate: sr,
         }
     }
 }
@@ -70,11 +70,11 @@ pub struct MultichannelDelay<const BUFSIZE: usize, const NCHAN: usize> {
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> MultichannelDelay<BUFSIZE, NCHAN> {
-    pub fn new() -> Self {
+    pub fn new(sr: f32) -> Self {
         let mut delays = Vec::new();
 
         for _ in 0..NCHAN {
-            delays.push(MonoDelay::<BUFSIZE>::new());
+            delays.push(MonoDelay::<BUFSIZE>::new(sr));
         }
 
         MultichannelDelay { delays: delays }
