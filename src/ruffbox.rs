@@ -1,6 +1,6 @@
 pub mod synth;
 
-use rubato::{InterpolationParameters, InterpolationType, Resampler, SincFixedIn, WindowFunction};
+use rubato::{Resampler, FftFixedIn};
 
 // crossbeam for the event queue
 use crossbeam::atomic::AtomicCell;
@@ -430,15 +430,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
 	    
             let mut samples_resampled: Vec<f32> = Vec::new();
 
-            let params = InterpolationParameters {
-                sinc_len: 256,
-                f_cutoff: 0.95,
-                interpolation: InterpolationType::Nearest,
-                oversampling_factor: 160,
-                window: WindowFunction::BlackmanHarris2,
-            };
-            let mut resampler =
-                SincFixedIn::<f32>::new(self.samplerate as f64 / sr as f64, params, 1024, 1);
+	    let mut resampler =  FftFixedIn::<f32>::new(sr as usize, self.samplerate as usize, 1024, 1, 1);
 
             // interpolation samples
             samples_resampled.push(0.0);
