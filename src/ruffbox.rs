@@ -100,7 +100,7 @@ pub struct Ruffbox<const BUFSIZE: usize, const NCHAN: usize> {
 
 impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
     pub fn new(
-	samplerate: f64, 
+        samplerate: f64,
         live_buffer: bool,
         life_buffer_time: f64,
         reverb_mode: &ReverbMode,
@@ -176,7 +176,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
             now: 0.0,
             master_reverb: rev,
             master_delay: MultichannelDelay::new(samplerate as f32),
-	    samplerate: samplerate as f32
+            samplerate: samplerate as f32,
         }
     }
 
@@ -482,7 +482,7 @@ mod tests {
 
     #[test]
     fn test_load_sample() {
-	// don't use life buffer here ...
+        // don't use life buffer here ...
         let mut ruff = Ruffbox::<512, 2>::new(44100.0, false, 2.0, &ReverbMode::FreeVerb);
 
         let mut sample = vec![1.0; 503];
