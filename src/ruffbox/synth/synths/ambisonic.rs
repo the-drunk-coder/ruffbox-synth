@@ -20,7 +20,7 @@ impl<const BUFSIZE: usize> SineSynthAmbiO1<BUFSIZE> {
     pub fn new(sr: f32) -> Self {
         SineSynthAmbiO1 {
             oscillator: SineOsc::new(440.0, 0.5, sr),
-            envelope: ASREnvelope::new(sr, 0.3, 0.05, 0.1, 0.05),
+            envelope: ASREnvelope::new(0.3, 0.05, 0.1, 0.05, sr),
             encoder: EncoderO1::new(),
             reverb: 0.0,
             delay: 0.0,
@@ -80,7 +80,7 @@ impl<const BUFSIZE: usize> LFTriSynthAmbiO1<BUFSIZE> {
     pub fn new(sr: f32) -> Self {
         LFTriSynthAmbiO1 {
             oscillator: LFTri::new(440.0, 0.5, sr),
-            envelope: ASREnvelope::new(sr, 0.3, 0.05, 0.1, 0.05),
+            envelope: ASREnvelope::new(0.3, 0.05, 0.1, 0.05, sr),
             encoder: EncoderO1::new(),
             reverb: 0.0,
             delay: 0.0,
@@ -142,7 +142,7 @@ impl<const BUFSIZE: usize> LFSawSynthAmbiO1<BUFSIZE> {
         LFSawSynthAmbiO1 {
             oscillator: LFSaw::new(100.0, 0.8, sr),
             filter: Lpf18::new(1500.0, 0.5, 0.1, sr),
-            envelope: ASREnvelope::new(sr, 1.0, 0.002, 0.02, 0.08),
+            envelope: ASREnvelope::new(1.0, 0.002, 0.02, 0.08, sr),
             encoder: EncoderO1::new(),
             reverb: 0.0,
             delay: 0.0,
@@ -207,7 +207,7 @@ impl<const BUFSIZE: usize> LFSquareSynthAmbiO1<BUFSIZE> {
         LFSquareSynthAmbiO1 {
             oscillator: LFSquare::new(100.0, 0.4, 0.8, sr),
             filter: Lpf18::new(1500.0, 0.5, 0.1, sr),
-            envelope: ASREnvelope::new(sr, 1.0, 0.002, 0.02, 0.08),
+            envelope: ASREnvelope::new(1.0, 0.002, 0.02, 0.08, sr),
             encoder: EncoderO1::new(),
             reverb: 0.0,
             delay: 0.0,
@@ -275,7 +275,7 @@ impl<const BUFSIZE: usize> AmbiSamplerO1<BUFSIZE> {
 
         AmbiSamplerO1 {
             sampler: Sampler::with_bufnum_len(bufnum, buflen, true),
-            envelope: ASREnvelope::new(sr, 1.0, 0.0001, dur, 0.0001),
+            envelope: ASREnvelope::new(1.0, 0.0001, dur, 0.0001, sr),
             hpf: BiquadHpf::new(10.0, 0.01, sr),
             peak_eq: PeakEq::new(700.0, 100.0, 0.0, sr),
             lpf: Lpf18::new(19500.0, 0.01, 0.01, sr),

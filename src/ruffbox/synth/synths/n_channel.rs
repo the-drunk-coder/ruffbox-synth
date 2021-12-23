@@ -20,7 +20,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> SineSynth<BUFSIZE, NCHAN> {
     pub fn new(sr: f32) -> Self {
         SineSynth {
             oscillator: SineOsc::new(440.0, 0.5, sr),
-            envelope: ASREnvelope::new(sr, 0.3, 0.05, 0.1, 0.05),
+            envelope: ASREnvelope::new(0.3, 0.05, 0.1, 0.05, sr),
             balance: PanChan::new(),
             reverb: 0.0,
             delay: 0.0,
@@ -81,7 +81,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> LFCubSynth<BUFSIZE, NCHAN> {
     pub fn new(sr: f32) -> Self {
         LFCubSynth {
             oscillator: LFCub::new(440.0, 0.5, sr),
-            envelope: ASREnvelope::new(sr, 0.3, 0.05, 0.1, 0.05),
+            envelope: ASREnvelope::new(0.3, 0.05, 0.1, 0.05, sr),
             filter: Lpf18::new(1500.0, 0.5, 0.1, sr),
             balance: PanChan::new(),
             reverb: 0.0,
@@ -145,7 +145,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> LFTriSynth<BUFSIZE, NCHAN> {
     pub fn new(sr: f32) -> Self {
         LFTriSynth {
             oscillator: LFTri::new(440.0, 0.5, sr),
-            envelope: ASREnvelope::new(sr, 0.3, 0.05, 0.1, 0.05),
+            envelope: ASREnvelope::new(0.3, 0.05, 0.1, 0.05, sr),
             balance: PanChan::new(),
             reverb: 0.0,
             delay: 0.0,
@@ -209,7 +209,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> LFSawSynth<BUFSIZE, NCHAN> {
         LFSawSynth {
             oscillator: LFSaw::new(100.0, 0.8, sr),
             filter: Lpf18::new(1500.0, 0.5, 0.1, sr),
-            envelope: ASREnvelope::new(sr, 1.0, 0.002, 0.02, 0.08),
+            envelope: ASREnvelope::new(1.0, 0.002, 0.02, 0.08, sr),
             balance: PanChan::new(),
             reverb: 0.0,
             delay: 0.0,
@@ -276,7 +276,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> LFSquareSynth<BUFSIZE, NCHAN> {
         LFSquareSynth {
             oscillator: LFSquare::new(100.0, 0.4, 0.8, sr),
             filter: Lpf18::new(1500.0, 0.5, 0.1, sr),
-            envelope: ASREnvelope::new(sr, 1.0, 0.002, 0.02, 0.08),
+            envelope: ASREnvelope::new(1.0, 0.002, 0.02, 0.08, sr),
             balance: PanChan::new(),
             reverb: 0.0,
             delay: 0.0,
@@ -350,7 +350,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> NChannelSampler<BUFSIZE, NCHAN> {
 
         NChannelSampler {
             sampler: Sampler::with_bufnum_len(bufnum, buflen, true),
-            envelope: ASREnvelope::new(sr, 1.0, 0.0001, dur, 0.0001),
+            envelope: ASREnvelope::new(1.0, 0.0001, dur, 0.0001, sr),
             hpf: BiquadHpf::new(20.0, 0.3, sr),
             peak_eq: PeakEq::new(700.0, 100.0, 0.0, sr),
             lpf: Lpf18::new(19500.0, 0.01, 0.01, sr),
@@ -433,8 +433,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RissetBell<BUFSIZE, NCHAN> {
     pub fn new(sr: f32) -> RissetBell<BUFSIZE, NCHAN> {
         let mut bell = RissetBell {
             oscillators: [SineOsc::new(440.0, 1.0, sr); 11],
-            envelopes: [ExpPercEnvelope::new(sr, 1.0, 0.005, 0.0, 0.05); 11],
-            main_envelope: ASREnvelope::new(sr, 1.0, 0.05, 0.5, 0.05),
+            envelopes: [ExpPercEnvelope::new(1.0, 0.005, 0.0, 0.05, sr); 11],
+            main_envelope: ASREnvelope::new(1.0, 0.05, 0.5, 0.05, sr),
             amps: [1.0, 0.67, 1.0, 1.8, 2.67, 1.67, 1.46, 1.33, 1.33, 1.0, 1.33],
             durs: [
                 1.0, 0.9, 0.65, 0.55, 0.325, 0.35, 0.25, 0.2, 0.15, 0.1, 0.075,

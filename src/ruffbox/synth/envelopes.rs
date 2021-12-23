@@ -21,15 +21,15 @@ pub struct ASREnvelope<const BUFSIZE: usize> {
 }
 
 impl<const BUFSIZE: usize> ASREnvelope<BUFSIZE> {
-    pub fn new(samplerate: f32, lvl: f32, atk: f32, sus: f32, rel: f32) -> Self {
-        let atk_samples = (samplerate * atk).round();
-        let sus_samples = atk_samples + (samplerate * sus).round();
-        let rel_samples = sus_samples + (samplerate * rel).round();
+    pub fn new(lvl: f32, atk: f32, sus: f32, rel: f32, sr: f32) -> Self {
+        let atk_samples = (sr * atk).round();
+        let sus_samples = atk_samples + (sr * sus).round();
+        let rel_samples = sus_samples + (sr * rel).round();
 
         //println!("atk sam: {} sus sam: {} rel sam: {}", atk_samples.round(), sus_samples.round(), rel_samples.round());
 
         ASREnvelope {
-            samplerate: samplerate,
+            samplerate: sr,
             atk: atk,
             sus: sus,
             rel: rel,
@@ -154,10 +154,10 @@ pub struct ExpPercEnvelope<const BUFSIZE: usize> {
 }
 
 impl<const BUFSIZE: usize> ExpPercEnvelope<BUFSIZE> {
-    pub fn new(samplerate: f32, lvl: f32, atk: f32, sus: f32, rel: f32) -> Self {
-        let atk_samples = (samplerate * atk).round() as usize;
-        let sus_samples = atk_samples + (samplerate * sus).round() as usize;
-        let rel_samples = (samplerate * rel).round() as usize;
+    pub fn new(lvl: f32, atk: f32, sus: f32, rel: f32, sr: f32) -> Self {
+        let atk_samples = (sr * atk).round() as usize;
+        let sus_samples = atk_samples + (sr * sus).round() as usize;
+        let rel_samples = (sr * rel).round() as usize;
 
         let atk_inc = 1.0 / atk_samples as f32;
         let rel_inc = 1.0 / rel_samples as f32;
@@ -165,7 +165,7 @@ impl<const BUFSIZE: usize> ExpPercEnvelope<BUFSIZE> {
         //println!("atk sam: {} sus sam: {} rel sam: {}", atk_samples, sus_samples, rel_samples );
 
         ExpPercEnvelope {
-            samplerate: samplerate,
+            samplerate: sr,
             atk: atk,
             sus: sus,
             rel: rel,
@@ -276,7 +276,7 @@ mod tests {
         let test_block: [f32; 128] = [1.0; 128];
 
         // half a block attack, one block sustain, half a block release ... 2 blocks total .
-        let mut env = ASREnvelope::<128>::new(44100.0, 0.5, 0.0014512, 0.0029024, 0.0014512);
+        let mut env = ASREnvelope::<128>::new(0.5, 0.0014512, 0.0029024, 0.0014512, 44100.0);
 
         let out_1: [f32; 128] = env.process_block(test_block, 0);
         let out_2: [f32; 128] = env.process_block(test_block, 0);
@@ -324,7 +324,7 @@ mod tests {
         let test_block: [f32; 128] = [1.0; 128];
 
         // half a block attack, one block sustain, half a block release ... 2 blocks total .
-        let mut env = ASREnvelope::<128>::new(44100.0, 0.0, 0.0, 0.0, 0.0);
+        let mut env = ASREnvelope::<128>::new(0.0, 0.0, 0.0, 0.0, 44100.0);
 
         // use paramter setter to set parameters ...
         env.set_parameter(SynthParameter::Attack, 0.0014512);
@@ -377,9 +377,9 @@ mod tests {
         let test_block: [f32; 128] = [1.0; 128];
 
         // let this one start at the beginning of a block
-        let mut env_at_start = ASREnvelope::<128>::new(44100.0, 0.0, 0.0, 0.0, 0.0);
+        let mut env_at_start = ASREnvelope::<128>::new(0.0, 0.0, 0.0, 0.0, 44100.0);
         // let this one start somewhere in the block
-        let mut env_with_offset = ASREnvelope::<128>::new(44100.0, 0.0, 0.0, 0.0, 0.0);
+        let mut env_with_offset = ASREnvelope::<128>::new(0.0, 0.0, 0.0, 0.0, 44100.0);
 
         // use paramter setter to set parameters ...
         println!("Set parameters for env at start:");
@@ -421,7 +421,7 @@ mod tests {
 
     #[test]
     fn perc_exp_smoke_test() {
-        let mut exp_env = ExpPercEnvelope::<128>::new(16000.0, 1.0, 0.05, 0.0, 1.0);
+        let mut exp_env = ExpPercEnvelope::<128>::new(1.0, 0.05, 0.0, 1.0, 16000.0);
         let test_block: [f32; 128] = [1.0; 128];
         let mut out = Vec::new();
         for _ in 0..132 {
