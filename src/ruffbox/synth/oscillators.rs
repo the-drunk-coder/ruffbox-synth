@@ -48,7 +48,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
         false
     }
 
-    fn get_next_block(&mut self, start_sample: usize, _: &Vec<Vec<f32>>) -> [f32; BUFSIZE] {
+    fn get_next_block(&mut self, start_sample: usize, _: &[Vec<f32>]) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
         for i in start_sample..BUFSIZE {
@@ -112,7 +112,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSaw<BUFSIZE> {
         false
     }
 
-    fn get_next_block(&mut self, start_sample: usize, _: &Vec<Vec<f32>>) -> [f32; BUFSIZE] {
+    fn get_next_block(&mut self, start_sample: usize, _: &[Vec<f32>]) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
         for i in start_sample..BUFSIZE {
@@ -172,7 +172,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFCub<BUFSIZE> {
         false
     }
 
-    fn get_next_block(&mut self, start_sample: usize, _: &Vec<Vec<f32>>) -> [f32; BUFSIZE] {
+    fn get_next_block(&mut self, start_sample: usize, _: &[Vec<f32>]) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
         let mut z: f32;
@@ -246,7 +246,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSquare<BUFSIZE> {
         false
     }
 
-    fn get_next_block(&mut self, start_sample: usize, _: &Vec<Vec<f32>>) -> [f32; BUFSIZE] {
+    fn get_next_block(&mut self, start_sample: usize, _: &[Vec<f32>]) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
         for i in start_sample..BUFSIZE {
@@ -453,7 +453,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFTri<BUFSIZE> {
         false
     }
 
-    fn get_next_block(&mut self, start_sample: usize, _: &Vec<Vec<f32>>) -> [f32; BUFSIZE] {
+    fn get_next_block(&mut self, start_sample: usize, _: &[Vec<f32>]) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
         for i in start_sample..BUFSIZE {

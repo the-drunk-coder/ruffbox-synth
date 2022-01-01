@@ -36,7 +36,7 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
     fn get_next_block_no_interp(
         &mut self,
         start_sample: usize,
-        sample_buffers: &Vec<Vec<f32>>,
+        sample_buffers: &[Vec<f32>],
     ) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
@@ -61,7 +61,7 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
     fn get_next_block_interp(
         &mut self,
         start_sample: usize,
-        sample_buffers: &Vec<Vec<f32>>,
+        sample_buffers: &[Vec<f32>],
     ) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
@@ -142,7 +142,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
     fn get_next_block(
         &mut self,
         start_sample: usize,
-        sample_buffers: &Vec<Vec<f32>>,
+        sample_buffers: &[Vec<f32>],
     ) -> [f32; BUFSIZE] {
         if self.playback_rate == 1.0 {
             self.get_next_block_no_interp(start_sample, sample_buffers)

@@ -51,7 +51,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN> for SineSyn
     fn get_next_block(
         &mut self,
         start_sample: usize,
-        sample_buffers: &Vec<Vec<f32>>,
+        sample_buffers: &[Vec<f32>],
     ) -> [[f32; BUFSIZE]; NCHAN] {
         let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample, sample_buffers);
         out = self.envelope.process_block(out, start_sample);
@@ -116,7 +116,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
     fn get_next_block(
         &mut self,
         start_sample: usize,
-        sample_buffers: &Vec<Vec<f32>>,
+        sample_buffers: &[Vec<f32>],
     ) -> [[f32; BUFSIZE]; NCHAN] {
         let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample, sample_buffers);
         out = self.envelope.process_block(out, start_sample);
@@ -178,7 +178,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
     fn get_next_block(
         &mut self,
         start_sample: usize,
-        sample_buffers: &Vec<Vec<f32>>,
+        sample_buffers: &[Vec<f32>],
     ) -> [[f32; BUFSIZE]; NCHAN] {
         let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample, sample_buffers);
         out = self.envelope.process_block(out, start_sample);
@@ -244,7 +244,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
     fn get_next_block(
         &mut self,
         start_sample: usize,
-        sample_buffers: &Vec<Vec<f32>>,
+        sample_buffers: &[Vec<f32>],
     ) -> [[f32; BUFSIZE]; NCHAN] {
         let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample, sample_buffers);
         out = self.filter.process_block(out, start_sample);
@@ -311,7 +311,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
     fn get_next_block(
         &mut self,
         start_sample: usize,
-        sample_buffers: &Vec<Vec<f32>>,
+        sample_buffers: &[Vec<f32>],
     ) -> [[f32; BUFSIZE]; NCHAN] {
         let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample, sample_buffers);
         out = self.filter.process_block(out, start_sample);
@@ -390,7 +390,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
     fn get_next_block(
         &mut self,
         start_sample: usize,
-        sample_buffers: &Vec<Vec<f32>>,
+        sample_buffers: &[Vec<f32>],
     ) -> [[f32; BUFSIZE]; NCHAN] {
         let mut out: [f32; BUFSIZE] = self.sampler.get_next_block(start_sample, sample_buffers);
         out = self.hpf.process_block(out, start_sample);
@@ -536,7 +536,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
     fn get_next_block(
         &mut self,
         start_sample: usize,
-        sample_buffers: &Vec<Vec<f32>>,
+        sample_buffers: &[Vec<f32>],
     ) -> [[f32; BUFSIZE]; NCHAN] {
         // first osc
         let mut out: [f32; BUFSIZE] =
