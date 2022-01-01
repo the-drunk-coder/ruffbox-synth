@@ -16,11 +16,11 @@ pub extern "C" fn alloc(size: usize) -> *mut f32 {
 pub mod ruffbox;
 
 lazy_static! {
-    static ref RUFF: Mutex<ruffbox::Ruffbox<128, 2>> = Mutex::new(ruffbox::Ruffbox::new(	
-	false,
+    static ref RUFF: Mutex<ruffbox::Ruffbox<128, 2>> = Mutex::new(ruffbox::Ruffbox::new(
+        false,
         0.0,
         &ruffbox::ReverbMode::FreeVerb,
-	44100.0
+        44100.0
     ));
 }
 

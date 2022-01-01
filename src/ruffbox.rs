@@ -1,6 +1,6 @@
 pub mod synth;
 
-use rubato::{Resampler, FftFixedIn};
+use rubato::{FftFixedIn, Resampler};
 
 // crossbeam for the event queue
 use crossbeam::atomic::AtomicCell;
@@ -101,11 +101,11 @@ pub struct Ruffbox<const BUFSIZE: usize, const NCHAN: usize> {
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
-    pub fn new(        
+    pub fn new(
         live_buffer: bool,
         life_buffer_time: f64,
         reverb_mode: &ReverbMode,
-	samplerate: f64
+        samplerate: f64,
     ) -> Ruffbox<BUFSIZE, NCHAN> {
         let (tx, rx): (
             Sender<ScheduledEvent<BUFSIZE, NCHAN>>,
@@ -123,30 +123,30 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
                 Box::new(mrev)
             }
             ReverbMode::Convolution(ir, sr) => {
-		let mut ir_clone = ir.clone();
-		// resample IR if needed ...
-		if *sr as f64 != samplerate {
-		    // zero-pad for resampling blocks
-		    if (ir.len() as f32 % 1024.0) > 0.0 {
-			let diff = 1024 - (ir.len() % 1024);
-			ir_clone.append(&mut vec![0.0; diff]);			
-		    }
-		    
-		    let mut ir_resampled: Vec<f32> = Vec::new();
-		    let mut resampler =  FftFixedIn::<f32>::new(*sr as usize, samplerate as usize, 1024, 1, 1);
-		    
-		    let num_chunks = ir.len() / 1024;
-		    for chunk in 0..num_chunks {
-			let chunk = vec![ir_clone[(1024 * chunk)..(1024 * (chunk + 1))].to_vec()];
-			let mut waves_out = resampler.process(&chunk).unwrap();
-			ir_resampled.append(&mut waves_out[0]);
-		    }
-		    Box::new(MultichannelConvolutionReverb::with_ir(&ir_resampled))
-		} else {
-		    Box::new(MultichannelConvolutionReverb::with_ir(&ir))
-		}
-		
-	    },
+                let mut ir_clone = ir.clone();
+                // resample IR if needed ...
+                if *sr as f64 != samplerate {
+                    // zero-pad for resampling blocks
+                    if (ir.len() as f32 % 1024.0) > 0.0 {
+                        let diff = 1024 - (ir.len() % 1024);
+                        ir_clone.append(&mut vec![0.0; diff]);
+                    }
+
+                    let mut ir_resampled: Vec<f32> = Vec::new();
+                    let mut resampler =
+                        FftFixedIn::<f32>::new(*sr as usize, samplerate as usize, 1024, 1, 1);
+
+                    let num_chunks = ir.len() / 1024;
+                    for chunk in 0..num_chunks {
+                        let chunk = vec![ir_clone[(1024 * chunk)..(1024 * (chunk + 1))].to_vec()];
+                        let mut waves_out = resampler.process(&chunk).unwrap();
+                        ir_resampled.append(&mut waves_out[0]);
+                    }
+                    Box::new(MultichannelConvolutionReverb::with_ir(&ir_resampled))
+                } else {
+                    Box::new(MultichannelConvolutionReverb::with_ir(&ir))
+                }
+            }
         };
 
         let mut buffers = Vec::with_capacity(2000);
@@ -448,9 +448,10 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
                 let diff = 1024 - (samples.len() % 1024);
                 samples.append(&mut vec![0.0; diff]);
             }
-	    
+
             let mut samples_resampled: Vec<f32> = Vec::new();
-	    let mut resampler =  FftFixedIn::<f32>::new(sr as usize, self.samplerate as usize, 1024, 1, 1);
+            let mut resampler =
+                FftFixedIn::<f32>::new(sr as usize, self.samplerate as usize, 1024, 1, 1);
 
             // interpolation samples
             samples_resampled.push(0.0);
