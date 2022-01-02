@@ -545,10 +545,7 @@ mod tests {
         // don't use life buffer here ...
         let mut ruff = Ruffbox::<512, 2>::new(false, 2.0, &ReverbMode::FreeVerb, 44100.0);
 
-        let mut sample = vec![1.0_f32; 503];
-        sample[0] = 0.0;
-        sample[501] = 0.0;
-        sample[502] = 0.0;
+        let mut sample = vec![1.0_f32; 500];
 
         ruff.load_sample(&mut sample, false, 44100.0);
 
@@ -593,9 +590,7 @@ mod tests {
         let mut ruff = Ruffbox::<128, 2>::new(true, 2.0, &ReverbMode::FreeVerb, 44100.0);
 
         let mut sample1 = vec![0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
-        let mut sample2 = vec![
-            0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0
-        ];
+        let mut sample2 = vec![0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0];
 
         let bnum1 = ruff.load_sample(&mut sample1, false, 44100.0);
         let bnum2 = ruff.load_sample(&mut sample2, false, 44100.0);
@@ -640,7 +635,7 @@ mod tests {
     #[test]
     fn reverb_smoke_test() {
         let mut ruff = Ruffbox::<128, 2>::new(true, 2.0, &ReverbMode::FreeVerb, 44100.0);
-       
+
         let mut sample1 = vec![0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
 
         let bnum1 = ruff.load_sample(&mut sample1, false, 44100.0);
@@ -675,11 +670,9 @@ mod tests {
 
         // block duration in seconds
         let block_duration = 0.00290249433;
-        
-        let mut sample1 = vec![0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0,];
-        let mut sample2 = vec![
-            0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0, 
-        ];
+
+        let mut sample1 = vec![0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
+        let mut sample2 = vec![0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0];
 
         let bnum1 = ruff.load_sample(&mut sample1, false, 44100.0);
         let bnum2 = ruff.load_sample(&mut sample2, false, 44100.0);
@@ -734,9 +727,7 @@ mod tests {
         let sec_per_sample = 0.00002267573;
 
         let mut sample1 = vec![0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
-        let mut sample2 = vec![
-            0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0
-        ];
+        let mut sample2 = vec![0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0];
 
         let bnum1 = ruff.load_sample(&mut sample1, false, 44100.0);
         let bnum2 = ruff.load_sample(&mut sample2, false, 44100.0);
@@ -801,9 +792,7 @@ mod tests {
         let block_duration = 0.00290249433;
 
         let mut sample1 = vec![0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
-        let mut sample2 = vec![
-            0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0
-        ];
+        let mut sample2 = vec![0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0];
 
         let bnum1 = ruff.load_sample(&mut sample1, false, 44100.0);
         let bnum2 = ruff.load_sample(&mut sample2, false, 44100.0);
