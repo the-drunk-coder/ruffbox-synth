@@ -92,7 +92,7 @@ impl<const BUFSIZE: usize> UniformPartitionedConvolution<BUFSIZE> {
         // (in this case, as filter length is always equal to blocksize,
         // the remainder is just the previous block)
         self.tmp_in[..BUFSIZE].copy_from_slice(&self.remainder[..BUFSIZE]);
-        self.tmp_in[BUFSIZE..(2 * BUFSIZE) - 1].copy_from_slice(&input[..BUFSIZE]);
+        self.tmp_in[BUFSIZE..(2 * BUFSIZE)].copy_from_slice(&input[..BUFSIZE]);
 
         // perform fft
         self.frequency_delay_line[self.frequency_delay_line_idx] = self.fft.forward(&self.tmp_in);
