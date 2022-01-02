@@ -5,6 +5,12 @@ pub struct PanChan<const BUFSIZE: usize, const NCHAN: usize> {
     levels: [f32; NCHAN],
 }
 
+impl<const BUFSIZE: usize, const NCHAN: usize> Default for PanChan<BUFSIZE, NCHAN> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<const BUFSIZE: usize, const NCHAN: usize> PanChan<BUFSIZE, NCHAN> {
     pub fn new() -> Self {
         let mut lvls = [0.0; NCHAN];
@@ -13,27 +19,29 @@ impl<const BUFSIZE: usize, const NCHAN: usize> PanChan<BUFSIZE, NCHAN> {
         PanChan { levels: lvls }
     }
 
-    /// some parameter limits might be nice ...
+    /// Set the parameter for this panner.
     pub fn set_parameter(&mut self, par: SynthParameter, value: f32) {
-        match par {
-            SynthParameter::ChannelPosition => {
-                let mut lvls = [0.0; NCHAN];
+        // if it was more parameters, match would be better,
+        // but this way clippy doesn't complain
+        if par == SynthParameter::ChannelPosition {
+            let mut lvls = [0.0; NCHAN];
 
-                let lower = value.floor();
-                let angle_rad = (value - lower) * PI * 0.5;
+            let lower = value.floor();
+            let angle_rad = (value - lower) * PI * 0.5;
 
-                let upper = lower + 1.0;
+            let upper = lower + 1.0;
 
-                lvls[lower as usize % (NCHAN as usize)] = angle_rad.cos();
-                lvls[upper as usize % (NCHAN as usize)] = angle_rad.sin();
+            lvls[lower as usize % (NCHAN as usize)] = angle_rad.cos();
+            lvls[upper as usize % (NCHAN as usize)] = angle_rad.sin();
 
-                self.levels = lvls;
-            }
-            _ => (),
-        };
+            self.levels = lvls;
+        }
     }
+
     /// pan mono to stereo
+    #[allow(clippy::needless_range_loop)]
     pub fn process_block(&mut self, block: [f32; BUFSIZE]) -> [[f32; BUFSIZE]; NCHAN] {
+        // I think the range loop is way more intuitive and easy to read here ...
         let mut out_buf = [[0.0; BUFSIZE]; NCHAN];
         for c in 0..NCHAN {
             for s in 0..BUFSIZE {

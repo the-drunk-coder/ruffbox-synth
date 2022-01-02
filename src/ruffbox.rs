@@ -144,7 +144,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
                     }
                     Box::new(MultichannelConvolutionReverb::with_ir(&ir_resampled))
                 } else {
-                    Box::new(MultichannelConvolutionReverb::with_ir(&ir))
+                    Box::new(MultichannelConvolutionReverb::with_ir(ir))
                 }
             }
         };
@@ -182,16 +182,16 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
         Ruffbox {
             running_instances: Vec::with_capacity(600),
             pending_events: Vec::with_capacity(600),
-            buffers: buffers,
-            buffer_lengths: buffer_lengths,
+            buffers,
+            buffer_lengths,
             live_buffer_idx: 1,
             live_buffer_current_block: 0,
             live_buffer_stitch_size: stitch_size,
-            stitch_buffer: stitch_buffer,
-            fade_curve: fade_curve,
+            stitch_buffer,
+            fade_curve,
             non_stitch_size: bufsize - stitch_size,
             fade_stitch_idx: 0,
-            bufsize: bufsize,
+            bufsize,
             prepared_instance_map: HashMap::with_capacity(1200),
             instance_counter: AtomicCell::new(0),
             new_instances_q_send: tx,

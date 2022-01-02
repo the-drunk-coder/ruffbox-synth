@@ -28,15 +28,15 @@ impl<const BUFSIZE: usize> BiquadHpf<BUFSIZE> {
         let b0 = q / ((k_pow_two * q) + k + q);
         BiquadHpf {
             cutoff: freq,
-            q: q,
+            q,
             a1: (2.0 * q * (k_pow_two - 1.0)) / ((k_pow_two * q) + k + q),
             a2: ((k_pow_two * q) - k + q) / ((k_pow_two * q) + k + q),
-            b0: b0,
+            b0,
             b1: -1.0 * ((2.0 * q) / ((k_pow_two * q) + k + q)),
             b2: b0,
             del1: 0.0,
             del2: 0.0,
-            k: k,
+            k,
             samplerate: sr,
         }
     }

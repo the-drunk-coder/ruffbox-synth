@@ -7,7 +7,7 @@ pub struct MultichannelConvolutionReverb<const BUFSIZE: usize, const NCHAN: usiz
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> MultichannelConvolutionReverb<BUFSIZE, NCHAN> {
-    pub fn with_ir(ir: &Vec<f32>) -> MultichannelConvolutionReverb<BUFSIZE, NCHAN> {
+    pub fn with_ir(ir: &[f32]) -> MultichannelConvolutionReverb<BUFSIZE, NCHAN> {
         let mut channel_convolvers = Vec::new();
         for _ in 0..NCHAN {
             channel_convolvers.push(UniformPartitionedConvolution::with_ir(ir.to_vec()));

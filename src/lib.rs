@@ -24,21 +24,29 @@ lazy_static! {
     ));
 }
 
+/// # Safety
+/// Main processing function.
+/// This function needs to be called in the audio thread of an external.
 #[no_mangle]
-pub extern "C" fn process(out_ptr_l: *mut f32, out_ptr_r: *mut f32, size: usize, stream_time: f64) {
+pub unsafe extern "C" fn process(
+    out_ptr_l: *mut f32,
+    out_ptr_r: *mut f32,
+    size: usize,
+    stream_time: f64,
+) {
     let mut ruff = RUFF.lock();
 
-    let out_buf_l: &mut [f32] = unsafe { std::slice::from_raw_parts_mut(out_ptr_l, size) };
-    let out_buf_r: &mut [f32] = unsafe { std::slice::from_raw_parts_mut(out_ptr_r, size) };
+    let out_buf_l: &mut [f32] = std::slice::from_raw_parts_mut(out_ptr_l, size);
+    let out_buf_r: &mut [f32] = std::slice::from_raw_parts_mut(out_ptr_r, size);
 
     // no more mono for now ...
     let out = ruff.process(stream_time, false);
-    for i in 0..128 {
-        out_buf_l[i] = out[0][i];
-        out_buf_r[i] = out[1][i];
-    }
+
+    out_buf_l[..128].copy_from_slice(&out[0][..128]);
+    out_buf_r[..128].copy_from_slice(&out[1][..128]);
 }
 
+/// Prepare an event instance.
 #[no_mangle]
 pub extern "C" fn prepare(
     src_type: ruffbox::synth::SourceType,
@@ -49,6 +57,7 @@ pub extern "C" fn prepare(
     ruff.prepare_instance(src_type, timestamp, sample_buf)
 }
 
+/// Set parameters for an event.
 #[no_mangle]
 pub extern "C" fn set_instance_parameter(
     instance_id: usize,
@@ -59,21 +68,26 @@ pub extern "C" fn set_instance_parameter(
     ruff.set_instance_parameter(instance_id, par, val);
 }
 
+/// Set a parameter for master effects.
 #[no_mangle]
 pub extern "C" fn set_master_parameter(par: ruffbox::synth::SynthParameter, val: f32) {
     let mut ruff = RUFF.lock();
     ruff.set_master_parameter(par, val);
 }
 
+/// Trigger the event instance.
 #[no_mangle]
 pub extern "C" fn trigger(instance_id: usize) {
     let mut ruff = RUFF.lock();
     ruff.trigger(instance_id);
 }
 
+/// # Safety
+///
+/// This function should only be calles to laod a sample from an external buffer.
 #[no_mangle]
-pub extern "C" fn load(sample_ptr: *mut f32, size: usize) -> usize {
+pub unsafe extern "C" fn load(sample_ptr: *mut f32, size: usize) -> usize {
     let mut ruff = RUFF.lock();
-    let in_buf: &mut [f32] = unsafe { std::slice::from_raw_parts_mut(sample_ptr, size) };
+    let in_buf: &mut [f32] = std::slice::from_raw_parts_mut(sample_ptr, size);
     ruff.load_sample(&mut in_buf.to_vec(), false, 44100.0)
 }

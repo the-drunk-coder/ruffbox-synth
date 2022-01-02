@@ -29,8 +29,14 @@ impl PrecomputedFilter {
         let mut workbuf = filter.to_vec();
         workbuf.resize(self.max_filter_length * 2, 0.0);
         let filter_freq_domain = self.fft.forward(&workbuf);
-        for i in 0..self.spectrum.len() {
-            self.spectrum[i] += filter_freq_domain[i];
+
+        // accumulate spectrum
+        for (i, spectral_bin) in filter_freq_domain
+            .iter()
+            .enumerate()
+            .take(self.spectrum.len())
+        {
+            self.spectrum[i] += spectral_bin;
         }
     }
 

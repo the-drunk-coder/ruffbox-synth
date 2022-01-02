@@ -23,7 +23,7 @@ impl<const BUFSIZE: usize> std::clone::Clone for BlockConvolver<BUFSIZE> {
         BlockConvolver {
             ir_freq_domain: self.ir_freq_domain.clone(),
             in_freq_domain: self.in_freq_domain.clone(),
-            fft: fft,
+            fft,
             tmp_in: vec![0.0; 256],
             tmp_out: vec![0.0; 256],
             remainder: vec![0.0; 128],
@@ -34,21 +34,19 @@ impl<const BUFSIZE: usize> std::clone::Clone for BlockConvolver<BUFSIZE> {
 
 impl<const BUFSIZE: usize> BlockConvolver<BUFSIZE> {
     // create block convolver from ir
-    pub fn from_ir(ir: &Vec<f32>) -> Self {
+    pub fn from_ir(ir: &[f32]) -> Self {
         // check if IR len == BUFSIZE ?
 
         let mut fft = RFft1D::<f32>::new(ir.len() * 2);
 
         // zero-pad impulse response (to match IR lenght)
         let mut ir_zeropad = vec![0.0; BUFSIZE * 2];
-        for i in 0..BUFSIZE / 2 {
-            ir_zeropad[i] = ir[i];
-        }
+        ir_zeropad[..(BUFSIZE / 2)].copy_from_slice(&ir[..(BUFSIZE / 2)]);
 
         BlockConvolver {
             ir_freq_domain: fft.forward(&ir_zeropad),
             in_freq_domain: vec![Complex::new(0.0, 0.0); ir.len() * 2],
-            fft: fft,
+            fft,
             tmp_in: vec![0.0; BUFSIZE * 2],
             tmp_out: vec![0.0; BUFSIZE * 2],
             remainder: vec![0.0; BUFSIZE],
@@ -60,10 +58,8 @@ impl<const BUFSIZE: usize> BlockConvolver<BUFSIZE> {
         // assemble input block from remainder part from previous block
         // (in this case, as filter length is always equal to blocksize,
         // the remainder is just the previous block)
-        for i in 0..BUFSIZE {
-            self.tmp_in[i] = self.remainder[i];
-            self.tmp_in[i + BUFSIZE] = input[i];
-        }
+        self.tmp_in[..BUFSIZE].copy_from_slice(&self.remainder[..BUFSIZE]);
+        self.tmp_in[BUFSIZE..(2 * BUFSIZE) - 1].copy_from_slice(&input[..BUFSIZE]);
 
         // perform fft
         self.in_freq_domain = self.fft.forward(&self.tmp_in);
@@ -78,10 +74,8 @@ impl<const BUFSIZE: usize> BlockConvolver<BUFSIZE> {
 
         // copy relevant part from ifft, scrap the rest
         let mut outarr = [0.0; BUFSIZE];
-        for i in 0..128 {
-            self.remainder[i] = input[i];
-            outarr[i] = self.tmp_out[i + BUFSIZE];
-        }
+        self.remainder[..128].copy_from_slice(&input[..128]);
+        outarr[..128].copy_from_slice(&self.tmp_out[BUFSIZE..(128 + BUFSIZE)]);
 
         // return result block ...
         outarr

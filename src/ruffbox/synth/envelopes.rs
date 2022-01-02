@@ -21,18 +21,18 @@ pub struct ASREnvelope<const BUFSIZE: usize> {
 }
 
 impl<const BUFSIZE: usize> ASREnvelope<BUFSIZE> {
-    pub fn new(lvl: f32, atk: f32, sus: f32, rel: f32, sr: f32) -> Self {
-        let atk_samples = (sr * atk).round();
-        let sus_samples = atk_samples + (sr * sus).round();
-        let rel_samples = sus_samples + (sr * rel).round();
+    pub fn new(lvl: f32, atk: f32, sus: f32, rel: f32, samplerate: f32) -> Self {
+        let atk_samples = (samplerate * atk).round();
+        let sus_samples = atk_samples + (samplerate * sus).round();
+        let rel_samples = sus_samples + (samplerate * rel).round();
 
         //println!("atk sam: {} sus sam: {} rel sam: {}", atk_samples.round(), sus_samples.round(), rel_samples.round());
 
         ASREnvelope {
-            samplerate: sr,
-            atk: atk,
-            sus: sus,
-            rel: rel,
+            samplerate,
+            atk,
+            sus,
+            rel,
             atk_samples: atk_samples as usize,
             sus_samples: sus_samples as usize,
             rel_samples: rel_samples as usize,
@@ -52,10 +52,7 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for ASREnvelope<BUFSIZE> {
     }
 
     fn is_finished(&self) -> bool {
-        match self.state {
-            SynthState::Finished => true,
-            _ => false,
-        }
+        matches!(self.state, SynthState::Finished)
     }
 
     fn set_parameter(&mut self, par: SynthParameter, value: f32) {
@@ -154,10 +151,10 @@ pub struct ExpPercEnvelope<const BUFSIZE: usize> {
 }
 
 impl<const BUFSIZE: usize> ExpPercEnvelope<BUFSIZE> {
-    pub fn new(lvl: f32, atk: f32, sus: f32, rel: f32, sr: f32) -> Self {
-        let atk_samples = (sr * atk).round() as usize;
-        let sus_samples = atk_samples + (sr * sus).round() as usize;
-        let rel_samples = (sr * rel).round() as usize;
+    pub fn new(lvl: f32, atk: f32, sus: f32, rel: f32, samplerate: f32) -> Self {
+        let atk_samples = (samplerate * atk).round() as usize;
+        let sus_samples = atk_samples + (samplerate * sus).round() as usize;
+        let rel_samples = (samplerate * rel).round() as usize;
 
         let atk_inc = 1.0 / atk_samples as f32;
         let rel_inc = 1.0 / rel_samples as f32;
@@ -165,16 +162,16 @@ impl<const BUFSIZE: usize> ExpPercEnvelope<BUFSIZE> {
         //println!("atk sam: {} sus sam: {} rel sam: {}", atk_samples, sus_samples, rel_samples );
 
         ExpPercEnvelope {
-            samplerate: sr,
-            atk: atk,
-            sus: sus,
-            rel: rel,
-            atk_samples: atk_samples,
-            sus_samples: sus_samples,
+            samplerate,
+            atk,
+            sus,
+            rel,
+            atk_samples,
+            sus_samples,
             rel_samples: sus_samples + rel_samples,
             sample_count: 0,
-            atk_inc: atk_inc,
-            rel_inc: rel_inc,
+            atk_inc,
+            rel_inc,
             curve: -4.5,
             time_count: 0.0,
             max_lvl: lvl,
@@ -189,10 +186,7 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for ExpPercEnvelope<BUFSIZE> {
     }
 
     fn is_finished(&self) -> bool {
-        match self.state {
-            SynthState::Finished => true,
-            _ => false,
-        }
+        matches!(self.state, SynthState::Finished)
     }
 
     fn set_parameter(&mut self, par: SynthParameter, value: f32) {
@@ -388,13 +382,11 @@ mod tests {
         env_at_start.set_parameter(SynthParameter::Sustain, 0.019);
         env_at_start.set_parameter(SynthParameter::Release, 0.07);
 
-        println!("\nSet parameters for env with offset:");
+        println!("\nSet parameters for env with offset:\n");
         env_with_offset.set_parameter(SynthParameter::Level, 1.0);
         env_with_offset.set_parameter(SynthParameter::Attack, 0.001);
         env_with_offset.set_parameter(SynthParameter::Sustain, 0.019);
         env_with_offset.set_parameter(SynthParameter::Release, 0.07);
-
-        println!("");
 
         let mut out_start = env_at_start.process_block(test_block, 0);
         let mut out_offset = env_with_offset.process_block(test_block, 60);

@@ -11,6 +11,12 @@ pub struct EncoderO1<const BUFSIZE: usize> {
     coefs: [f32; 4],
 }
 
+impl<const BUFSIZE: usize> Default for EncoderO1<BUFSIZE> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<const BUFSIZE: usize> EncoderO1<BUFSIZE> {
     pub fn new() -> Self {
         EncoderO1 {
@@ -22,7 +28,7 @@ impl<const BUFSIZE: usize> EncoderO1<BUFSIZE> {
         }
     }
 
-    /// some parameter limits might be nice ...
+    // some parameter limits might be nice ...
     pub fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         match par {
             SynthParameter::AmbisonicAzimuth => self.azimuth = value,
@@ -44,11 +50,11 @@ impl<const BUFSIZE: usize> EncoderO1<BUFSIZE> {
     pub fn process_block(&mut self, input: [f32; BUFSIZE]) -> [[f32; BUFSIZE]; 4] {
         let mut enc_block = [[0.0; BUFSIZE]; 4];
 
-        for i in 0..BUFSIZE {
-            enc_block[0][i] = input[i] * self.coefs[0];
-            enc_block[1][i] = input[i] * self.coefs[1];
-            enc_block[2][i] = input[i] * self.coefs[2];
-            enc_block[3][i] = input[i] * self.coefs[3];
+        for (i, input_sample) in input.iter().enumerate().take(BUFSIZE) {
+            enc_block[0][i] = input_sample * self.coefs[0];
+            enc_block[1][i] = input_sample * self.coefs[1];
+            enc_block[2][i] = input_sample * self.coefs[2];
+            enc_block[3][i] = input_sample * self.coefs[3];
         }
         enc_block
     }

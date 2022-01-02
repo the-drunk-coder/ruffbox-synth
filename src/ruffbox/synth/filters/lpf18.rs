@@ -32,8 +32,8 @@ pub struct Lpf18<const BUFSIZE: usize> {
 }
 
 impl<const BUFSIZE: usize> Lpf18<BUFSIZE> {
-    pub fn new(freq: f32, res: f32, dist: f32, sr: f32) -> Self {
-        let kfcn = 2.0 * freq * (1.0 / sr);
+    pub fn new(freq: f32, res: f32, dist: f32, samplerate: f32) -> Self {
+        let kfcn = 2.0 * freq * (1.0 / samplerate);
         let kp = ((-2.7528 * kfcn + 3.0429) * kfcn + 1.718) * kfcn - 0.9984;
         let kp1 = kp + 1.0;
         let kp1h = 0.5 * kp1;
@@ -41,22 +41,22 @@ impl<const BUFSIZE: usize> Lpf18<BUFSIZE> {
         let value = 1.0 + (dist * (1.5 + 2.0 * res * (1.0 - kfcn)));
         Lpf18 {
             cutoff: freq,
-            res: res,
-            dist: dist,
+            res,
+            dist,
             ay1: 0.0,
             ay2: 0.0,
             ax1: 0.0,
             ay11: 0.0,
             ay31: 0.0,
-            kfcn: kfcn,
-            kp: kp,
-            kp1: kp1,
-            kp1h: kp1h,
-            kres: kres,
-            value: value,
+            kfcn,
+            kp,
+            kp1,
+            kp1h,
+            kres,
+            value,
             aout: 0.0,
             lastin: 0.0,
-            samplerate: sr,
+            samplerate,
         }
     }
 

@@ -91,10 +91,8 @@ impl<const BUFSIZE: usize> UniformPartitionedConvolution<BUFSIZE> {
         // assemble input block from remainder part from previous block
         // (in this case, as filter length is always equal to blocksize,
         // the remainder is just the previous block)
-        for i in 0..BUFSIZE {
-            self.tmp_in[i] = self.remainder[i];
-            self.tmp_in[i + BUFSIZE] = input[i];
-        }
+        self.tmp_in[..BUFSIZE].copy_from_slice(&self.remainder[..BUFSIZE]);
+        self.tmp_in[BUFSIZE..(2 * BUFSIZE) - 1].copy_from_slice(&input[..BUFSIZE]);
 
         // perform fft
         self.frequency_delay_line[self.frequency_delay_line_idx] = self.fft.forward(&self.tmp_in);
@@ -129,10 +127,9 @@ impl<const BUFSIZE: usize> UniformPartitionedConvolution<BUFSIZE> {
 
         // copy relevant part from ifft, scrap the rest
         let mut outarr = [0.0; BUFSIZE];
-        for i in 0..self.input_size {
-            self.remainder[i] = input[i];
-            outarr[i] = self.tmp_out[i + BUFSIZE];
-        }
+        self.remainder[..self.input_size].copy_from_slice(&input[..self.input_size]);
+        outarr[..self.input_size]
+            .copy_from_slice(&self.tmp_out[BUFSIZE..(self.input_size + BUFSIZE)]);
 
         // return result block ...
         outarr

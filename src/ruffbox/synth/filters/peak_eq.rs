@@ -37,14 +37,14 @@ impl<const BUFSIZE: usize> PeakEq<BUFSIZE> {
 
         PeakEq {
             center: center_freq,
-            bw: bw,
-            gain: gain,
-            h_zero: h_zero,
-            v_zero: v_zero,
-            d: d,
+            bw,
+            gain,
+            h_zero,
+            v_zero,
+            d,
             del1: 0.0,
             del2: 0.0,
-            c: c,
+            c,
             samplerate: sr,
         }
     }

@@ -23,13 +23,13 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
         Sampler {
             index: 1, // start with one to account for interpolation
             frac_index: 1.0,
-            bufnum: bufnum,
-            buflen: buflen,
+            bufnum,
+            buflen,
             playback_rate: 1.0,
             frac_index_increment: 1.0,
             state: SynthState::Fresh,
             level: 1.0,
-            repeat: repeat,
+            repeat,
         }
     }
 
@@ -40,18 +40,16 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
     ) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
-        for i in start_sample..BUFSIZE {
-            out_buf[i] = sample_buffers[self.bufnum][self.index] * self.level;
+        for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
+            *current_sample = sample_buffers[self.bufnum][self.index] * self.level;
 
             if self.index < self.buflen {
-                self.index = self.index + 1;
+                self.index += 1;
+            } else if self.repeat {
+                self.frac_index = 1.0;
+                self.index = 1;
             } else {
-                if self.repeat {
-                    self.frac_index = 1.0;
-                    self.index = 1;
-                } else {
-                    self.finish();
-                }
+                self.finish();
             }
         }
 
@@ -65,7 +63,7 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
     ) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
-        for i in start_sample..BUFSIZE {
+        for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
             // get sample:
             let idx = self.frac_index.floor();
             let frac = self.frac_index - idx;
@@ -82,17 +80,15 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
             let c2 = y_m1 - 2.5 * y_0 + 2.0 * y_1 - 0.5 * y_2;
             let c3 = 0.5 * (y_2 - y_m1) + 1.5 * (y_0 - y_1);
 
-            out_buf[i] = (((c3 * frac + c2) * frac + c1) * frac + c0) * self.level;
+            *current_sample = (((c3 * frac + c2) * frac + c1) * frac + c0) * self.level;
 
             if ((self.frac_index + self.frac_index_increment) as usize) < self.buflen {
-                self.frac_index = self.frac_index + self.frac_index_increment;
+                self.frac_index += self.frac_index_increment;
+            } else if self.repeat {
+                self.frac_index = 1.0;
+                self.index = 1;
             } else {
-                if self.repeat {
-                    self.frac_index = 1.0;
-                    self.index = 1;
-                } else {
-                    self.finish();
-                }
+                self.finish();
             }
         }
 
@@ -133,10 +129,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
     }
 
     fn is_finished(&self) -> bool {
-        match self.state {
-            SynthState::Finished => true,
-            _ => false,
-        }
+        matches!(self.state, SynthState::Finished)
     }
 
     fn get_next_block(

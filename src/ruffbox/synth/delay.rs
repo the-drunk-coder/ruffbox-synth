@@ -77,7 +77,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> MultichannelDelay<BUFSIZE, NCHAN>
             delays.push(MonoDelay::<BUFSIZE>::new(sr));
         }
 
-        MultichannelDelay { delays: delays }
+        MultichannelDelay { delays }
     }
 
     pub fn set_parameter(&mut self, par: SynthParameter, val: f32) {

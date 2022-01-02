@@ -317,16 +317,16 @@ impl<const BUFSIZE: usize, const NCHAN: usize> MultichannelFreeverb<BUFSIZE, NCH
         let wet2 = wet * ((1.0 - tuning.initial_width) / 2.0);
 
         MultichannelFreeverb {
-            combs: combs,
-            allpasses: allpasses,
+            combs,
+            allpasses,
             gain: tuning.fixed_gain,
             roomsize: tuning.initial_room,
             damp: tuning.initial_damp,
             wet: tuning.initial_wet,
-            wet1: wet1,
-            wet2: wet2,
+            wet1,
+            wet2,
             width: tuning.initial_width,
-            tuning: tuning,
+            tuning,
         }
     }
 

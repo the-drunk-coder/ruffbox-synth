@@ -72,8 +72,7 @@ pub trait MonoSource<const BUFSIZE: usize> {
     fn set_parameter(&mut self, par: SynthParameter, value: f32);
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
-    fn get_next_block(&mut self, start_sample: usize, in_buffers: &[Vec<f32>])
-        -> [f32; BUFSIZE];
+    fn get_next_block(&mut self, start_sample: usize, in_buffers: &[Vec<f32>]) -> [f32; BUFSIZE];
 }
 
 pub trait MonoEffect<const BUFSIZE: usize> {

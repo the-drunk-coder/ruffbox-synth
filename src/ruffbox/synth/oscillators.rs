@@ -21,7 +21,7 @@ pub struct SineOsc<const BUFSIZE: usize> {
 impl<const BUFSIZE: usize> SineOsc<BUFSIZE> {
     pub fn new(freq: f32, lvl: f32, sr: f32) -> Self {
         SineOsc {
-            lvl: lvl,
+            lvl,
             sin_time: 0.0,
             sin_delta_time: 1.0 / sr,
             pi_slice: 2.0 * PI * freq,
@@ -51,8 +51,8 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
     fn get_next_block(&mut self, start_sample: usize, _: &[Vec<f32>]) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
-        for i in start_sample..BUFSIZE {
-            out_buf[i] =
+        for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
+            *current_sample =
                 (self.pi_slice * self.sin_delta_time * self.sample_count as f32).sin() * self.lvl;
             self.sample_count += 1;
             self.sin_time += self.sin_delta_time;
@@ -76,13 +76,13 @@ pub struct LFSaw<const BUFSIZE: usize> {
 }
 
 impl<const BUFSIZE: usize> LFSaw<BUFSIZE> {
-    pub fn new(freq: f32, lvl: f32, sr: f32) -> Self {
+    pub fn new(freq: f32, lvl: f32, samplerate: f32) -> Self {
         LFSaw {
-            freq: freq,
-            lvl: lvl,
-            samplerate: sr,
-            period_samples: (sr / freq).round() as usize,
-            lvl_inc: (2.0 * lvl) / (sr / freq).round(),
+            freq,
+            lvl,
+            samplerate,
+            period_samples: (samplerate / freq).round() as usize,
+            lvl_inc: (2.0 * lvl) / (samplerate / freq).round(),
             cur_lvl: -1.0 * lvl,
             period_count: 0,
         }
@@ -115,8 +115,8 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSaw<BUFSIZE> {
     fn get_next_block(&mut self, start_sample: usize, _: &[Vec<f32>]) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
-        for i in start_sample..BUFSIZE {
-            out_buf[i] = self.cur_lvl;
+        for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
+            *current_sample = self.cur_lvl;
             self.period_count += 1;
             if self.period_count > self.period_samples {
                 self.period_count = 0;
@@ -141,13 +141,13 @@ pub struct LFCub<const BUFSIZE: usize> {
 }
 
 impl<const BUFSIZE: usize> LFCub<BUFSIZE> {
-    pub fn new(freq: f32, lvl: f32, sr: f32) -> Self {
+    pub fn new(freq: f32, lvl: f32, samplerate: f32) -> Self {
         LFCub {
             //freq: freq,
-            lvl: lvl,
-            samplerate: sr,
+            lvl,
+            samplerate,
             phase: 0.0,
-            freq: freq,
+            freq,
         }
     }
 }
@@ -176,7 +176,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFCub<BUFSIZE> {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
         let mut z: f32;
-        for i in start_sample..BUFSIZE {
+        for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
             if self.phase < 1.0 {
                 z = self.phase;
             } else if self.phase < 2.0 {
@@ -186,7 +186,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFCub<BUFSIZE> {
                 z = self.phase;
             }
             self.phase += self.freq;
-            out_buf[i] = self.lvl * z * z * (6.0 - 4.0 * z) - 1.0;
+            *current_sample = self.lvl * z * z * (6.0 - 4.0 * z) - 1.0;
         }
 
         out_buf
@@ -207,15 +207,15 @@ pub struct LFSquare<const BUFSIZE: usize> {
 }
 
 impl<const BUFSIZE: usize> LFSquare<BUFSIZE> {
-    pub fn new(freq: f32, pw: f32, lvl: f32, sr: f32) -> Self {
+    pub fn new(freq: f32, pulsewidth: f32, lvl: f32, samplerate: f32) -> Self {
         LFSquare {
             //freq: freq,
-            lvl: lvl,
-            samplerate: sr,
-            pulsewidth: pw,
-            period_samples: (sr / freq).round() as usize,
+            lvl,
+            samplerate,
+            pulsewidth,
+            period_samples: (samplerate / freq).round() as usize,
             period_count: 0,
-            flank_point: ((sr / freq).round() * pw) as usize,
+            flank_point: ((samplerate / freq).round() * pulsewidth) as usize,
         }
     }
 }
@@ -249,11 +249,11 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSquare<BUFSIZE> {
     fn get_next_block(&mut self, start_sample: usize, _: &[Vec<f32>]) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
-        for i in start_sample..BUFSIZE {
+        for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
             if self.period_count < self.flank_point {
-                out_buf[i] = self.lvl;
+                *current_sample = self.lvl;
             } else {
-                out_buf[i] = -self.lvl;
+                *current_sample = -self.lvl;
             }
 
             self.period_count += 1;
@@ -405,13 +405,13 @@ pub struct LFTri<const BUFSIZE: usize> {
 }
 
 impl<const BUFSIZE: usize> LFTri<BUFSIZE> {
-    pub fn new(freq: f32, lvl: f32, sr: f32) -> Self {
-        let period_samples = (sr / freq).round() as usize;
+    pub fn new(freq: f32, lvl: f32, samplerate: f32) -> Self {
+        let period_samples = (samplerate / freq).round() as usize;
         let segment_samples = period_samples / 4;
         LFTri {
-            lvl: lvl,
-            samplerate: sr,
-            segment_samples: segment_samples,
+            lvl,
+            samplerate,
+            segment_samples,
             period_first_ascent_samples: period_samples - (3 * segment_samples),
             period_second_ascent_samples: period_samples,
             period_descent_samples: period_samples - segment_samples,
@@ -456,8 +456,9 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFTri<BUFSIZE> {
     fn get_next_block(&mut self, start_sample: usize, _: &[Vec<f32>]) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
-        for i in start_sample..BUFSIZE {
-            out_buf[i] = self.cur_lvl;
+        for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
+            *current_sample = self.cur_lvl;
+
             self.period_count += 1;
             if self.period_count < self.period_first_ascent_samples {
                 self.cur_lvl += self.lvl_first_inc;
