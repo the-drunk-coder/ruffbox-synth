@@ -438,9 +438,11 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
         self.new_instances_q_send.send(scheduled_event).unwrap();
     }
 
-    /// loads a mono sample and returns the assigned buffer number
-    /// resample to current samplerate if necessary
-    /// adds interpolation samples to buffer
+    /// Loads a mono sample and returns the assigned buffer number.
+    ///
+    /// Resample to current samplerate if necessary and specified.
+    /// The sample buffer is passed as mutable because the method adds
+    /// interpolation samples without the need of a copy.
     pub fn load_sample(&mut self, samples: &mut Vec<f32>, resample: bool, sr: f32) -> usize {
         if resample && (self.samplerate != sr) {
             // zero-pad for resampling blocks
@@ -491,7 +493,7 @@ mod tests {
 
     #[test]
     fn test_stitch_stuff() {
-        let mut ruff = Ruffbox::<512, 2>::new(44100.0, true, 2.0, &ReverbMode::FreeVerb);
+        let mut ruff = Ruffbox::<512, 2>::new(true, 2.0, &ReverbMode::FreeVerb, 44100.0);
         assert_approx_eq::assert_approx_eq!(ruff.fade_curve[0], 0.0, 0.00001);
         assert_approx_eq::assert_approx_eq!(ruff.fade_curve[127], 1.0, 0.0002);
 
@@ -541,14 +543,14 @@ mod tests {
     #[test]
     fn test_load_sample() {
         // don't use life buffer here ...
-        let mut ruff = Ruffbox::<512, 2>::new(44100.0, false, 2.0, &ReverbMode::FreeVerb);
+        let mut ruff = Ruffbox::<512, 2>::new(false, 2.0, &ReverbMode::FreeVerb, 44100.0);
 
-        let mut sample = vec![1.0; 503];
+        let mut sample = vec![1.0_f32; 503];
         sample[0] = 0.0;
         sample[501] = 0.0;
         sample[502] = 0.0;
 
-        ruff.load_sample(&sample);
+        ruff.load_sample(&mut sample, false, 44100.0);
 
         assert_approx_eq::assert_approx_eq!(ruff.buffers[0][0], 0.0, 0.0002);
         assert_approx_eq::assert_approx_eq!(ruff.buffers[0][1], 1.0, 0.0002);
@@ -561,7 +563,7 @@ mod tests {
 
     #[test]
     fn test_sine_synth_at_block_start() {
-        let mut ruff = Ruffbox::<128, 2>::new(44100.0, true, 2.0, &ReverbMode::FreeVerb);
+        let mut ruff = Ruffbox::<128, 2>::new(true, 2.0, &ReverbMode::FreeVerb, 44100.0);
 
         let inst = ruff.prepare_instance(SourceType::SineSynth, 0.0, 0);
         ruff.set_instance_parameter(inst, SynthParameter::PitchFrequency, 440.0);
@@ -588,16 +590,15 @@ mod tests {
 
     #[test]
     fn test_basic_playback() {
-        let mut ruff = Ruffbox::<128, 2>::new(44100.0, true, 2.0, &ReverbMode::FreeVerb);
+        let mut ruff = Ruffbox::<128, 2>::new(true, 2.0, &ReverbMode::FreeVerb, 44100.0);
 
-        // first point and last two points are for eventual interpolation
-        let sample1 = [0.0, 0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0, 0.0, 0.0];
-        let sample2 = [
-            0.0, 0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0, 0.0, 0.0,
+        let mut sample1 = vec![0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
+        let mut sample2 = vec![
+            0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0
         ];
 
-        let bnum1 = ruff.load_sample(&sample1);
-        let bnum2 = ruff.load_sample(&sample2);
+        let bnum1 = ruff.load_sample(&mut sample1, false, 44100.0);
+        let bnum2 = ruff.load_sample(&mut sample2, false, 44100.0);
 
         ruff.process(0.0, true);
 
@@ -638,12 +639,11 @@ mod tests {
 
     #[test]
     fn reverb_smoke_test() {
-        let mut ruff = Ruffbox::<128, 2>::new(44100.0, true, 2.0, &ReverbMode::FreeVerb);
+        let mut ruff = Ruffbox::<128, 2>::new(true, 2.0, &ReverbMode::FreeVerb, 44100.0);
+       
+        let mut sample1 = vec![0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
 
-        // first point and last two points are for eventual interpolation
-        let sample1 = [0.0, 0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0, 0.0, 0.0];
-
-        let bnum1 = ruff.load_sample(&sample1);
+        let bnum1 = ruff.load_sample(&mut sample1, false, 44100.0);
 
         ruff.process(0.0, true);
 
@@ -671,19 +671,18 @@ mod tests {
 
     #[test]
     fn test_scheduled_playback() {
-        let mut ruff = Ruffbox::<128, 2>::new(44100.0, true, 2.0, &ReverbMode::FreeVerb);
+        let mut ruff = Ruffbox::<128, 2>::new(true, 2.0, &ReverbMode::FreeVerb, 44100.0);
 
         // block duration in seconds
         let block_duration = 0.00290249433;
-
-        // first point and last two points are for eventual interpolation
-        let sample1 = [0.0, 0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0, 0.0, 0.0];
-        let sample2 = [
-            0.0, 0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0, 0.0, 0.0,
+        
+        let mut sample1 = vec![0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0,];
+        let mut sample2 = vec![
+            0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0, 
         ];
 
-        let bnum1 = ruff.load_sample(&sample1);
-        let bnum2 = ruff.load_sample(&sample2);
+        let bnum1 = ruff.load_sample(&mut sample1, false, 44100.0);
+        let bnum2 = ruff.load_sample(&mut sample2, false, 44100.0);
 
         let inst_1 = ruff.prepare_instance(SourceType::Sampler, 0.291, bnum1);
         let inst_2 = ruff.prepare_instance(SourceType::Sampler, 0.291, bnum2);
@@ -728,19 +727,19 @@ mod tests {
 
     #[test]
     fn test_overlap_playback() {
-        let mut ruff = Ruffbox::<128, 2>::new(44100.0, true, 2.0, &ReverbMode::FreeVerb);
+        let mut ruff = Ruffbox::<128, 2>::new(true, 2.0, &ReverbMode::FreeVerb, 44100.0);
 
         // block duration in seconds
         let block_duration = 0.00290249433;
         let sec_per_sample = 0.00002267573;
 
-        let sample1 = [0.0, 0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0, 0.0, 0.0];
-        let sample2 = [
-            0.0, 0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0, 0.0, 0.0,
+        let mut sample1 = vec![0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
+        let mut sample2 = vec![
+            0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0
         ];
 
-        let bnum1 = ruff.load_sample(&sample1);
-        let bnum2 = ruff.load_sample(&sample2);
+        let bnum1 = ruff.load_sample(&mut sample1, false, 44100.0);
+        let bnum2 = ruff.load_sample(&mut sample2, false, 44100.0);
 
         let inst_1 = ruff.prepare_instance(SourceType::Sampler, 0.291, bnum1);
         let inst_2 =
@@ -796,18 +795,18 @@ mod tests {
 
     #[test]
     fn test_disjunct_playback() {
-        let mut ruff = Ruffbox::<128, 2>::new(44100.0, true, 2.0, &ReverbMode::FreeVerb);
+        let mut ruff = Ruffbox::<128, 2>::new(true, 2.0, &ReverbMode::FreeVerb, 44100.0);
 
         // block duration in seconds
         let block_duration = 0.00290249433;
 
-        let sample1 = [0.0, 0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0, 0.0, 0.0];
-        let sample2 = [
-            0.0, 0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0, 0.0, 0.0,
+        let mut sample1 = vec![0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
+        let mut sample2 = vec![
+            0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0
         ];
 
-        let bnum1 = ruff.load_sample(&sample1);
-        let bnum2 = ruff.load_sample(&sample2);
+        let bnum1 = ruff.load_sample(&mut sample1, false, 44100.0);
+        let bnum2 = ruff.load_sample(&mut sample2, false, 44100.0);
 
         // schedule two samples ahead, so they should  occur in different blocks
         // first sample should appear in block 100
@@ -868,11 +867,11 @@ mod tests {
 
     #[test]
     fn test_late_playback() {
-        let mut ruff = Ruffbox::<128, 2>::new(44100.0, true, 2.0, &ReverbMode::FreeVerb);
+        let mut ruff = Ruffbox::<128, 2>::new(true, 2.0, &ReverbMode::FreeVerb, 44100.0);
 
-        let sample1 = [0.0, 0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0, 0.0, 0.0];
+        let mut sample1 = vec![0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
 
-        let bnum1 = ruff.load_sample(&sample1);
+        let bnum1 = ruff.load_sample(&mut sample1, false, 44100.0);
 
         ruff.process(0.0, false);
 
