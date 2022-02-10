@@ -138,8 +138,8 @@ pub fn init_ruffbox<const BUFSIZE: usize, const NCHAN: usize>(
 
     let now = Arc::new(AtomicCell::<f64>::new(0.0));
 
-    let front = RuffboxControls::<BUFSIZE, NCHAN>::new(samplerate, &now, txi, txg);
-    let back = RuffboxPlayhead::<BUFSIZE, NCHAN>::new(
+    let controls = RuffboxControls::<BUFSIZE, NCHAN>::new(samplerate, &now, txi, txg);
+    let playhead = RuffboxPlayhead::<BUFSIZE, NCHAN>::new(
         live_buffer,
         live_buffer_time,
         reverb_mode,
@@ -149,7 +149,7 @@ pub fn init_ruffbox<const BUFSIZE: usize, const NCHAN: usize>(
         rxg,
     );
 
-    (front, back)
+    (controls, playhead)
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
