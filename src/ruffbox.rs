@@ -23,7 +23,7 @@ use crate::ruffbox::synth::SynthParameter;
 /// timed event, to be created in the trigger method, then
 /// sent to the event queue to be either dispatched directly
 /// or pushed to the pending queue ...
-struct ScheduledEvent<const BUFSIZE: usize, const NCHAN: usize> {
+pub(crate) struct ScheduledEvent<const BUFSIZE: usize, const NCHAN: usize> {
     timestamp: f64,
     source: Box<dyn Synth<BUFSIZE, NCHAN> + Send>,
 }
@@ -68,14 +68,19 @@ impl<const BUFSIZE: usize, const NCHAN: usize> ScheduledEvent<BUFSIZE, NCHAN> {
     }
 }
 
-///
+/// Make your choice, freeverb or convolution ??
 pub enum ReverbMode {
     FreeVerb,
     Convolution(Vec<f32>, f32),
 }
 
+// before loading, analyze how many samples you want to load,
+// and pre-allocate the buffer vector accordingly (later)
+
+// store 'now' in atomic cell 
+
 /// the main synth instance
-pub struct Ruffbox<const BUFSIZE: usize, const NCHAN: usize> {
+pub struct RuffboxBackend<const BUFSIZE: usize, const NCHAN: usize> {
     running_instances: Vec<Box<dyn Synth<BUFSIZE, NCHAN> + Send>>,
     pending_events: Vec<ScheduledEvent<BUFSIZE, NCHAN>>,
     buffers: Vec<Vec<f32>>,
@@ -88,9 +93,6 @@ pub struct Ruffbox<const BUFSIZE: usize, const NCHAN: usize> {
     fade_curve: Vec<f32>,
     stitch_buffer: Vec<f32>,
     bufsize: usize,
-    prepared_instance_map: HashMap<usize, ScheduledEvent<BUFSIZE, NCHAN>>,
-    instance_counter: AtomicCell<usize>,
-    new_instances_q_send: crossbeam::channel::Sender<ScheduledEvent<BUFSIZE, NCHAN>>,
     new_instances_q_rec: crossbeam::channel::Receiver<ScheduledEvent<BUFSIZE, NCHAN>>,
     block_duration: f64,
     sec_per_sample: f64,
@@ -100,18 +102,28 @@ pub struct Ruffbox<const BUFSIZE: usize, const NCHAN: usize> {
     pub samplerate: f32, // finally after all those years ...
 }
 
-impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
-    pub fn new(
+pub struct RuffboxFrontend<const BUFSIZE: usize, const NCHAN: usize> {
+    prepared_instance_map: HashMap<usize, ScheduledEvent<BUFSIZE, NCHAN>>,
+    instance_counter: AtomicCell<usize>,
+    new_instances_q_send: crossbeam::channel::Sender<ScheduledEvent<BUFSIZE, NCHAN>>,
+    buffer_lengths: Vec<usize>,
+    pub samplerate: f32, // finally after all those years ...
+}
+
+//let (tx, rx): (
+//            Sender<ScheduledEvent<BUFSIZE, NCHAN>>,
+//            Receiver<ScheduledEvent<BUFSIZE, NCHAN>>,
+//        ) = crossbeam::channel::bounded(1000);
+
+impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxBackend<BUFSIZE, NCHAN> {
+    fn new(
         live_buffer: bool,
         life_buffer_time: f64,
         reverb_mode: &ReverbMode,
         samplerate: f64,
-    ) -> Ruffbox<BUFSIZE, NCHAN> {
-        let (tx, rx): (
-            Sender<ScheduledEvent<BUFSIZE, NCHAN>>,
-            Receiver<ScheduledEvent<BUFSIZE, NCHAN>>,
-        ) = crossbeam::channel::bounded(1000);
-
+	rx: crossbeam::channel::Receiver<ScheduledEvent<BUFSIZE, NCHAN>>,
+    ) -> RuffboxBackend<BUFSIZE, NCHAN> {
+        
         // create reverb
         let rev: Box<dyn MultichannelReverb<BUFSIZE, NCHAN> + Send> = match reverb_mode {
             ReverbMode::FreeVerb => {
@@ -179,7 +191,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
             pi_idx += pi_inc;
         }
 
-        Ruffbox {
+        RuffboxBackend {
             running_instances: Vec::with_capacity(600),
             pending_events: Vec::with_capacity(600),
             buffers,
@@ -191,10 +203,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
             fade_curve,
             non_stitch_size: bufsize - stitch_size,
             fade_stitch_idx: 0,
-            bufsize,
-            prepared_instance_map: HashMap::with_capacity(1200),
-            instance_counter: AtomicCell::new(0),
-            new_instances_q_send: tx,
+            bufsize,                 
             new_instances_q_rec: rx,
             // timing stuff
             block_duration: BUFSIZE as f64 / samplerate,
@@ -363,6 +372,71 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
 
         out_buf
     }
+    
+    pub fn set_master_parameter(&mut self, par: SynthParameter, val: f32) {
+        self.master_reverb.set_parameter(par, val);
+        self.master_delay.set_parameter(par, val);
+    }
+        
+    /// Loads a mono sample and returns the assigned buffer number.
+    ///
+    /// Resample to current samplerate if necessary and specified.
+    /// The sample buffer is passed as mutable because the method adds
+    /// interpolation samples without the need of a copy.
+    pub fn load_sample(&mut self, samples: &mut Vec<f32>, resample: bool, sr: f32) -> usize {
+        if resample && (self.samplerate != sr) {
+            // zero-pad for resampling blocks
+            if (samples.len() as f32 % 1024.0) > 0.0 {
+                let diff = 1024 - (samples.len() % 1024);
+                samples.append(&mut vec![0.0; diff]);
+            }
+
+            let mut samples_resampled: Vec<f32> = Vec::new();
+            let mut resampler =
+                FftFixedIn::<f32>::new(sr as usize, self.samplerate as usize, 1024, 1, 1);
+
+            // interpolation samples
+            samples_resampled.push(0.0);
+            let num_chunks = samples.len() / 1024;
+            for chunk in 0..num_chunks {
+                let chunk = vec![samples[(1024 * chunk)..(1024 * (chunk + 1))].to_vec()];
+                let mut waves_out = resampler.process(&chunk).unwrap();
+                samples_resampled.append(&mut waves_out[0]);
+            }
+            // interpolation samples
+            samples_resampled.push(0.0);
+            samples_resampled.push(0.0);
+            self.buffer_lengths.push(samples_resampled.len() - 3); // account for interpolation samples
+            self.buffers.push(samples_resampled);
+        } else {
+            samples.insert(0, 0.0); // interpolation sample
+            samples.push(0.0);
+            samples.push(0.0);
+            self.buffer_lengths.push(samples.len() - 3); // account for interpolation samples
+            self.buffers.push(samples.to_vec());
+        }
+        // return bufnum
+        self.buffers.len() - 1
+    }
+
+    pub fn get_now(&self) -> f64 {
+        self.now
+    }
+}
+
+impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxFrontend<BUFSIZE, NCHAN> {
+    fn new(
+	samplerate: f64,
+	tx: crossbeam::channel::Sender<ScheduledEvent<BUFSIZE, NCHAN>>,
+    ) -> RuffboxFrontend<BUFSIZE, NCHAN> {        	
+        RuffboxFrontend {            
+            prepared_instance_map: HashMap::with_capacity(1200),
+            instance_counter: AtomicCell::new(0),
+            new_instances_q_send: tx,
+	    buffer_lengths: Vec::with_capacity(2000),
+	    samplerate: samplerate as f32,
+        }
+    }
 
     /// prepare a sound source instance, return instance id
     pub fn prepare_instance(
@@ -425,12 +499,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
             .unwrap()
             .set_parameter(par, val);
     }
-
-    pub fn set_master_parameter(&mut self, par: SynthParameter, val: f32) {
-        self.master_reverb.set_parameter(par, val);
-        self.master_delay.set_parameter(par, val);
-    }
-
+    
     /// triggers a synth for buffer reference or a synth
     pub fn trigger(&mut self, instance_id: usize) {
         // add check if it actually exists !
@@ -438,49 +507,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Ruffbox<BUFSIZE, NCHAN> {
         self.new_instances_q_send.send(scheduled_event).unwrap();
     }
 
-    /// Loads a mono sample and returns the assigned buffer number.
-    ///
-    /// Resample to current samplerate if necessary and specified.
-    /// The sample buffer is passed as mutable because the method adds
-    /// interpolation samples without the need of a copy.
-    pub fn load_sample(&mut self, samples: &mut Vec<f32>, resample: bool, sr: f32) -> usize {
-        if resample && (self.samplerate != sr) {
-            // zero-pad for resampling blocks
-            if (samples.len() as f32 % 1024.0) > 0.0 {
-                let diff = 1024 - (samples.len() % 1024);
-                samples.append(&mut vec![0.0; diff]);
-            }
-
-            let mut samples_resampled: Vec<f32> = Vec::new();
-            let mut resampler =
-                FftFixedIn::<f32>::new(sr as usize, self.samplerate as usize, 1024, 1, 1);
-
-            // interpolation samples
-            samples_resampled.push(0.0);
-            let num_chunks = samples.len() / 1024;
-            for chunk in 0..num_chunks {
-                let chunk = vec![samples[(1024 * chunk)..(1024 * (chunk + 1))].to_vec()];
-                let mut waves_out = resampler.process(&chunk).unwrap();
-                samples_resampled.append(&mut waves_out[0]);
-            }
-            // interpolation samples
-            samples_resampled.push(0.0);
-            samples_resampled.push(0.0);
-            self.buffer_lengths.push(samples_resampled.len() - 3); // account for interpolation samples
-            self.buffers.push(samples_resampled);
-        } else {
-            samples.insert(0, 0.0); // interpolation sample
-            samples.push(0.0);
-            samples.push(0.0);
-            self.buffer_lengths.push(samples.len() - 3); // account for interpolation samples
-            self.buffers.push(samples.to_vec());
-        }
-        // return bufnum
-        self.buffers.len() - 1
-    }
-
     pub fn get_now(&self) -> f64 {
-        self.now
+        0.0
     }
 }
 
