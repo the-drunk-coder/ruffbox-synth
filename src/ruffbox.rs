@@ -77,7 +77,7 @@ pub enum ReverbMode {
 // before loading, analyze how many samples you want to load,
 // and pre-allocate the buffer vector accordingly (later)
 
-// store 'now' in atomic cell 
+// store 'now' in atomic cell
 
 /// the main synth instance
 pub struct RuffboxBackend<const BUFSIZE: usize, const NCHAN: usize> {
@@ -99,7 +99,7 @@ pub struct RuffboxBackend<const BUFSIZE: usize, const NCHAN: usize> {
     now: f64,
     master_reverb: Box<dyn MultichannelReverb<BUFSIZE, NCHAN> + Send>,
     master_delay: MultichannelDelay<BUFSIZE, NCHAN>,
-    pub samplerate: f32, // finally after all those years ...
+    samplerate: f32, // finally after all those years ...
 }
 
 pub struct RuffboxFrontend<const BUFSIZE: usize, const NCHAN: usize> {
@@ -110,20 +110,40 @@ pub struct RuffboxFrontend<const BUFSIZE: usize, const NCHAN: usize> {
     pub samplerate: f32, // finally after all those years ...
 }
 
-//let (tx, rx): (
-//            Sender<ScheduledEvent<BUFSIZE, NCHAN>>,
-//            Receiver<ScheduledEvent<BUFSIZE, NCHAN>>,
-//        ) = crossbeam::channel::bounded(1000);
+pub fn init_ruffbox<const BUFSIZE: usize, const NCHAN: usize>(
+    live_buffer: bool,
+    live_buffer_time: f64,
+    reverb_mode: &ReverbMode,
+    samplerate: f64,
+) -> (
+    RuffboxFrontend<BUFSIZE, NCHAN>,
+    RuffboxBackend<BUFSIZE, NCHAN>,
+) {
+    let (tx, rx): (
+        Sender<ScheduledEvent<BUFSIZE, NCHAN>>,
+        Receiver<ScheduledEvent<BUFSIZE, NCHAN>>,
+    ) = crossbeam::channel::bounded(1000);
+
+    let front = RuffboxFrontend::<BUFSIZE, NCHAN>::new(samplerate, tx);
+    let back = RuffboxBackend::<BUFSIZE, NCHAN>::new(
+        live_buffer,
+        live_buffer_time,
+        reverb_mode,
+        samplerate,
+        rx,
+    );
+
+    (front, back)
+}
 
 impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxBackend<BUFSIZE, NCHAN> {
     fn new(
         live_buffer: bool,
-        life_buffer_time: f64,
+        live_buffer_time: f64,
         reverb_mode: &ReverbMode,
         samplerate: f64,
-	rx: crossbeam::channel::Receiver<ScheduledEvent<BUFSIZE, NCHAN>>,
+        rx: crossbeam::channel::Receiver<ScheduledEvent<BUFSIZE, NCHAN>>,
     ) -> RuffboxBackend<BUFSIZE, NCHAN> {
-        
         // create reverb
         let rev: Box<dyn MultichannelReverb<BUFSIZE, NCHAN> + Send> = match reverb_mode {
             ReverbMode::FreeVerb => {
@@ -166,13 +186,13 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxBackend<BUFSIZE, NCHAN> {
 
         if live_buffer {
             // create live buffer
-            buffers.push(vec![0.0; (samplerate * life_buffer_time) as usize + 3]);
-            buffer_lengths.push((samplerate * life_buffer_time) as usize);
+            buffers.push(vec![0.0; (samplerate * live_buffer_time) as usize + 3]);
+            buffer_lengths.push((samplerate * live_buffer_time) as usize);
             println!("live buf time samples: {}", buffer_lengths[0]);
             for _ in 0..10 {
                 // create freeze buffers
-                buffers.push(vec![0.0; (samplerate * life_buffer_time) as usize + 3]);
-                buffer_lengths.push((samplerate * life_buffer_time) as usize);
+                buffers.push(vec![0.0; (samplerate * live_buffer_time) as usize + 3]);
+                buffer_lengths.push((samplerate * live_buffer_time) as usize);
             }
         }
 
@@ -203,7 +223,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxBackend<BUFSIZE, NCHAN> {
             fade_curve,
             non_stitch_size: bufsize - stitch_size,
             fade_stitch_idx: 0,
-            bufsize,                 
+            bufsize,
             new_instances_q_rec: rx,
             // timing stuff
             block_duration: BUFSIZE as f64 / samplerate,
@@ -372,12 +392,12 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxBackend<BUFSIZE, NCHAN> {
 
         out_buf
     }
-    
+
     pub fn set_master_parameter(&mut self, par: SynthParameter, val: f32) {
         self.master_reverb.set_parameter(par, val);
         self.master_delay.set_parameter(par, val);
     }
-        
+
     /// Loads a mono sample and returns the assigned buffer number.
     ///
     /// Resample to current samplerate if necessary and specified.
@@ -426,15 +446,15 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxBackend<BUFSIZE, NCHAN> {
 
 impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxFrontend<BUFSIZE, NCHAN> {
     fn new(
-	samplerate: f64,
-	tx: crossbeam::channel::Sender<ScheduledEvent<BUFSIZE, NCHAN>>,
-    ) -> RuffboxFrontend<BUFSIZE, NCHAN> {        	
-        RuffboxFrontend {            
+        samplerate: f64,
+        tx: crossbeam::channel::Sender<ScheduledEvent<BUFSIZE, NCHAN>>,
+    ) -> RuffboxFrontend<BUFSIZE, NCHAN> {
+        RuffboxFrontend {
             prepared_instance_map: HashMap::with_capacity(1200),
             instance_counter: AtomicCell::new(0),
             new_instances_q_send: tx,
-	    buffer_lengths: Vec::with_capacity(2000),
-	    samplerate: samplerate as f32,
+            buffer_lengths: Vec::with_capacity(2000),
+            samplerate: samplerate as f32,
         }
     }
 
@@ -499,7 +519,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxFrontend<BUFSIZE, NCHAN> {
             .unwrap()
             .set_parameter(par, val);
     }
-    
+
     /// triggers a synth for buffer reference or a synth
     pub fn trigger(&mut self, instance_id: usize) {
         // add check if it actually exists !
