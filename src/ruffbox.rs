@@ -25,7 +25,7 @@ use crate::ruffbox::synth::SynthParameter;
 /// timed event, to be created in the trigger method, then
 /// sent to the event queue to be either dispatched directly
 /// or pushed to the pending queue ...
-pub(crate) struct ScheduledEvent<const BUFSIZE: usize, const NCHAN: usize> {
+struct ScheduledEvent<const BUFSIZE: usize, const NCHAN: usize> {
     timestamp: f64,
     source: Box<dyn Synth<BUFSIZE, NCHAN> + Send>,
 }
