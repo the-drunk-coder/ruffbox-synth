@@ -10,6 +10,8 @@ use crossbeam::channel::Sender;
 use std::collections::HashMap;
 
 use std::cmp::Ordering;
+use std::sync::Arc;
+
 
 use crate::ruffbox::synth::convolution_reverb::MultichannelConvolutionReverb;
 use crate::ruffbox::synth::delay::MultichannelDelay;
@@ -96,7 +98,7 @@ pub struct RuffboxBackend<const BUFSIZE: usize, const NCHAN: usize> {
     new_instances_q_rec: crossbeam::channel::Receiver<ScheduledEvent<BUFSIZE, NCHAN>>,
     block_duration: f64,
     sec_per_sample: f64,
-    now: f64,
+    now: Arc<AtomicCell<f64>>,
     master_reverb: Box<dyn MultichannelReverb<BUFSIZE, NCHAN> + Send>,
     master_delay: MultichannelDelay<BUFSIZE, NCHAN>,
     samplerate: f32, // finally after all those years ...
@@ -107,6 +109,7 @@ pub struct RuffboxFrontend<const BUFSIZE: usize, const NCHAN: usize> {
     instance_counter: AtomicCell<usize>,
     new_instances_q_send: crossbeam::channel::Sender<ScheduledEvent<BUFSIZE, NCHAN>>,
     buffer_lengths: Vec<usize>,
+    now: Arc<AtomicCell<f64>>,
     pub samplerate: f32, // finally after all those years ...
 }
 
@@ -122,14 +125,17 @@ pub fn init_ruffbox<const BUFSIZE: usize, const NCHAN: usize>(
     let (tx, rx): (
         Sender<ScheduledEvent<BUFSIZE, NCHAN>>,
         Receiver<ScheduledEvent<BUFSIZE, NCHAN>>,
-    ) = crossbeam::channel::bounded(1000);
+    ) = crossbeam::channel::bounded(1500);
 
-    let front = RuffboxFrontend::<BUFSIZE, NCHAN>::new(samplerate, tx);
+    let now = Arc::new(AtomicCell::<f64>::new(0.0));
+
+    let front = RuffboxFrontend::<BUFSIZE, NCHAN>::new(samplerate, &now, tx);
     let back = RuffboxBackend::<BUFSIZE, NCHAN>::new(
         live_buffer,
         live_buffer_time,
         reverb_mode,
         samplerate,
+	&now,
         rx,
     );
 
@@ -142,6 +148,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxBackend<BUFSIZE, NCHAN> {
         live_buffer_time: f64,
         reverb_mode: &ReverbMode,
         samplerate: f64,
+	now: &Arc<AtomicCell<f64>>,
         rx: crossbeam::channel::Receiver<ScheduledEvent<BUFSIZE, NCHAN>>,
     ) -> RuffboxBackend<BUFSIZE, NCHAN> {
         // create reverb
@@ -228,7 +235,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxBackend<BUFSIZE, NCHAN> {
             // timing stuff
             block_duration: BUFSIZE as f64 / samplerate,
             sec_per_sample: 1.0 / samplerate,
-            now: 0.0,
+            now: Arc::clone(now),
             master_reverb: rev,
             master_delay: MultichannelDelay::new(samplerate as f32),
             samplerate: samplerate as f32,
@@ -303,10 +310,13 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxBackend<BUFSIZE, NCHAN> {
 
         let mut master_delay_in: [[f32; BUFSIZE]; NCHAN] = [[0.0; BUFSIZE]; NCHAN];
         let mut master_reverb_in: [[f32; BUFSIZE]; NCHAN] = [[0.0; BUFSIZE]; NCHAN];
-
-        if !track_time_internally {
-            self.now = stream_time;
-        }
+		
+        let now = if !track_time_internally {
+            self.now.store(stream_time);
+	    stream_time
+        } else {
+	    self.now.load()
+	};
 
         // remove finished instances ...
         self.running_instances
@@ -314,10 +324,10 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxBackend<BUFSIZE, NCHAN> {
 
         // add new instances
         for new_event in self.new_instances_q_rec.try_iter() {
-            if new_event.timestamp == 0.0 || new_event.timestamp == self.now {
+            if new_event.timestamp == 0.0 || new_event.timestamp == now {
                 self.running_instances.push(new_event.source);
             //println!("now");
-            } else if new_event.timestamp < self.now {
+            } else if new_event.timestamp < now {
                 // late events
                 self.running_instances.push(new_event.source);
                 // how to send out a late message ??
@@ -344,7 +354,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxBackend<BUFSIZE, NCHAN> {
 
         // sort new events by timestamp, order of already sorted elements doesn't matter
         self.pending_events.sort_unstable_by(|a, b| b.cmp(a));
-        let block_end = self.now + self.block_duration;
+        let block_end = now + self.block_duration;
 
         // fetch event if it belongs to this block, if any ...
         while !self.pending_events.is_empty()
@@ -353,7 +363,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxBackend<BUFSIZE, NCHAN> {
             let mut current_event = self.pending_events.pop().unwrap();
             //println!("on time ts: {} st: {}", current_event.timestamp, self.now);
             // calculate precise timing
-            let sample_offset = (current_event.timestamp - self.now) / self.sec_per_sample;
+            let sample_offset = (current_event.timestamp - now) / self.sec_per_sample;
 
             let block = current_event
                 .source
@@ -386,7 +396,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxBackend<BUFSIZE, NCHAN> {
         }
 
         if track_time_internally {
-            self.now += self.block_duration;
+            self.now.store(now + self.block_duration);
         }
         //println!("now {}", self.now);
 
@@ -438,15 +448,12 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxBackend<BUFSIZE, NCHAN> {
         // return bufnum
         self.buffers.len() - 1
     }
-
-    pub fn get_now(&self) -> f64 {
-        self.now
-    }
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxFrontend<BUFSIZE, NCHAN> {
     fn new(
         samplerate: f64,
+	now: &Arc<AtomicCell<f64>>,
         tx: crossbeam::channel::Sender<ScheduledEvent<BUFSIZE, NCHAN>>,
     ) -> RuffboxFrontend<BUFSIZE, NCHAN> {
         RuffboxFrontend {
@@ -455,6 +462,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxFrontend<BUFSIZE, NCHAN> {
             new_instances_q_send: tx,
             buffer_lengths: Vec::with_capacity(2000),
             samplerate: samplerate as f32,
+	    now: Arc::clone(now),
         }
     }
 
@@ -528,7 +536,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxFrontend<BUFSIZE, NCHAN> {
     }
 
     pub fn get_now(&self) -> f64 {
-        0.0
+        self.now.load()
     }
 }
 

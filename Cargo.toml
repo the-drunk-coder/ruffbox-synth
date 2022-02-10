@@ -10,12 +10,7 @@ repository = "https://github.com/the-drunk-coder/ruffbox-synth/"
 categories = ["multimedia::audio"]
 keywords = ["audio", "synthesizer", "beatbox", "sampler"]
 
-#[lib]
-#crate-type = ["rlib", "cdylib"]
-
 [dependencies]
-lazy_static = "1.4.0"
-wee_alloc = { version = "0.4.5", optional = true }
 crossbeam = "0.8"
 parking_lot = "0.11"
 num-complex = "0.4"
