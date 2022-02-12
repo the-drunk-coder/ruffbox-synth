@@ -75,11 +75,10 @@ pub enum ReverbMode {
     Convolution(Vec<f32>, f32),
 }
 
-
 enum ControlMessage<const BUFSIZE: usize, const NCHAN: usize> {
-    LoadSample(usize, usize, Box<Vec<f32>>),
+    LoadSample(usize, usize, Vec<f32>), // num, len, samples
     SetGlobalParam(SynthParameter, f32),
-    ScheduleEvent(ScheduledEvent<BUFSIZE, NCHAN>)
+    ScheduleEvent(ScheduledEvent<BUFSIZE, NCHAN>),
 }
 
 // before loading, analyze how many samples you want to load,
@@ -92,6 +91,7 @@ pub struct RuffboxPlayhead<const BUFSIZE: usize, const NCHAN: usize> {
     pending_events: Vec<ScheduledEvent<BUFSIZE, NCHAN>>,
     buffers: Vec<Vec<f32>>,
     buffer_lengths: Vec<usize>,
+    max_buffers: usize,
     live_buffer_idx: usize,
     live_buffer_current_block: usize,
     live_buffer_stitch_size: usize,
@@ -106,7 +106,6 @@ pub struct RuffboxPlayhead<const BUFSIZE: usize, const NCHAN: usize> {
     now: Arc<AtomicCell<f64>>,
     master_reverb: Box<dyn MultichannelReverb<BUFSIZE, NCHAN> + Send>,
     master_delay: MultichannelDelay<BUFSIZE, NCHAN>,
-    samplerate: f32, // finally after all those years ...
 }
 
 /// These are the controls, the part which you use in your control thread
@@ -114,8 +113,10 @@ pub struct RuffboxPlayhead<const BUFSIZE: usize, const NCHAN: usize> {
 pub struct RuffboxControls<const BUFSIZE: usize, const NCHAN: usize> {
     prepared_instance_map: HashMap<usize, ScheduledEvent<BUFSIZE, NCHAN>>,
     instance_counter: AtomicCell<usize>,
+    buffer_counter: AtomicCell<usize>,
     control_q_send: crossbeam::channel::Sender<ControlMessage<BUFSIZE, NCHAN>>,
     buffer_lengths: Vec<usize>,
+    max_buffers: usize,
     now: Arc<AtomicCell<f64>>,
     pub samplerate: f32, // finally after all those years ...
 }
@@ -125,6 +126,8 @@ pub fn init_ruffbox<const BUFSIZE: usize, const NCHAN: usize>(
     live_buffer_time: f64,
     reverb_mode: &ReverbMode,
     samplerate: f64,
+    max_buffers: usize,
+    freeze_buffers: usize,
 ) -> (
     RuffboxControls<BUFSIZE, NCHAN>,
     RuffboxPlayhead<BUFSIZE, NCHAN>,
@@ -133,17 +136,26 @@ pub fn init_ruffbox<const BUFSIZE: usize, const NCHAN: usize>(
         Sender<ControlMessage<BUFSIZE, NCHAN>>,
         Receiver<ControlMessage<BUFSIZE, NCHAN>>,
     ) = crossbeam::channel::bounded(2000);
-    
+
     let now = Arc::new(AtomicCell::<f64>::new(0.0));
 
-    let controls = RuffboxControls::<BUFSIZE, NCHAN>::new(samplerate, &now, tx);
+    let controls = RuffboxControls::<BUFSIZE, NCHAN>::new(
+        samplerate,
+        live_buffer,
+        max_buffers,
+        freeze_buffers,
+        &now,
+        tx,
+    );
     let playhead = RuffboxPlayhead::<BUFSIZE, NCHAN>::new(
         live_buffer,
         live_buffer_time,
         reverb_mode,
         samplerate,
+        max_buffers,
+        freeze_buffers,
         &now,
-        rx,       
+        rx,
     );
 
     (controls, playhead)
@@ -155,6 +167,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
         live_buffer_time: f64,
         reverb_mode: &ReverbMode,
         samplerate: f64,
+        max_buffers: usize,
+        freeze_buffers: usize,
         now: &Arc<AtomicCell<f64>>,
         rx: crossbeam::channel::Receiver<ControlMessage<BUFSIZE, NCHAN>>,
     ) -> RuffboxPlayhead<BUFSIZE, NCHAN> {
@@ -195,18 +209,20 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
             }
         };
 
-        let mut buffers = Vec::with_capacity(2000);
-        let mut buffer_lengths = Vec::with_capacity(2000);
+        // init buffer memory
+        let mut buffers = vec![vec![0.0]; max_buffers];
+        // init buffer lengths
+        let mut buffer_lengths = vec![0; max_buffers];
 
         if live_buffer {
             // create live buffer
-            buffers.push(vec![0.0; (samplerate * live_buffer_time) as usize + 3]);
-            buffer_lengths.push((samplerate * live_buffer_time) as usize);
+            buffers[0] = vec![0.0; (samplerate * live_buffer_time) as usize + 3];
+            buffer_lengths[0] = (samplerate * live_buffer_time) as usize;
             println!("live buf time samples: {}", buffer_lengths[0]);
-            for _ in 0..10 {
+            for b in 1..freeze_buffers + 1 {
                 // create freeze buffers
-                buffers.push(vec![0.0; (samplerate * live_buffer_time) as usize + 3]);
-                buffer_lengths.push((samplerate * live_buffer_time) as usize);
+                buffers[b] = vec![0.0; (samplerate * live_buffer_time) as usize + 3];
+                buffer_lengths[b] = (samplerate * live_buffer_time) as usize;
             }
         }
 
@@ -230,6 +246,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
             pending_events: Vec::with_capacity(600),
             buffers,
             buffer_lengths,
+            max_buffers,
             live_buffer_idx: 1,
             live_buffer_current_block: 0,
             live_buffer_stitch_size: stitch_size,
@@ -245,7 +262,6 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
             now: Arc::clone(now),
             master_reverb: rev,
             master_delay: MultichannelDelay::new(samplerate as f32),
-            samplerate: samplerate as f32,
         }
     }
 
@@ -324,35 +340,41 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
         } else {
             self.now.load()
         };
-	
+
         // remove finished instances ...
         self.running_instances
             .retain(|instance| !&instance.is_finished());
-	
-	for cm in self.control_q_rec.try_iter() {
-	    match cm {
-		ControlMessage::SetGlobalParam(par,val) => {
-		    self.master_reverb.set_parameter(par, val);
-		    self.master_delay.set_parameter(par, val);
-		},
-		ControlMessage::ScheduleEvent(new_event) => { // add new instances
-		    if new_event.timestamp == 0.0 || new_event.timestamp == now {
-			self.running_instances.push(new_event.source);
-			//println!("now");
-		    } else if new_event.timestamp < now {
-			// late events
-			self.running_instances.push(new_event.source);
-			// how to send out a late message ??
-			// some lock-free message queue to a printer thread or something ....
-			println!("late");
-		    } else {
-			self.pending_events.push(new_event);
-		    }
-		},
-		_ => {}
-	    }
-	}
-        
+
+        for cm in self.control_q_rec.try_iter() {
+            match cm {
+                ControlMessage::SetGlobalParam(par, val) => {
+                    self.master_reverb.set_parameter(par, val);
+                    self.master_delay.set_parameter(par, val);
+                }
+                ControlMessage::ScheduleEvent(new_event) => {
+                    // add new instances
+                    if new_event.timestamp == 0.0 || new_event.timestamp == now {
+                        self.running_instances.push(new_event.source);
+                    //println!("now");
+                    } else if new_event.timestamp < now {
+                        // late events
+                        self.running_instances.push(new_event.source);
+                        // how to send out a late message ??
+                        // some lock-free message queue to a printer thread or something ....
+                        println!("late");
+                    } else {
+                        self.pending_events.push(new_event);
+                    }
+                }
+                ControlMessage::LoadSample(num, len, content) => {
+                    if num < self.max_buffers {
+                        self.buffers[num] = content; // transfer to samples
+                        self.buffer_lengths[num] = len;
+                    }
+                }
+            }
+        }
+
         // handle already running instances
         for running_inst in self.running_instances.iter_mut() {
             let block = running_inst.get_next_block(0, &self.buffers);
@@ -422,12 +444,17 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
 impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
     fn new(
         samplerate: f64,
+        life_buffer: bool,
+        max_buffers: usize,
+        freeze_buffers: usize,
         now: &Arc<AtomicCell<f64>>,
         tx: crossbeam::channel::Sender<ControlMessage<BUFSIZE, NCHAN>>,
     ) -> RuffboxControls<BUFSIZE, NCHAN> {
         RuffboxControls {
             prepared_instance_map: HashMap::with_capacity(1200),
             instance_counter: AtomicCell::new(0),
+            buffer_counter: AtomicCell::new(if life_buffer { 1 + freeze_buffers } else { 0 }),
+            max_buffers,
             control_q_send: tx,
             buffer_lengths: Vec::with_capacity(2000),
             samplerate: samplerate as f32,
@@ -507,12 +534,14 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
     pub fn trigger(&mut self, instance_id: usize) {
         // add check if it actually exists !
         let scheduled_event = self.prepared_instance_map.remove(&instance_id).unwrap();
-        self.control_q_send.send(ControlMessage::ScheduleEvent(scheduled_event)).unwrap();
+        self.control_q_send
+            .send(ControlMessage::ScheduleEvent(scheduled_event))
+            .unwrap();
     }
 
     /// get the current timestamp
     pub fn get_now(&self) -> f64 {
-	// this might cause locking on platforms where AtomicCell<float> isn't lockfree
+        // this might cause locking on platforms where AtomicCell<float> isn't lockfree
         self.now.load()
     }
 
@@ -522,13 +551,20 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
     /// The sample buffer is passed as mutable because the method adds
     /// interpolation samples without the need of a copy.
     pub fn load_sample(&mut self, samples: &mut Vec<f32>, resample: bool, sr: f32) -> usize {
-        if resample && (self.samplerate != sr) {
+        let buffer_id = self.buffer_counter.fetch_add(1);
+
+        if buffer_id > self.max_buffers {
+            println!("warning, this buffer won't be loaded !");
+            return buffer_id;
+        }
+
+        let (buflen, buffer) = if resample && (self.samplerate != sr) {
             // zero-pad for resampling blocks
             if (samples.len() as f32 % 1024.0) > 0.0 {
                 let diff = 1024 - (samples.len() % 1024);
                 samples.append(&mut vec![0.0; diff]);
             }
-	    
+
             let mut samples_resampled: Vec<f32> = Vec::new();
             let mut resampler =
                 FftFixedIn::<f32>::new(sr as usize, self.samplerate as usize, 1024, 1, 1);
@@ -544,15 +580,18 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
             // interpolation samples
             samples_resampled.push(0.0);
             samples_resampled.push(0.0);
-            
+            (samples_resampled.len(), samples_resampled)
         } else {
             samples.insert(0, 0.0); // interpolation sample
             samples.push(0.0);
             samples.push(0.0);
-            
-        }
+            (samples.len(), samples.to_vec())
+        };
+        self.control_q_send
+            .send(ControlMessage::LoadSample(buffer_id, buflen, buffer))
+            .unwrap();
         // return bufnum
-        0
+        buffer_id
     }
 }
 
