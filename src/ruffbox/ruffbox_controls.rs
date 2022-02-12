@@ -170,12 +170,12 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
             // interpolation samples
             samples_resampled.push(0.0);
             samples_resampled.push(0.0);
-            (samples_resampled.len(), samples_resampled)
+            (samples_resampled.len() - 3, samples_resampled)
         } else {
             samples.insert(0, 0.0); // interpolation sample
             samples.push(0.0);
             samples.push(0.0);
-            (samples.len(), samples.to_vec())
+            (samples.len() - 3, samples.to_vec())
         };
 
         self.buffer_lengths[buffer_id] = buflen;
