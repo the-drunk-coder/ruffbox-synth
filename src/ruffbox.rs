@@ -12,7 +12,7 @@ use std::sync::Arc;
 
 use crate::ruffbox::synth::Synth;
 use crate::ruffbox::synth::SynthParameter;
-use crate::ruffbox::{ruffbox_controls::*, ruffbox_playhead::*};
+pub use crate::ruffbox::{ruffbox_controls::*, ruffbox_playhead::*};
 
 /// timed event, to be created in the trigger method, then
 /// sent to the event queue to be either dispatched directly
