@@ -122,11 +122,14 @@ pub fn init_ruffbox<const BUFSIZE: usize, const NCHAN: usize>(
 mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
+    use crate::ruffbox::synth::SourceType;
     use std::f32::consts::PI;
 
     #[test]
     fn test_stitch_stuff() {
-        let mut ruff = Ruffbox::<512, 2>::new(true, 2.0, &ReverbMode::FreeVerb, 44100.0);
+        let (_, mut ruff) =
+            init_ruffbox::<512, 2>(true, 2.0, &ReverbMode::FreeVerb, 44100.0, 3000, 10);
+
         assert_approx_eq::assert_approx_eq!(ruff.fade_curve[0], 0.0, 0.00001);
         assert_approx_eq::assert_approx_eq!(ruff.fade_curve[127], 1.0, 0.0002);
 
@@ -175,12 +178,13 @@ mod tests {
 
     #[test]
     fn test_load_sample() {
-        // don't use life buffer here ...
-        let mut ruff = Ruffbox::<512, 2>::new(false, 2.0, &ReverbMode::FreeVerb, 44100.0);
+        let (ctrl, mut ruff) =
+            init_ruffbox::<512, 2>(false, 2.0, &ReverbMode::FreeVerb, 44100.0, 3000, 10);
 
         let mut sample = vec![1.0_f32; 500];
 
-        ruff.load_sample(&mut sample, false, 44100.0);
+        ctrl.load_sample(&mut sample, false, 44100.0);
+        ruff.process(0.0, true);
 
         assert_approx_eq::assert_approx_eq!(ruff.buffers[0][0], 0.0, 0.0002);
         assert_approx_eq::assert_approx_eq!(ruff.buffers[0][1], 1.0, 0.0002);
@@ -193,17 +197,18 @@ mod tests {
 
     #[test]
     fn test_sine_synth_at_block_start() {
-        let mut ruff = Ruffbox::<128, 2>::new(true, 2.0, &ReverbMode::FreeVerb, 44100.0);
+        let (ctrl, mut ruff) =
+            init_ruffbox::<128, 2>(false, 2.0, &ReverbMode::FreeVerb, 44100.0, 3000, 10);
 
-        let inst = ruff.prepare_instance(SourceType::SineSynth, 0.0, 0);
-        ruff.set_instance_parameter(inst, SynthParameter::PitchFrequency, 440.0);
-        ruff.set_instance_parameter(inst, SynthParameter::ChannelPosition, 0.0);
-        ruff.set_instance_parameter(inst, SynthParameter::Level, 1.0);
-        ruff.set_instance_parameter(inst, SynthParameter::Attack, 0.0);
-        ruff.set_instance_parameter(inst, SynthParameter::Sustain, 1.0);
-        ruff.set_instance_parameter(inst, SynthParameter::Release, 0.0);
+        let mut inst = ctrl.prepare_instance(SourceType::SineSynth, 0.0, 0);
+        inst.set_instance_parameter(SynthParameter::PitchFrequency, 440.0);
+        inst.set_instance_parameter(SynthParameter::ChannelPosition, 0.0);
+        inst.set_instance_parameter(SynthParameter::Level, 1.0);
+        inst.set_instance_parameter(SynthParameter::Attack, 0.0);
+        inst.set_instance_parameter(SynthParameter::Sustain, 1.0);
+        inst.set_instance_parameter(SynthParameter::Release, 0.0);
 
-        ruff.trigger(inst);
+        ctrl.trigger(inst);
 
         let out_1 = ruff.process(0.0, true);
         let mut comp_1 = [0.0; 128];
@@ -220,38 +225,39 @@ mod tests {
 
     #[test]
     fn test_basic_playback() {
-        let mut ruff = Ruffbox::<128, 2>::new(true, 2.0, &ReverbMode::FreeVerb, 44100.0);
+        let (ctrl, mut ruff) =
+            init_ruffbox::<128, 2>(true, 2.0, &ReverbMode::FreeVerb, 44100.0, 3000, 10);
 
         let mut sample1 = vec![0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
         let mut sample2 = vec![0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0];
 
-        let bnum1 = ruff.load_sample(&mut sample1, false, 44100.0);
-        let bnum2 = ruff.load_sample(&mut sample2, false, 44100.0);
+        let bnum1 = ctrl.load_sample(&mut sample1, false, 44100.0);
+        let bnum2 = ctrl.load_sample(&mut sample2, false, 44100.0);
 
         ruff.process(0.0, true);
 
-        let inst_1 = ruff.prepare_instance(SourceType::Sampler, 0.0, bnum1);
-        let inst_2 = ruff.prepare_instance(SourceType::Sampler, 0.0, bnum2);
+        let mut inst_1 = ctrl.prepare_instance(SourceType::Sampler, 0.0, bnum1);
+        let mut inst_2 = ctrl.prepare_instance(SourceType::Sampler, 0.0, bnum2);
 
         // pan to left, neutralize
-        ruff.set_instance_parameter(inst_1, SynthParameter::ChannelPosition, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::LowpassCutoffFrequency, 22050.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::LowpassFilterDistortion, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::LowpassQFactor, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::Attack, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::Release, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::Sustain, 9.0 / 44100.0);
+        inst_1.set_instance_parameter(SynthParameter::ChannelPosition, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::LowpassCutoffFrequency, 22050.0);
+        inst_1.set_instance_parameter(SynthParameter::LowpassFilterDistortion, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::LowpassQFactor, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::Attack, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::Release, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::Sustain, 9.0 / 44100.0);
 
-        ruff.set_instance_parameter(inst_2, SynthParameter::ChannelPosition, 0.0);
-        ruff.set_instance_parameter(inst_2, SynthParameter::LowpassCutoffFrequency, 22050.0);
-        ruff.set_instance_parameter(inst_2, SynthParameter::LowpassFilterDistortion, 0.0);
-        ruff.set_instance_parameter(inst_2, SynthParameter::LowpassQFactor, 0.0);
-        ruff.set_instance_parameter(inst_2, SynthParameter::Attack, 0.0);
-        ruff.set_instance_parameter(inst_2, SynthParameter::Release, 0.0);
-        ruff.set_instance_parameter(inst_2, SynthParameter::Sustain, 9.0 / 44100.0);
+        inst_2.set_instance_parameter(SynthParameter::ChannelPosition, 0.0);
+        inst_2.set_instance_parameter(SynthParameter::LowpassCutoffFrequency, 22050.0);
+        inst_2.set_instance_parameter(SynthParameter::LowpassFilterDistortion, 0.0);
+        inst_2.set_instance_parameter(SynthParameter::LowpassQFactor, 0.0);
+        inst_2.set_instance_parameter(SynthParameter::Attack, 0.0);
+        inst_2.set_instance_parameter(SynthParameter::Release, 0.0);
+        inst_2.set_instance_parameter(SynthParameter::Sustain, 9.0 / 44100.0);
 
-        ruff.trigger(inst_1);
-        ruff.trigger(inst_2);
+        ctrl.trigger(inst_1);
+        ctrl.trigger(inst_2);
 
         let out_buf = ruff.process(0.0, true);
 
@@ -267,27 +273,28 @@ mod tests {
 
     #[test]
     fn reverb_smoke_test() {
-        let mut ruff = Ruffbox::<128, 2>::new(true, 2.0, &ReverbMode::FreeVerb, 44100.0);
+        let (ctrl, mut ruff) =
+            init_ruffbox::<128, 2>(true, 2.0, &ReverbMode::FreeVerb, 44100.0, 3000, 10);
 
         let mut sample1 = vec![0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
 
-        let bnum1 = ruff.load_sample(&mut sample1, false, 44100.0);
+        let bnum1 = ctrl.load_sample(&mut sample1, false, 44100.0);
 
         ruff.process(0.0, true);
 
-        let inst_1 = ruff.prepare_instance(SourceType::Sampler, 0.0, bnum1);
+        let mut inst_1 = ctrl.prepare_instance(SourceType::Sampler, 0.0, bnum1);
 
         // pan to left
-        ruff.set_instance_parameter(inst_1, SynthParameter::ChannelPosition, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::ReverbMix, 1.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::LowpassCutoffFrequency, 22050.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::LowpassFilterDistortion, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::LowpassQFactor, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::Attack, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::Release, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::Sustain, 9.0 / 44100.0);
+        inst_1.set_instance_parameter(SynthParameter::ChannelPosition, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::ReverbMix, 1.0);
+        inst_1.set_instance_parameter(SynthParameter::LowpassCutoffFrequency, 22050.0);
+        inst_1.set_instance_parameter(SynthParameter::LowpassFilterDistortion, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::LowpassQFactor, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::Attack, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::Release, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::Sustain, 9.0 / 44100.0);
 
-        ruff.trigger(inst_1);
+        ctrl.trigger(inst_1);
 
         let out_buf = ruff.process(0.0, true);
 
@@ -299,7 +306,8 @@ mod tests {
 
     #[test]
     fn test_scheduled_playback() {
-        let mut ruff = Ruffbox::<128, 2>::new(true, 2.0, &ReverbMode::FreeVerb, 44100.0);
+        let (ctrl, mut ruff) =
+            init_ruffbox::<128, 2>(true, 2.0, &ReverbMode::FreeVerb, 44100.0, 3000, 10);
 
         // block duration in seconds
         let block_duration = 0.00290249433;
@@ -307,31 +315,31 @@ mod tests {
         let mut sample1 = vec![0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
         let mut sample2 = vec![0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0];
 
-        let bnum1 = ruff.load_sample(&mut sample1, false, 44100.0);
-        let bnum2 = ruff.load_sample(&mut sample2, false, 44100.0);
+        let bnum1 = ctrl.load_sample(&mut sample1, false, 44100.0);
+        let bnum2 = ctrl.load_sample(&mut sample2, false, 44100.0);
 
-        let inst_1 = ruff.prepare_instance(SourceType::Sampler, 0.291, bnum1);
-        let inst_2 = ruff.prepare_instance(SourceType::Sampler, 0.291, bnum2);
+        let mut inst_1 = ctrl.prepare_instance(SourceType::Sampler, 0.291, bnum1);
+        let mut inst_2 = ctrl.prepare_instance(SourceType::Sampler, 0.291, bnum2);
 
         // pan to left
-        ruff.set_instance_parameter(inst_1, SynthParameter::ChannelPosition, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::LowpassCutoffFrequency, 22050.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::LowpassFilterDistortion, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::LowpassQFactor, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::Attack, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::Release, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::Sustain, 9.0 / 44100.0);
+        inst_1.set_instance_parameter(SynthParameter::ChannelPosition, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::LowpassCutoffFrequency, 22050.0);
+        inst_1.set_instance_parameter(SynthParameter::LowpassFilterDistortion, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::LowpassQFactor, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::Attack, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::Release, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::Sustain, 9.0 / 44100.0);
 
-        ruff.set_instance_parameter(inst_2, SynthParameter::ChannelPosition, 0.0);
-        ruff.set_instance_parameter(inst_2, SynthParameter::LowpassCutoffFrequency, 22050.0);
-        ruff.set_instance_parameter(inst_2, SynthParameter::LowpassFilterDistortion, 0.0);
-        ruff.set_instance_parameter(inst_2, SynthParameter::LowpassQFactor, 0.0);
-        ruff.set_instance_parameter(inst_2, SynthParameter::Attack, 0.0);
-        ruff.set_instance_parameter(inst_2, SynthParameter::Release, 0.0);
-        ruff.set_instance_parameter(inst_2, SynthParameter::Sustain, 9.0 / 44100.0);
+        inst_2.set_instance_parameter(SynthParameter::ChannelPosition, 0.0);
+        inst_2.set_instance_parameter(SynthParameter::LowpassCutoffFrequency, 22050.0);
+        inst_2.set_instance_parameter(SynthParameter::LowpassFilterDistortion, 0.0);
+        inst_2.set_instance_parameter(SynthParameter::LowpassQFactor, 0.0);
+        inst_2.set_instance_parameter(SynthParameter::Attack, 0.0);
+        inst_2.set_instance_parameter(SynthParameter::Release, 0.0);
+        inst_2.set_instance_parameter(SynthParameter::Sustain, 9.0 / 44100.0);
 
-        ruff.trigger(inst_1);
-        ruff.trigger(inst_2);
+        ctrl.trigger(inst_1);
+        ctrl.trigger(inst_2);
 
         let mut stream_time = 0.0;
         // calculate a few blocks
@@ -353,7 +361,8 @@ mod tests {
 
     #[test]
     fn test_overlap_playback() {
-        let mut ruff = Ruffbox::<128, 2>::new(true, 2.0, &ReverbMode::FreeVerb, 44100.0);
+        let (ctrl, mut ruff) =
+            init_ruffbox::<128, 2>(true, 2.0, &ReverbMode::FreeVerb, 44100.0, 3000, 10);
 
         // block duration in seconds
         let block_duration = 0.00290249433;
@@ -362,32 +371,32 @@ mod tests {
         let mut sample1 = vec![0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
         let mut sample2 = vec![0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0];
 
-        let bnum1 = ruff.load_sample(&mut sample1, false, 44100.0);
-        let bnum2 = ruff.load_sample(&mut sample2, false, 44100.0);
+        let bnum1 = ctrl.load_sample(&mut sample1, false, 44100.0);
+        let bnum2 = ctrl.load_sample(&mut sample2, false, 44100.0);
 
-        let inst_1 = ruff.prepare_instance(SourceType::Sampler, 0.291, bnum1);
-        let inst_2 =
-            ruff.prepare_instance(SourceType::Sampler, 0.291 + (4.0 * sec_per_sample), bnum2);
+        let mut inst_1 = ctrl.prepare_instance(SourceType::Sampler, 0.291, bnum1);
+        let mut inst_2 =
+            ctrl.prepare_instance(SourceType::Sampler, 0.291 + (4.0 * sec_per_sample), bnum2);
 
         // pan to left
-        ruff.set_instance_parameter(inst_1, SynthParameter::ChannelPosition, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::LowpassCutoffFrequency, 22050.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::LowpassFilterDistortion, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::LowpassQFactor, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::Attack, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::Release, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::Sustain, 9.0 / 44100.0);
+        inst_1.set_instance_parameter(SynthParameter::ChannelPosition, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::LowpassCutoffFrequency, 22050.0);
+        inst_1.set_instance_parameter(SynthParameter::LowpassFilterDistortion, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::LowpassQFactor, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::Attack, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::Release, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::Sustain, 9.0 / 44100.0);
 
-        ruff.set_instance_parameter(inst_2, SynthParameter::ChannelPosition, 0.0);
-        ruff.set_instance_parameter(inst_2, SynthParameter::LowpassCutoffFrequency, 22050.0);
-        ruff.set_instance_parameter(inst_2, SynthParameter::LowpassFilterDistortion, 0.0);
-        ruff.set_instance_parameter(inst_2, SynthParameter::LowpassQFactor, 0.0);
-        ruff.set_instance_parameter(inst_2, SynthParameter::Attack, 0.0);
-        ruff.set_instance_parameter(inst_2, SynthParameter::Release, 0.0);
-        ruff.set_instance_parameter(inst_2, SynthParameter::Sustain, 9.0 / 44100.0);
+        inst_2.set_instance_parameter(SynthParameter::ChannelPosition, 0.0);
+        inst_2.set_instance_parameter(SynthParameter::LowpassCutoffFrequency, 22050.0);
+        inst_2.set_instance_parameter(SynthParameter::LowpassFilterDistortion, 0.0);
+        inst_2.set_instance_parameter(SynthParameter::LowpassQFactor, 0.0);
+        inst_2.set_instance_parameter(SynthParameter::Attack, 0.0);
+        inst_2.set_instance_parameter(SynthParameter::Release, 0.0);
+        inst_2.set_instance_parameter(SynthParameter::Sustain, 9.0 / 44100.0);
 
-        ruff.trigger(inst_1);
-        ruff.trigger(inst_2);
+        ctrl.trigger(inst_1);
+        ctrl.trigger(inst_2);
 
         let mut stream_time = 0.0;
 
@@ -419,7 +428,8 @@ mod tests {
 
     #[test]
     fn test_disjunct_playback() {
-        let mut ruff = Ruffbox::<128, 2>::new(true, 2.0, &ReverbMode::FreeVerb, 44100.0);
+        let (ctrl, mut ruff) =
+            init_ruffbox::<128, 2>(true, 2.0, &ReverbMode::FreeVerb, 44100.0, 3000, 10);
 
         // block duration in seconds
         let block_duration = 0.00290249433;
@@ -427,8 +437,8 @@ mod tests {
         let mut sample1 = vec![0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
         let mut sample2 = vec![0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0];
 
-        let bnum1 = ruff.load_sample(&mut sample1, false, 44100.0);
-        let bnum2 = ruff.load_sample(&mut sample2, false, 44100.0);
+        let bnum1 = ctrl.load_sample(&mut sample1, false, 44100.0);
+        let bnum2 = ctrl.load_sample(&mut sample2, false, 44100.0);
 
         // schedule two samples ahead, so they should  occur in different blocks
         // first sample should appear in block 100
@@ -436,28 +446,28 @@ mod tests {
         // second sample should appear ten blocks later
         let second_sample_timestamp = 0.291 + (10.0 * block_duration);
 
-        let inst_1 = ruff.prepare_instance(SourceType::Sampler, 0.291, bnum1);
-        let inst_2 = ruff.prepare_instance(SourceType::Sampler, second_sample_timestamp, bnum2);
+        let mut inst_1 = ctrl.prepare_instance(SourceType::Sampler, 0.291, bnum1);
+        let mut inst_2 = ctrl.prepare_instance(SourceType::Sampler, second_sample_timestamp, bnum2);
 
         // pan to left
-        ruff.set_instance_parameter(inst_1, SynthParameter::ChannelPosition, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::LowpassCutoffFrequency, 22050.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::LowpassFilterDistortion, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::LowpassQFactor, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::Attack, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::Release, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::Sustain, 9.0 / 44100.0);
+        inst_1.set_instance_parameter(SynthParameter::ChannelPosition, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::LowpassCutoffFrequency, 22050.0);
+        inst_1.set_instance_parameter(SynthParameter::LowpassFilterDistortion, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::LowpassQFactor, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::Attack, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::Release, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::Sustain, 9.0 / 44100.0);
 
-        ruff.set_instance_parameter(inst_2, SynthParameter::ChannelPosition, 0.0);
-        ruff.set_instance_parameter(inst_2, SynthParameter::LowpassCutoffFrequency, 22050.0);
-        ruff.set_instance_parameter(inst_2, SynthParameter::LowpassFilterDistortion, 0.0);
-        ruff.set_instance_parameter(inst_2, SynthParameter::LowpassQFactor, 0.0);
-        ruff.set_instance_parameter(inst_2, SynthParameter::Attack, 0.0);
-        ruff.set_instance_parameter(inst_2, SynthParameter::Release, 0.0);
-        ruff.set_instance_parameter(inst_2, SynthParameter::Sustain, 9.0 / 44100.0);
+        inst_2.set_instance_parameter(SynthParameter::ChannelPosition, 0.0);
+        inst_2.set_instance_parameter(SynthParameter::LowpassCutoffFrequency, 22050.0);
+        inst_2.set_instance_parameter(SynthParameter::LowpassFilterDistortion, 0.0);
+        inst_2.set_instance_parameter(SynthParameter::LowpassQFactor, 0.0);
+        inst_2.set_instance_parameter(SynthParameter::Attack, 0.0);
+        inst_2.set_instance_parameter(SynthParameter::Release, 0.0);
+        inst_2.set_instance_parameter(SynthParameter::Sustain, 9.0 / 44100.0);
 
-        ruff.trigger(inst_1);
-        ruff.trigger(inst_2);
+        ctrl.trigger(inst_1);
+        ctrl.trigger(inst_2);
 
         let mut stream_time = 0.0;
 
@@ -489,26 +499,27 @@ mod tests {
 
     #[test]
     fn test_late_playback() {
-        let mut ruff = Ruffbox::<128, 2>::new(true, 2.0, &ReverbMode::FreeVerb, 44100.0);
+        let (ctrl, mut ruff) =
+            init_ruffbox::<128, 2>(true, 2.0, &ReverbMode::FreeVerb, 44100.0, 3000, 10);
 
         let mut sample1 = vec![0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
 
-        let bnum1 = ruff.load_sample(&mut sample1, false, 44100.0);
+        let bnum1 = ctrl.load_sample(&mut sample1, false, 44100.0);
 
         ruff.process(0.0, false);
 
-        let inst_1 = ruff.prepare_instance(SourceType::Sampler, 0.1, bnum1);
+        let mut inst_1 = ctrl.prepare_instance(SourceType::Sampler, 0.1, bnum1);
 
         // pan to left
-        ruff.set_instance_parameter(inst_1, SynthParameter::ChannelPosition, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::LowpassCutoffFrequency, 22050.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::LowpassFilterDistortion, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::LowpassQFactor, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::Attack, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::Release, 0.0);
-        ruff.set_instance_parameter(inst_1, SynthParameter::Sustain, 9.0 / 44100.0);
+        inst_1.set_instance_parameter(SynthParameter::ChannelPosition, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::LowpassCutoffFrequency, 22050.0);
+        inst_1.set_instance_parameter(SynthParameter::LowpassFilterDistortion, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::LowpassQFactor, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::Attack, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::Release, 0.0);
+        inst_1.set_instance_parameter(SynthParameter::Sustain, 9.0 / 44100.0);
 
-        ruff.trigger(inst_1);
+        ctrl.trigger(inst_1);
 
         // process after the instance's trigger time
         let out_buf = ruff.process(0.101, false);

@@ -19,16 +19,16 @@ use crate::ruffbox::ScheduledEvent;
 pub struct RuffboxPlayhead<const BUFSIZE: usize, const NCHAN: usize> {
     running_instances: Vec<Box<dyn Synth<BUFSIZE, NCHAN> + Send + Sync>>,
     pending_events: Vec<ScheduledEvent<BUFSIZE, NCHAN>>,
-    buffers: Vec<Vec<f32>>,
-    buffer_lengths: Vec<usize>,
+    pub(crate) buffers: Vec<Vec<f32>>,     // crate public for test
+    pub(crate) buffer_lengths: Vec<usize>, // crate public for test
     max_buffers: usize,
     live_buffer_idx: usize,
     live_buffer_current_block: usize,
     live_buffer_stitch_size: usize,
     non_stitch_size: usize,
     fade_stitch_idx: usize,
-    fade_curve: Vec<f32>,
-    stitch_buffer: Vec<f32>,
+    pub(crate) fade_curve: Vec<f32>, // crate public for test
+    pub(crate) stitch_buffer: Vec<f32>,
     bufsize: usize,
     control_q_rec: crossbeam::channel::Receiver<ControlMessage<BUFSIZE, NCHAN>>,
     block_duration: f64,
