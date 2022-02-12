@@ -17,7 +17,7 @@ use crate::ruffbox::ScheduledEvent;
 /// This is the "Playhead", that is, the part you use in the
 /// output callback funtion of your application
 pub struct RuffboxPlayhead<const BUFSIZE: usize, const NCHAN: usize> {
-    running_instances: Vec<Box<dyn Synth<BUFSIZE, NCHAN> + Send>>,
+    running_instances: Vec<Box<dyn Synth<BUFSIZE, NCHAN> + Send + Sync>>,
     pending_events: Vec<ScheduledEvent<BUFSIZE, NCHAN>>,
     buffers: Vec<Vec<f32>>,
     buffer_lengths: Vec<usize>,
@@ -34,7 +34,7 @@ pub struct RuffboxPlayhead<const BUFSIZE: usize, const NCHAN: usize> {
     block_duration: f64,
     sec_per_sample: f64,
     now: Arc<AtomicCell<f64>>,
-    master_reverb: Box<dyn MultichannelReverb<BUFSIZE, NCHAN> + Send>,
+    master_reverb: Box<dyn MultichannelReverb<BUFSIZE, NCHAN> + Send + Sync>,
     master_delay: MultichannelDelay<BUFSIZE, NCHAN>,
 }
 
@@ -51,7 +51,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
         rx: crossbeam::channel::Receiver<ControlMessage<BUFSIZE, NCHAN>>,
     ) -> RuffboxPlayhead<BUFSIZE, NCHAN> {
         // create reverb
-        let rev: Box<dyn MultichannelReverb<BUFSIZE, NCHAN> + Send> = match reverb_mode {
+        let rev: Box<dyn MultichannelReverb<BUFSIZE, NCHAN> + Send + Sync> = match reverb_mode {
             ReverbMode::FreeVerb => {
                 let mut mrev = MultichannelFreeverb::new(samplerate as f32);
                 // tweak some reverb values for freeverb
