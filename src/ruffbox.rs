@@ -19,7 +19,7 @@ pub use crate::ruffbox::{ruffbox_controls::*, ruffbox_playhead::*};
 /// or pushed to the pending queue ...
 pub(crate) struct ScheduledEvent<const BUFSIZE: usize, const NCHAN: usize> {
     timestamp: f64,
-    source: Box<dyn Synth<BUFSIZE, NCHAN> + Send>,
+    source: Box<dyn Synth<BUFSIZE, NCHAN> + Send + Sync>,
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> Ord for ScheduledEvent<BUFSIZE, NCHAN> {
@@ -50,7 +50,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Eq for ScheduledEvent<BUFSIZE, NC
 
 // constructor implementation
 impl<const BUFSIZE: usize, const NCHAN: usize> ScheduledEvent<BUFSIZE, NCHAN> {
-    pub fn new(ts: f64, src: Box<dyn Synth<BUFSIZE, NCHAN> + Send>) -> Self {
+    pub fn new(ts: f64, src: Box<dyn Synth<BUFSIZE, NCHAN> + Send + Sync>) -> Self {
         ScheduledEvent {
             timestamp: ts,
             source: src,
