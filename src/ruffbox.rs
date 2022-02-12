@@ -79,6 +79,7 @@ enum ControlMessage<const BUFSIZE: usize, const NCHAN: usize> {
     LoadSample(usize, usize, Vec<f32>), // num, len, samples
     SetGlobalParam(SynthParameter, f32),
     ScheduleEvent(ScheduledEvent<BUFSIZE, NCHAN>),
+    FreezeBuffer(usize)
 }
 
 // before loading, analyze how many samples you want to load,
@@ -162,6 +163,7 @@ pub fn init_ruffbox<const BUFSIZE: usize, const NCHAN: usize>(
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
+    #[allow(clippy::too_many_arguments)]
     fn new(
         live_buffer: bool,
         live_buffer_time: f64,
@@ -316,14 +318,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
             self.fade_stitch_idx = 0;
         }
     }
-
-    /// transfer contents of live buffer to freeze buffer
-    pub fn freeze_buffer(&mut self, freezbuf: usize) {
-        for i in 1..self.buffer_lengths[0] + 1 {
-            self.buffers[freezbuf][i] = self.buffers[0][i];
-        }
-    }
-
+    
     pub fn process(
         &mut self,
         stream_time: f64,
@@ -372,6 +367,11 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
                         self.buffer_lengths[num] = len;
                     }
                 }
+		ControlMessage::FreezeBuffer(fb) => {
+		    for i in 1..self.buffer_lengths[0] + 1 {
+			self.buffers[fb][i] = self.buffers[0][i];
+		    }
+		}
             }
         }
 
@@ -545,6 +545,13 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
         self.now.load()
     }
 
+    /// transfer contents of live buffer to freeze buffer
+    pub fn freeze_buffer(&mut self, freezbuf: usize) {
+        self.control_q_send
+            .send(ControlMessage::FreezeBuffer(freezbuf))
+            .unwrap();
+    }
+    
     /// Loads a mono sample and returns the assigned buffer number.
     ///
     /// Resample to current samplerate if necessary and specified.
