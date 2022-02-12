@@ -11,12 +11,13 @@ use crate::ruffbox::ScheduledEvent;
 use dashmap::DashMap;
 use std::sync::Arc;
 
+/// thin wrapper around a scheduled event instasnce
 pub struct PreparedInstance<const BUFSIZE: usize, const NCHAN: usize> {
-    ev: ScheduledEvent<BUFSIZE, NCHAN>
+    ev: ScheduledEvent<BUFSIZE, NCHAN>,
 }
 
-impl <const BUFSIZE: usize, const NCHAN: usize> PreparedInstance <BUFSIZE, NCHAN> {
-    pub fn set_instance_parameter(&mut self, par: SynthParameter, val: f32) {        
+impl<const BUFSIZE: usize, const NCHAN: usize> PreparedInstance<BUFSIZE, NCHAN> {
+    pub fn set_instance_parameter(&mut self, par: SynthParameter, val: f32) {
         self.ev.set_parameter(par, val);
     }
 }
@@ -30,12 +31,12 @@ pub struct RuffboxControls<const BUFSIZE: usize, const NCHAN: usize> {
     // use &mut self. Maybe one day I'll find out how to make the controls
     // actually stateless, but until then, the interior mutability pattern
     // comes in handy ...
-    buffer_counter: AtomicCell<usize>,     
+    buffer_counter: AtomicCell<usize>,
     buffer_lengths: DashMap<usize, usize>,
     max_buffers: usize,
     control_q_send: crossbeam::channel::Sender<ControlMessage<BUFSIZE, NCHAN>>,
     now: Arc<AtomicCell<f64>>, // shared reference to global time counter
-    pub samplerate: f32, // finally after all those years ...
+    pub samplerate: f32,       // finally after all those years ...
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
@@ -47,11 +48,11 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
         now: &Arc<AtomicCell<f64>>,
         tx: crossbeam::channel::Sender<ControlMessage<BUFSIZE, NCHAN>>,
     ) -> RuffboxControls<BUFSIZE, NCHAN> {
-        RuffboxControls {            
+        RuffboxControls {
             buffer_counter: AtomicCell::new(if life_buffer { 1 + freeze_buffers } else { 0 }),
-	    buffer_lengths: DashMap::new(),
-	    max_buffers,
-            control_q_send: tx,            
+            buffer_lengths: DashMap::new(),
+            max_buffers,
+            control_q_send: tx,
             samplerate: samplerate as f32,
             now: Arc::clone(now),
         }
@@ -63,50 +64,50 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
         src_type: SourceType,
         timestamp: f64,
         sample_buf: usize,
-    ) -> PreparedInstance<BUFSIZE, NCHAN> {                
+    ) -> PreparedInstance<BUFSIZE, NCHAN> {
         PreparedInstance {
-	    ev: match src_type {
-		SourceType::SineOsc => {
+            ev: match src_type {
+                SourceType::SineOsc => {
                     ScheduledEvent::new(timestamp, Box::new(SineSynth::new(self.samplerate)))
-		}
-		SourceType::SineSynth => {
+                }
+                SourceType::SineSynth => {
                     ScheduledEvent::new(timestamp, Box::new(SineSynth::new(self.samplerate)))
-		}
-		SourceType::LFTriangleSynth => {
+                }
+                SourceType::LFTriangleSynth => {
                     ScheduledEvent::new(timestamp, Box::new(LFTriSynth::new(self.samplerate)))
-		}
-		SourceType::RissetBell => {
+                }
+                SourceType::RissetBell => {
                     ScheduledEvent::new(timestamp, Box::new(RissetBell::new(self.samplerate)))
-		}
-		SourceType::Sampler => ScheduledEvent::new(
+                }
+                SourceType::Sampler => ScheduledEvent::new(
                     timestamp,
                     Box::new(NChannelSampler::with_bufnum_len(
-			sample_buf,
-			*self.buffer_lengths.get(&sample_buf).unwrap(),
-			self.samplerate,
+                        sample_buf,
+                        *self.buffer_lengths.get(&sample_buf).unwrap(),
+                        self.samplerate,
                     )),
-		),
-		SourceType::LiveSampler => ScheduledEvent::new(
+                ),
+                SourceType::LiveSampler => ScheduledEvent::new(
                     timestamp,
                     Box::new(NChannelSampler::with_bufnum_len(
-			0,
-			*self.buffer_lengths.get(&0).unwrap(),
-			self.samplerate,
+                        0,
+                        *self.buffer_lengths.get(&0).unwrap(),
+                        self.samplerate,
                     )),
-		),
-		SourceType::LFSawSynth => {
+                ),
+                SourceType::LFSawSynth => {
                     ScheduledEvent::new(timestamp, Box::new(LFSawSynth::new(self.samplerate)))
-		}
-		SourceType::LFSquareSynth => {
+                }
+                SourceType::LFSquareSynth => {
                     ScheduledEvent::new(timestamp, Box::new(LFSquareSynth::new(self.samplerate)))
-		}
-		SourceType::LFCubSynth => {
+                }
+                SourceType::LFCubSynth => {
                     ScheduledEvent::new(timestamp, Box::new(LFCubSynth::new(self.samplerate)))
-		}
-            }
-	}
+                }
+            },
+        }
     }
-    
+
     pub fn set_master_parameter(&self, par: SynthParameter, val: f32) {
         self.control_q_send
             .send(ControlMessage::SetGlobalParam(par, val))
@@ -114,7 +115,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
     }
 
     /// triggers a synth for buffer reference or a synth
-    pub fn trigger(&self, instance: PreparedInstance<BUFSIZE, NCHAN>) {                
+    pub fn trigger(&self, instance: PreparedInstance<BUFSIZE, NCHAN>) {
         self.control_q_send
             .send(ControlMessage::ScheduleEvent(instance.ev))
             .unwrap();
