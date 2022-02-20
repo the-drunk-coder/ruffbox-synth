@@ -97,18 +97,21 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
                     timestamp,
                     Box::new(NChannelSampler::with_bufnum_len(
                         sample_buf,
-                        *self.buffer_lengths.get(&0).unwrap(),
+                        *self.buffer_lengths.get(&sample_buf).unwrap(),
                         self.samplerate,
                     )),
                 ),
-                SourceType::FrozenSampler => ScheduledEvent::new(
-                    timestamp,
-                    Box::new(NChannelSampler::with_bufnum_len(
-                        sample_buf + self.freeze_buffer_offset,
-                        *self.buffer_lengths.get(&0).unwrap(),
-                        self.samplerate,
-                    )),
-                ),
+                SourceType::FrozenSampler => {
+                    let final_bufnum = sample_buf + self.freeze_buffer_offset;
+                    ScheduledEvent::new(
+                        timestamp,
+                        Box::new(NChannelSampler::with_bufnum_len(
+                            final_bufnum,
+                            *self.buffer_lengths.get(&final_bufnum).unwrap(),
+                            self.samplerate,
+                        )),
+                    )
+                }
                 SourceType::LFSawSynth => {
                     ScheduledEvent::new(timestamp, Box::new(LFSawSynth::new(self.samplerate)))
                 }
