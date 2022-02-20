@@ -104,11 +104,10 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
 
         if live_buffers > 0 {
             // pre-calculate a fade curve for live buffer stitching
-
             let pi_inc = std::f32::consts::PI / stitch_size as f32;
             let mut pi_idx: f32 = 0.0;
             let mut stitch_buffer = Vec::new();
-            println!("live buf time samples: {}", buffer_lengths[0]);
+
             for _ in 0..stitch_size {
                 stitch_buffer.push(0.0);
                 fade_curve.push((-pi_idx.cos() + 1.0) / 2.0);
@@ -130,6 +129,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
                 buffers[b] = vec![0.0; (samplerate * live_buffer_time) as usize + 3];
                 buffer_lengths[b] = (samplerate * live_buffer_time) as usize;
             }
+            println!("live buf time samples: {}", buffer_lengths[0]);
         }
 
         RuffboxPlayhead {
