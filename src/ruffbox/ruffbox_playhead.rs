@@ -19,7 +19,7 @@ pub(crate) struct LiveBufferMetadata {
     live_buffer_current_block: usize,
     live_buffer_stitch_size: usize,
     fade_stitch_idx: usize,
-    stitch_buffer: Vec<f32>,
+    pub(crate) stitch_buffer: Vec<f32>,
 }
 
 /// This is the "Playhead", that is, the part you use in the
