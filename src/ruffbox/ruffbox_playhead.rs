@@ -41,7 +41,7 @@ pub struct RuffboxPlayhead<const BUFSIZE: usize, const NCHAN: usize> {
 impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn new(
-        live_buffer: bool,
+        live_buffers: usize,
         live_buffer_time: f64,
         reverb_mode: &ReverbMode,
         samplerate: f64,
@@ -94,10 +94,13 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
 
         //println!("max num buffers {} {}", buffers.len(), max_buffers);
 
-        if live_buffer {
+        if live_buffers > 0 {
             // create live buffer
-            buffers[0] = vec![0.0; (samplerate * live_buffer_time) as usize + 3];
-            buffer_lengths[0] = (samplerate * live_buffer_time) as usize;
+            for b in 0..live_buffers {
+                buffers[b] = vec![0.0; (samplerate * live_buffer_time) as usize + 3];
+                buffer_lengths[b] = (samplerate * live_buffer_time) as usize;
+            }
+
             println!("live buf time samples: {}", buffer_lengths[0]);
             for b in 1..freeze_buffers + 1 {
                 // create freeze buffers
@@ -145,37 +148,37 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
         }
     }
 
-    pub fn write_samples_to_live_buffer(&mut self, samples: &[f32]) {
+    pub fn write_samples_to_live_buffer(&mut self, bufnum: usize, samples: &[f32]) {
         for s in samples.iter() {
-            self.buffers[0][self.live_buffer_idx] = *s;
+            self.buffers[bufnum][self.live_buffer_idx] = *s;
             self.live_buffer_idx += 1;
-            if self.live_buffer_idx >= self.buffer_lengths[0] {
+            if self.live_buffer_idx >= self.buffer_lengths[bufnum] {
                 self.live_buffer_idx = 1;
             }
         }
     }
 
     // there HAS to be a more elegant solution for this ...
-    pub fn write_sample_to_live_buffer(&mut self, sample: f32) {
+    pub fn write_sample_to_live_buffer(&mut self, bufnum: usize, sample: f32) {
         // first, overwrite old stitch region if we're at the beginning of a new block
         if self.live_buffer_current_block == 0 {
             let mut count_back_idx = self.live_buffer_idx - 1;
             for s in (0..self.stitch_buffer.len()).rev() {
                 if count_back_idx < 1 {
-                    count_back_idx = self.buffer_lengths[0]; // live buffer length
+                    count_back_idx = self.buffer_lengths[bufnum]; // live buffer length
                 }
-                self.buffers[0][count_back_idx] = self.stitch_buffer[s];
+                self.buffers[bufnum][count_back_idx] = self.stitch_buffer[s];
                 count_back_idx -= 1;
             }
         }
 
         if self.live_buffer_current_block < self.non_stitch_size {
-            self.buffers[0][self.live_buffer_idx] = sample;
+            self.buffers[bufnum][self.live_buffer_idx] = sample;
         } else if self.live_buffer_current_block < self.bufsize {
             self.stitch_buffer[self.fade_stitch_idx] = sample;
 
             // stitch by fading ...
-            self.buffers[0][self.live_buffer_idx] = self.buffers[0][self.live_buffer_idx]
+            self.buffers[bufnum][self.live_buffer_idx] = self.buffers[bufnum][self.live_buffer_idx]
                 * self.fade_curve[self.fade_stitch_idx]
                 + sample * (1.0 - self.fade_curve[self.fade_stitch_idx]);
             self.fade_stitch_idx += 1;
@@ -184,7 +187,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
         self.live_buffer_idx += 1;
         self.live_buffer_current_block += 1;
 
-        if self.live_buffer_idx >= self.buffer_lengths[0] {
+        if self.live_buffer_idx >= self.buffer_lengths[bufnum] {
             self.live_buffer_idx = 1;
         }
 
@@ -245,9 +248,11 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
                         self.buffer_lengths[id] = len;
                     }
                 }
-                ControlMessage::FreezeBuffer(fb) => {
-                    for i in 1..self.buffer_lengths[0] + 1 {
-                        self.buffers[fb][i] = self.buffers[0][i];
+                ControlMessage::FreezeBuffer(fb, ib) => {
+                    // start at one to account for interpolation
+                    // sample
+                    for i in 1..self.buffer_lengths[ib] + 1 {
+                        self.buffers[fb][i] = self.buffers[ib][i];
                     }
                 }
             }

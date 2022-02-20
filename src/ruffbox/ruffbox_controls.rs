@@ -33,6 +33,7 @@ pub struct RuffboxControls<const BUFSIZE: usize, const NCHAN: usize> {
     // comes in handy ...
     buffer_counter: AtomicCell<usize>,
     buffer_lengths: DashMap<usize, usize>,
+    freeze_buffer_offset: usize,
     max_buffers: usize,
     control_q_send: crossbeam::channel::Sender<ControlMessage<BUFSIZE, NCHAN>>,
     now: Arc<AtomicCell<f64>>, // shared reference to global time counter
@@ -42,14 +43,19 @@ pub struct RuffboxControls<const BUFSIZE: usize, const NCHAN: usize> {
 impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
     pub(crate) fn new(
         samplerate: f64,
-        life_buffer: bool,
+        live_buffers: usize,
         max_buffers: usize,
         freeze_buffers: usize,
         now: &Arc<AtomicCell<f64>>,
         tx: crossbeam::channel::Sender<ControlMessage<BUFSIZE, NCHAN>>,
     ) -> RuffboxControls<BUFSIZE, NCHAN> {
         RuffboxControls {
-            buffer_counter: AtomicCell::new(if life_buffer { 1 + freeze_buffers } else { 0 }),
+            buffer_counter: AtomicCell::new(if live_buffers > 0 {
+                live_buffers + freeze_buffers
+            } else {
+                0
+            }),
+            freeze_buffer_offset: live_buffers,
             buffer_lengths: DashMap::new(),
             max_buffers,
             control_q_send: tx,
@@ -90,7 +96,15 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
                 SourceType::LiveSampler => ScheduledEvent::new(
                     timestamp,
                     Box::new(NChannelSampler::with_bufnum_len(
-                        0,
+                        sample_buf,
+                        *self.buffer_lengths.get(&0).unwrap(),
+                        self.samplerate,
+                    )),
+                ),
+                SourceType::FrozenSampler => ScheduledEvent::new(
+                    timestamp,
+                    Box::new(NChannelSampler::with_bufnum_len(
+                        sample_buf + self.freeze_buffer_offset,
                         *self.buffer_lengths.get(&0).unwrap(),
                         self.samplerate,
                     )),
@@ -128,9 +142,13 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
     }
 
     /// transfer contents of live buffer to freeze buffer
-    pub fn freeze_buffer(&self, freezbuf: usize) {
+    pub fn freeze_buffer(&self, freezbuf: usize, inbuf: usize) {
+        // acutal buffer numbers are calculated here ...
         self.control_q_send
-            .send(ControlMessage::FreezeBuffer(freezbuf))
+            .send(ControlMessage::FreezeBuffer(
+                freezbuf + self.freeze_buffer_offset,
+                inbuf,
+            ))
             .unwrap();
     }
 

@@ -72,13 +72,13 @@ pub(crate) enum ControlMessage<const BUFSIZE: usize, const NCHAN: usize> {
     LoadSample(usize, usize, Vec<f32>), // num, len, samples
     SetGlobalParam(SynthParameter, f32),
     ScheduleEvent(ScheduledEvent<BUFSIZE, NCHAN>),
-    FreezeBuffer(usize),
+    FreezeBuffer(usize, usize),
 }
 
 /// before loading, analyze how many samples you want to load,
 /// and pre-allocate the buffer vector accordingly (later)
 pub fn init_ruffbox<const BUFSIZE: usize, const NCHAN: usize>(
-    live_buffer: bool,
+    live_buffers: usize,
     live_buffer_time: f64,
     reverb_mode: &ReverbMode,
     samplerate: f64,
@@ -97,14 +97,14 @@ pub fn init_ruffbox<const BUFSIZE: usize, const NCHAN: usize>(
 
     let controls = RuffboxControls::<BUFSIZE, NCHAN>::new(
         samplerate,
-        live_buffer,
+        live_buffers,
         max_buffers,
         freeze_buffers,
         &now,
         tx,
     );
     let playhead = RuffboxPlayhead::<BUFSIZE, NCHAN>::new(
-        live_buffer,
+        live_buffers,
         live_buffer_time,
         reverb_mode,
         samplerate,

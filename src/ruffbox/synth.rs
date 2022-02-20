@@ -59,6 +59,7 @@ pub enum SynthParameter {
 pub enum SourceType {
     Sampler,
     LiveSampler,
+    FrozenSampler,
     SineOsc,
     SineSynth,
     LFCubSynth,
