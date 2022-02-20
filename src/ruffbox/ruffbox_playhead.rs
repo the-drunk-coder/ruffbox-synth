@@ -14,6 +14,14 @@ use crate::ruffbox::ControlMessage;
 use crate::ruffbox::ReverbMode;
 use crate::ruffbox::ScheduledEvent;
 
+pub(crate) struct LiveBufferMetadata {
+    live_buffer_idx: usize,
+    live_buffer_current_block: usize,
+    live_buffer_stitch_size: usize,
+    fade_stitch_idx: usize,
+    stitch_buffer: Vec<f32>,
+}
+
 /// This is the "Playhead", that is, the part you use in the
 /// output callback funtion of your application
 pub struct RuffboxPlayhead<const BUFSIZE: usize, const NCHAN: usize> {
@@ -22,13 +30,9 @@ pub struct RuffboxPlayhead<const BUFSIZE: usize, const NCHAN: usize> {
     pub(crate) buffers: Vec<Vec<f32>>,     // crate public for test
     pub(crate) buffer_lengths: Vec<usize>, // crate public for test
     max_buffers: usize,
-    live_buffer_idx: usize,
-    live_buffer_current_block: usize,
-    live_buffer_stitch_size: usize,
     non_stitch_size: usize,
-    fade_stitch_idx: usize,
     pub(crate) fade_curve: Vec<f32>, // crate public for test
-    pub(crate) stitch_buffer: Vec<f32>,
+    pub(crate) live_buffer_metadata: Vec<LiveBufferMetadata>,
     bufsize: usize,
     control_q_rec: crossbeam::channel::Receiver<ControlMessage<BUFSIZE, NCHAN>>,
     block_duration: f64,
@@ -93,30 +97,39 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
         let mut buffer_lengths = vec![0; max_buffers];
 
         //println!("max num buffers {} {}", buffers.len(), max_buffers);
+        let bufsize = BUFSIZE;
+        let stitch_size = bufsize / 4;
+        let mut live_buffer_metadata = Vec::new();
+        let mut fade_curve = Vec::new();
 
         if live_buffers > 0 {
+            // pre-calculate a fade curve for live buffer stitching
+
+            let pi_inc = std::f32::consts::PI / stitch_size as f32;
+            let mut pi_idx: f32 = 0.0;
+            let mut stitch_buffer = Vec::new();
+            println!("live buf time samples: {}", buffer_lengths[0]);
+            for _ in 0..stitch_size {
+                stitch_buffer.push(0.0);
+                fade_curve.push((-pi_idx.cos() + 1.0) / 2.0);
+                pi_idx += pi_inc;
+            }
+
+            // one stitch buffer per live buffer
+            for _ in 0..live_buffers {
+                live_buffer_metadata.push(LiveBufferMetadata {
+                    live_buffer_idx: 1,
+                    live_buffer_current_block: 0,
+                    live_buffer_stitch_size: stitch_size,
+                    fade_stitch_idx: 0,
+                    stitch_buffer: stitch_buffer.clone(),
+                });
+            }
             // create live buffers and freeze buffers
             for b in 0..live_buffers + freeze_buffers {
                 buffers[b] = vec![0.0; (samplerate * live_buffer_time) as usize + 3];
                 buffer_lengths[b] = (samplerate * live_buffer_time) as usize;
             }
-
-            println!("live buf time samples: {}", buffer_lengths[0]);
-        }
-
-        // pre-calculate a fade curve for live buffer stitching
-        let bufsize = BUFSIZE;
-        let stitch_size = bufsize / 4;
-        let mut stitch_buffer = Vec::new();
-        let mut fade_curve = Vec::new();
-
-        let pi_inc = std::f32::consts::PI / stitch_size as f32;
-        let mut pi_idx: f32 = 0.0;
-
-        for _ in 0..stitch_size {
-            stitch_buffer.push(0.0);
-            fade_curve.push((-pi_idx.cos() + 1.0) / 2.0);
-            pi_idx += pi_inc;
         }
 
         RuffboxPlayhead {
@@ -125,13 +138,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
             buffers,
             buffer_lengths,
             max_buffers,
-            live_buffer_idx: 1,
-            live_buffer_current_block: 0,
-            live_buffer_stitch_size: stitch_size,
-            stitch_buffer,
+            live_buffer_metadata,
             fade_curve,
             non_stitch_size: bufsize - stitch_size,
-            fade_stitch_idx: 0,
             bufsize,
             control_q_rec: rx,
             // timing stuff
@@ -143,55 +152,51 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
         }
     }
 
-    pub fn write_samples_to_live_buffer(&mut self, bufnum: usize, samples: &[f32]) {
-        for s in samples.iter() {
-            self.buffers[bufnum][self.live_buffer_idx] = *s;
-            self.live_buffer_idx += 1;
-            if self.live_buffer_idx >= self.buffer_lengths[bufnum] {
-                self.live_buffer_idx = 1;
-            }
-        }
-    }
-
     // there HAS to be a more elegant solution for this ...
     pub fn write_sample_to_live_buffer(&mut self, bufnum: usize, sample: f32) {
         // first, overwrite old stitch region if we're at the beginning of a new block
-        if self.live_buffer_current_block == 0 {
-            let mut count_back_idx = self.live_buffer_idx - 1;
-            for s in (0..self.stitch_buffer.len()).rev() {
+        if self.live_buffer_metadata[bufnum].live_buffer_current_block == 0 {
+            let mut count_back_idx = self.live_buffer_metadata[bufnum].live_buffer_idx - 1;
+            for s in (0..self.live_buffer_metadata[bufnum].stitch_buffer.len()).rev() {
                 if count_back_idx < 1 {
                     count_back_idx = self.buffer_lengths[bufnum]; // live buffer length
                 }
-                self.buffers[bufnum][count_back_idx] = self.stitch_buffer[s];
+                self.buffers[bufnum][count_back_idx] =
+                    self.live_buffer_metadata[bufnum].stitch_buffer[s];
                 count_back_idx -= 1;
             }
         }
 
-        if self.live_buffer_current_block < self.non_stitch_size {
-            self.buffers[bufnum][self.live_buffer_idx] = sample;
-        } else if self.live_buffer_current_block < self.bufsize {
-            self.stitch_buffer[self.fade_stitch_idx] = sample;
+        if self.live_buffer_metadata[bufnum].live_buffer_current_block < self.non_stitch_size {
+            self.buffers[bufnum][self.live_buffer_metadata[bufnum].live_buffer_idx] = sample;
+        } else if self.live_buffer_metadata[bufnum].live_buffer_current_block < self.bufsize {
+            let fdi = self.live_buffer_metadata[bufnum].fade_stitch_idx;
+            self.live_buffer_metadata[bufnum].stitch_buffer[fdi] = sample;
 
             // stitch by fading ...
-            self.buffers[bufnum][self.live_buffer_idx] = self.buffers[bufnum][self.live_buffer_idx]
-                * self.fade_curve[self.fade_stitch_idx]
-                + sample * (1.0 - self.fade_curve[self.fade_stitch_idx]);
-            self.fade_stitch_idx += 1;
+            self.buffers[bufnum][self.live_buffer_metadata[bufnum].live_buffer_idx] = self.buffers
+                [bufnum][self.live_buffer_metadata[bufnum].live_buffer_idx]
+                * self.fade_curve[self.live_buffer_metadata[bufnum].fade_stitch_idx]
+                + sample
+                    * (1.0 - self.fade_curve[self.live_buffer_metadata[bufnum].fade_stitch_idx]);
+            self.live_buffer_metadata[bufnum].fade_stitch_idx += 1;
         }
 
-        self.live_buffer_idx += 1;
-        self.live_buffer_current_block += 1;
+        self.live_buffer_metadata[bufnum].live_buffer_idx += 1;
+        self.live_buffer_metadata[bufnum].live_buffer_current_block += 1;
 
-        if self.live_buffer_idx >= self.buffer_lengths[bufnum] {
-            self.live_buffer_idx = 1;
+        if self.live_buffer_metadata[bufnum].live_buffer_idx >= self.buffer_lengths[bufnum] {
+            self.live_buffer_metadata[bufnum].live_buffer_idx = 1;
         }
 
-        if self.live_buffer_current_block >= self.bufsize {
-            self.live_buffer_current_block = 0;
+        if self.live_buffer_metadata[bufnum].live_buffer_current_block >= self.bufsize {
+            self.live_buffer_metadata[bufnum].live_buffer_current_block = 0;
         }
 
-        if self.fade_stitch_idx >= self.live_buffer_stitch_size {
-            self.fade_stitch_idx = 0;
+        if self.live_buffer_metadata[bufnum].fade_stitch_idx
+            >= self.live_buffer_metadata[bufnum].live_buffer_stitch_size
+        {
+            self.live_buffer_metadata[bufnum].fade_stitch_idx = 0;
         }
     }
 
