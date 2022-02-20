@@ -98,6 +98,7 @@ pub fn init_ruffbox<const BUFSIZE: usize, const NCHAN: usize>(
     let controls = RuffboxControls::<BUFSIZE, NCHAN>::new(
         samplerate,
         live_buffers,
+        live_buffer_time,
         max_buffers,
         freeze_buffers,
         &now,

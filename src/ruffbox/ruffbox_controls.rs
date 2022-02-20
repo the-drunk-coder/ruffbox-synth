@@ -44,11 +44,21 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
     pub(crate) fn new(
         samplerate: f64,
         live_buffers: usize,
+        live_buffer_time: f64,
         max_buffers: usize,
         freeze_buffers: usize,
         now: &Arc<AtomicCell<f64>>,
         tx: crossbeam::channel::Sender<ControlMessage<BUFSIZE, NCHAN>>,
     ) -> RuffboxControls<BUFSIZE, NCHAN> {
+        // dash map is strange, mutable without mut ...
+        let buffer_lengths = DashMap::new();
+        if live_buffers > 0 {
+            // create buffer lenghts for live buffers and freeze buffers
+            for b in 0..live_buffers + freeze_buffers {
+                buffer_lengths.insert(b, (samplerate * live_buffer_time) as usize);
+            }
+        }
+
         RuffboxControls {
             buffer_counter: AtomicCell::new(if live_buffers > 0 {
                 live_buffers + freeze_buffers
@@ -56,7 +66,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
                 0
             }),
             freeze_buffer_offset: live_buffers,
-            buffer_lengths: DashMap::new(),
+            buffer_lengths,
             max_buffers,
             control_q_send: tx,
             samplerate: samplerate as f32,

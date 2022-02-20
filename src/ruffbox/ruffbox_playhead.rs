@@ -95,18 +95,13 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
         //println!("max num buffers {} {}", buffers.len(), max_buffers);
 
         if live_buffers > 0 {
-            // create live buffer
-            for b in 0..live_buffers {
+            // create live buffers and freeze buffers
+            for b in 0..live_buffers + freeze_buffers {
                 buffers[b] = vec![0.0; (samplerate * live_buffer_time) as usize + 3];
                 buffer_lengths[b] = (samplerate * live_buffer_time) as usize;
             }
 
             println!("live buf time samples: {}", buffer_lengths[0]);
-            for b in 1..freeze_buffers + 1 {
-                // create freeze buffers
-                buffers[b] = vec![0.0; (samplerate * live_buffer_time) as usize + 3];
-                buffer_lengths[b] = (samplerate * live_buffer_time) as usize;
-            }
         }
 
         // pre-calculate a fade curve for live buffer stitching
