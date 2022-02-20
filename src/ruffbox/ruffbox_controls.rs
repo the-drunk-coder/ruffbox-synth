@@ -34,6 +34,8 @@ pub struct RuffboxControls<const BUFSIZE: usize, const NCHAN: usize> {
     buffer_counter: AtomicCell<usize>,
     buffer_lengths: DashMap<usize, usize>,
     freeze_buffer_offset: usize,
+    num_live_buffers: usize,
+    num_freeze_buffers: usize,
     max_buffers: usize,
     control_q_send: crossbeam::channel::Sender<ControlMessage<BUFSIZE, NCHAN>>,
     now: Arc<AtomicCell<f64>>, // shared reference to global time counter
@@ -66,6 +68,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
                 0
             }),
             freeze_buffer_offset: live_buffers,
+            num_live_buffers: live_buffers,
+            num_freeze_buffers: freeze_buffers,
             buffer_lengths,
             max_buffers,
             control_q_send: tx,
@@ -80,8 +84,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
         src_type: SourceType,
         timestamp: f64,
         sample_buf: usize,
-    ) -> PreparedInstance<BUFSIZE, NCHAN> {
-        PreparedInstance {
+    ) -> Option<PreparedInstance<BUFSIZE, NCHAN>> {
+        Some(PreparedInstance {
             ev: match src_type {
                 SourceType::SineOsc => {
                     ScheduledEvent::new(timestamp, Box::new(SineSynth::new(self.samplerate)))
@@ -103,16 +107,27 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
                         self.samplerate,
                     )),
                 ),
-                SourceType::LiveSampler => ScheduledEvent::new(
-                    timestamp,
-                    Box::new(NChannelSampler::with_bufnum_len(
-                        sample_buf,
-                        *self.buffer_lengths.get(&sample_buf).unwrap(),
-                        self.samplerate,
-                    )),
-                ),
-                SourceType::FrozenSampler => {
-                    let final_bufnum = sample_buf + self.freeze_buffer_offset;
+                SourceType::LiveSampler if self.num_live_buffers > 0 => {
+                    let final_bufnum = if sample_buf < self.num_live_buffers {
+                        sample_buf
+                    } else {
+                        0
+                    };
+                    ScheduledEvent::new(
+                        timestamp,
+                        Box::new(NChannelSampler::with_bufnum_len(
+                            final_bufnum,
+                            *self.buffer_lengths.get(&final_bufnum).unwrap(),
+                            self.samplerate,
+                        )),
+                    )
+                }
+                SourceType::FrozenSampler if self.num_freeze_buffers > 0 => {
+                    let final_bufnum = if sample_buf < self.num_freeze_buffers {
+                        sample_buf + self.freeze_buffer_offset
+                    } else {
+                        self.freeze_buffer_offset
+                    };
                     ScheduledEvent::new(
                         timestamp,
                         Box::new(NChannelSampler::with_bufnum_len(
@@ -131,8 +146,11 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
                 SourceType::LFCubSynth => {
                     ScheduledEvent::new(timestamp, Box::new(LFCubSynth::new(self.samplerate)))
                 }
+                _ => {
+                    return None;
+                } // jump out
             },
-        }
+        })
     }
 
     pub fn set_master_parameter(&self, par: SynthParameter, val: f32) {
