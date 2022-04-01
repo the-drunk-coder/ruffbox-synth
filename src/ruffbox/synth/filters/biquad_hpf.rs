@@ -44,10 +44,10 @@ impl<const BUFSIZE: usize> BiquadHpf<BUFSIZE> {
 
 impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for BiquadHpf<BUFSIZE> {
     // some parameter limits might be nice ...
-    fn set_parameter(&mut self, par: SynthParameter, value: f32) {
+    fn set_parameter(&mut self, par: SynthParameter) {
         match par {
-            SynthParameter::HighpassCutoffFrequency => self.cutoff = value,
-            SynthParameter::HighpassQFactor => self.q = value,
+            SynthParameter::HighpassCutoffFrequency(f) => self.cutoff = f,
+            SynthParameter::HighpassQFactor(q) => self.q = q,
             _ => (),
         };
 

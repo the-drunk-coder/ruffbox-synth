@@ -39,10 +39,10 @@ impl<const BUFSIZE: usize> LFTri<BUFSIZE> {
 
 impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFTri<BUFSIZE> {
     // some parameter limits might be nice ...
-    fn set_parameter(&mut self, par: SynthParameter, value: f32) {
+    fn set_parameter(&mut self, par: SynthParameter) {
         match par {
-            SynthParameter::PitchFrequency => {
-                let period_samples = (self.samplerate / value).round() as usize;
+            SynthParameter::PitchFrequency(f) => {
+                let period_samples = (self.samplerate / f).round() as usize;
                 // the segment-wise implementation is a bit strange but works for now ...
                 self.segment_samples = period_samples / 4;
                 self.period_second_ascent_samples = period_samples;
@@ -52,8 +52,8 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFTri<BUFSIZE> {
                 self.lvl_inc_dec = self.lvl / self.segment_samples as f32;
                 self.lvl_first_inc = self.lvl / self.period_first_ascent_samples as f32;
             }
-            SynthParameter::Level => {
-                self.lvl = value;
+            SynthParameter::Level(l) => {
+                self.lvl = l;
                 self.lvl_inc_dec = self.lvl / self.segment_samples as f32;
                 self.lvl_first_inc = self.lvl / self.period_first_ascent_samples as f32;
             }

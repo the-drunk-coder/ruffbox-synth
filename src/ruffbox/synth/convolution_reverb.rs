@@ -19,7 +19,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> MultichannelConvolutionReverb<BUF
 impl<const BUFSIZE: usize, const NCHAN: usize> MultichannelReverb<BUFSIZE, NCHAN>
     for MultichannelConvolutionReverb<BUFSIZE, NCHAN>
 {
-    fn set_parameter(&mut self, _par: SynthParameter, _val: f32) {
+    fn set_parameter(&mut self, _: SynthParameter) {
         // nothing to do here ...
     }
 

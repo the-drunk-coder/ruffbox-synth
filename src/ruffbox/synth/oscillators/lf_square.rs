@@ -30,19 +30,19 @@ impl<const BUFSIZE: usize> LFSquare<BUFSIZE> {
 
 impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSquare<BUFSIZE> {
     // some parameter limits might be nice ...
-    fn set_parameter(&mut self, par: SynthParameter, value: f32) {
+    fn set_parameter(&mut self, par: SynthParameter) {
         match par {
-            SynthParameter::PitchFrequency => {
+            SynthParameter::PitchFrequency(f) => {
                 //self.freq = value;
-                self.period_samples = (self.samplerate / value).round() as usize;
+                self.period_samples = (self.samplerate / f).round() as usize;
                 self.flank_point = (self.period_samples as f32 * self.pulsewidth).round() as usize;
             }
-            SynthParameter::Pulsewidth => {
-                self.pulsewidth = value;
-                self.flank_point = (self.period_samples as f32 * value).round() as usize;
+            SynthParameter::Pulsewidth(pw) => {
+                self.pulsewidth = pw;
+                self.flank_point = (self.period_samples as f32 * pw).round() as usize;
             }
-            SynthParameter::Level => {
-                self.lvl = value;
+            SynthParameter::Level(l) => {
+                self.lvl = l;
             }
             _ => (),
         }

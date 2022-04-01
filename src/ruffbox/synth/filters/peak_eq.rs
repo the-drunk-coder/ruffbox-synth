@@ -52,11 +52,11 @@ impl<const BUFSIZE: usize> PeakEq<BUFSIZE> {
 
 impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for PeakEq<BUFSIZE> {
     // some parameter limits might be nice ...
-    fn set_parameter(&mut self, par: SynthParameter, value: f32) {
+    fn set_parameter(&mut self, par: SynthParameter) {
         match par {
-            SynthParameter::PeakFrequency => self.center = value,
-            SynthParameter::PeakGain => self.gain = value,
-            SynthParameter::PeakQFactor => self.bw = value,
+            SynthParameter::PeakFrequency(f) => self.center = f,
+            SynthParameter::PeakGain(g) => self.gain = g,
+            SynthParameter::PeakQFactor(q) => self.bw = q,
             _ => (),
         };
 

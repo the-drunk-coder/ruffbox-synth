@@ -17,8 +17,8 @@ pub struct PreparedInstance<const BUFSIZE: usize, const NCHAN: usize> {
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> PreparedInstance<BUFSIZE, NCHAN> {
-    pub fn set_instance_parameter(&mut self, par: SynthParameter, val: f32) {
-        self.ev.set_parameter(par, val);
+    pub fn set_instance_parameter(&mut self, par: SynthParameter) {
+        self.ev.set_parameter(par);
     }
 }
 
@@ -153,9 +153,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
         })
     }
 
-    pub fn set_master_parameter(&self, par: SynthParameter, val: f32) {
+    pub fn set_master_parameter(&self, par: SynthParameter) {
         self.control_q_send
-            .send(ControlMessage::SetGlobalParam(par, val))
+            .send(ControlMessage::SetGlobalParam(par))
             .unwrap();
     }
 
