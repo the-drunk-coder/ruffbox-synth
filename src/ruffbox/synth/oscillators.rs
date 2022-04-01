@@ -18,7 +18,9 @@ pub use crate::ruffbox::synth::oscillators::lf_tri::LFTri;
 mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
-
+    use std::f32::consts::PI;
+    use crate::ruffbox::synth::MonoSource;
+    
     #[test]
     fn sine_osc_test_at_block_start() {
         let mut osc = SineOsc::<128>::new(440.0, 1.0, 44100.0);
