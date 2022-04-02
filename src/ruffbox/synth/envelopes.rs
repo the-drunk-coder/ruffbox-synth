@@ -321,10 +321,10 @@ mod tests {
         let mut env = ASREnvelope::<128>::new(0.0, 0.0, 0.0, 0.0, 44100.0);
 
         // use paramter setter to set parameters ...
-        env.set_parameter(SynthParameter::Attack(0.0014512));
-        env.set_parameter(SynthParameter::Sustain(0.0029024));
-        env.set_parameter(SynthParameter::Release(0.0014512));
-        env.set_parameter(SynthParameter::Level(0.5));
+        env.set_parameter(SynthParameter::Attack, 0.0014512);
+        env.set_parameter(SynthParameter::Sustain, 0.0029024);
+        env.set_parameter(SynthParameter::Release, 0.0014512);
+        env.set_parameter(SynthParameter::Level, 0.5);
 
         let out_1: [f32; 128] = env.process_block(test_block, 0);
         let out_2: [f32; 128] = env.process_block(test_block, 0);
@@ -377,16 +377,16 @@ mod tests {
 
         // use paramter setter to set parameters ...
         println!("Set parameters for env at start:");
-        env_at_start.set_parameter(SynthParameter::Level(1.0));
-        env_at_start.set_parameter(SynthParameter::Attack(0.001));
-        env_at_start.set_parameter(SynthParameter::Sustain(0.019));
-        env_at_start.set_parameter(SynthParameter::Release(0.07));
+        env_at_start.set_parameter(SynthParameter::Level, 1.0);
+        env_at_start.set_parameter(SynthParameter::Attack, 0.001);
+        env_at_start.set_parameter(SynthParameter::Sustain, 0.019);
+        env_at_start.set_parameter(SynthParameter::Release, 0.07);
 
         println!("\nSet parameters for env with offset:\n");
-        env_with_offset.set_parameter(SynthParameter::Level(1.0));
-        env_with_offset.set_parameter(SynthParameter::Attack(0.001));
-        env_with_offset.set_parameter(SynthParameter::Sustain(0.019));
-        env_with_offset.set_parameter(SynthParameter::Release(0.07));
+        env_with_offset.set_parameter(SynthParameter::Level, 1.0);
+        env_with_offset.set_parameter(SynthParameter::Attack, 0.001);
+        env_with_offset.set_parameter(SynthParameter::Sustain, 0.019);
+        env_with_offset.set_parameter(SynthParameter::Release, 0.07);
 
         let mut out_start = env_at_start.process_block(test_block, 0);
         let mut out_offset = env_with_offset.process_block(test_block, 60);
