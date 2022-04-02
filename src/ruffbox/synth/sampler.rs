@@ -97,15 +97,15 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
-    fn set_parameter(&mut self, par: SynthParameter) {
+    fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         match par {
-            SynthParameter::PlaybackStart(start) => {
-                let mut value_clamped = start;
+            SynthParameter::PlaybackStart => {
+                let mut value_clamped = value;
                 // clamp value
-                if start > 1.0 {
-                    value_clamped = start - ((start as usize) as f32);
-                } else if start < 0.0 {
-                    value_clamped = 1.0 + (start - ((start as i32) as f32));
+                if value > 1.0 {
+                    value_clamped = value - ((value as usize) as f32);
+                } else if value < 0.0 {
+                    value_clamped = 1.0 + (value - ((value as i32) as f32));
                 }
 
                 let offset = ((self.buflen - 1) as f32 * value_clamped) as usize;
@@ -113,12 +113,12 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
                                          //println!("setting starting point to sample {}", self.index);
                 self.frac_index = self.index as f32;
             }
-            SynthParameter::PlaybackRate(rate) => {
-                self.playback_rate = rate;
-                self.frac_index_increment = 1.0 * rate;
+            SynthParameter::PlaybackRate => {
+                self.playback_rate = value;
+                self.frac_index_increment = 1.0 * value;
             }
-            SynthParameter::Level(l) => {
-                self.level = l;
+            SynthParameter::Level => {
+                self.level = value;
             }
             _ => (),
         };

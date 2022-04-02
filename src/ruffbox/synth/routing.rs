@@ -20,14 +20,14 @@ impl<const BUFSIZE: usize, const NCHAN: usize> PanChan<BUFSIZE, NCHAN> {
     }
 
     /// Set the parameter for this panner.
-    pub fn set_parameter(&mut self, par: SynthParameter) {
+    pub fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         // if it was more parameters, match would be better,
         // but this way clippy doesn't complain
-        if let SynthParameter::ChannelPosition(pos) = par {
+        if par == SynthParameter::ChannelPosition {
             let mut lvls = [0.0; NCHAN];
 
-            let lower = pos.floor();
-            let angle_rad = (pos - lower) * PI * 0.5;
+            let lower = value.floor();
+            let angle_rad = (value - lower) * PI * 0.5;
 
             let upper = lower + 1.0;
 

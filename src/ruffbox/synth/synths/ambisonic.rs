@@ -29,13 +29,13 @@ impl<const BUFSIZE: usize> SineSynthAmbiO1<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for SineSynthAmbiO1<BUFSIZE> {
-    fn set_parameter(&mut self, par: SynthParameter) {
-        self.oscillator.set_parameter(par);
-        self.envelope.set_parameter(par);
-        self.encoder.set_parameter(par);
+    fn set_parameter(&mut self, par: SynthParameter, val: f32) {
+        self.oscillator.set_parameter(par, val);
+        self.envelope.set_parameter(par, val);
+        self.encoder.set_parameter(par, val);
         match par {
-            SynthParameter::ReverbMix(rm) => self.reverb = rm,
-            SynthParameter::DelayMix(dm) => self.delay = dm,
+            SynthParameter::ReverbMix => self.reverb = val,
+            SynthParameter::DelayMix => self.delay = val,
             _ => (),
         };
     }
@@ -89,13 +89,13 @@ impl<const BUFSIZE: usize> LFTriSynthAmbiO1<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for LFTriSynthAmbiO1<BUFSIZE> {
-    fn set_parameter(&mut self, par: SynthParameter) {
-        self.oscillator.set_parameter(par);
-        self.envelope.set_parameter(par);
-        self.encoder.set_parameter(par);
+    fn set_parameter(&mut self, par: SynthParameter, val: f32) {
+        self.oscillator.set_parameter(par, val);
+        self.envelope.set_parameter(par, val);
+        self.encoder.set_parameter(par, val);
         match par {
-            SynthParameter::ReverbMix(rm) => self.reverb = rm,
-            SynthParameter::DelayMix(dm) => self.delay = dm,
+            SynthParameter::ReverbMix => self.reverb = val,
+            SynthParameter::DelayMix => self.delay = val,
             _ => (),
         };
     }
@@ -151,15 +151,15 @@ impl<const BUFSIZE: usize> LFSawSynthAmbiO1<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for LFSawSynthAmbiO1<BUFSIZE> {
-    fn set_parameter(&mut self, par: SynthParameter) {
-        self.oscillator.set_parameter(par);
-        self.filter.set_parameter(par);
-        self.envelope.set_parameter(par);
-        self.encoder.set_parameter(par);
+    fn set_parameter(&mut self, par: SynthParameter, val: f32) {
+        self.oscillator.set_parameter(par, val);
+        self.filter.set_parameter(par, val);
+        self.envelope.set_parameter(par, val);
+        self.encoder.set_parameter(par, val);
 
         match par {
-            SynthParameter::ReverbMix(rm) => self.reverb = rm,
-            SynthParameter::DelayMix(dm) => self.delay = dm,
+            SynthParameter::ReverbMix => self.reverb = val,
+            SynthParameter::DelayMix => self.delay = val,
             _ => (),
         };
     }
@@ -216,15 +216,15 @@ impl<const BUFSIZE: usize> LFSquareSynthAmbiO1<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for LFSquareSynthAmbiO1<BUFSIZE> {
-    fn set_parameter(&mut self, par: SynthParameter) {
-        self.oscillator.set_parameter(par);
-        self.filter.set_parameter(par);
-        self.envelope.set_parameter(par);
-        self.encoder.set_parameter(par);
+    fn set_parameter(&mut self, par: SynthParameter, val: f32) {
+        self.oscillator.set_parameter(par, val);
+        self.filter.set_parameter(par, val);
+        self.envelope.set_parameter(par, val);
+        self.encoder.set_parameter(par, val);
 
         match par {
-            SynthParameter::ReverbMix(rm) => self.reverb = rm,
-            SynthParameter::DelayMix(dm) => self.delay = dm,
+            SynthParameter::ReverbMix => self.reverb = val,
+            SynthParameter::DelayMix => self.delay = val,
             _ => (),
         };
     }
@@ -287,17 +287,17 @@ impl<const BUFSIZE: usize> AmbiSamplerO1<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for AmbiSamplerO1<BUFSIZE> {
-    fn set_parameter(&mut self, par: SynthParameter) {
-        self.sampler.set_parameter(par);
-        self.hpf.set_parameter(par);
-        self.peak_eq.set_parameter(par);
-        self.lpf.set_parameter(par);
-        self.envelope.set_parameter(par);
-        self.encoder.set_parameter(par);
+    fn set_parameter(&mut self, par: SynthParameter, val: f32) {
+        self.sampler.set_parameter(par, val);
+        self.hpf.set_parameter(par, val);
+        self.peak_eq.set_parameter(par, val);
+        self.lpf.set_parameter(par, val);
+        self.envelope.set_parameter(par, val);
+        self.encoder.set_parameter(par, val);
 
         match par {
-            SynthParameter::ReverbMix(rm) => self.reverb = rm,
-            SynthParameter::DelayMix(dm) => self.delay = dm,
+            SynthParameter::ReverbMix => self.reverb = val,
+            SynthParameter::DelayMix => self.delay = val,
             _ => (),
         };
     }

@@ -29,10 +29,10 @@ impl<const BUFSIZE: usize> EncoderO1<BUFSIZE> {
     }
 
     // some parameter limits might be nice ...
-    pub fn set_parameter(&mut self, par: SynthParameter) {
+    pub fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         match par {
-            SynthParameter::AmbisonicAzimuth(azi) => self.azimuth = azi,
-            SynthParameter::AmbisonicElevation(ele) => self.elevation = ele,
+            SynthParameter::AmbisonicAzimuth => self.azimuth = value,
+            SynthParameter::AmbisonicElevation => self.elevation = value,
             _ => (),
         };
 

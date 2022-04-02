@@ -29,10 +29,10 @@ impl<const BUFSIZE: usize> SineOsc<BUFSIZE> {
 
 impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
     // some parameter limits might be nice ...
-    fn set_parameter(&mut self, par: SynthParameter) {
+    fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         match par {
-            SynthParameter::PitchFrequency(f) => self.pi_slice = 2.0 * PI * f,
-            SynthParameter::Level(l) => self.lvl = l,
+            SynthParameter::PitchFrequency => self.pi_slice = 2.0 * PI * value,
+            SynthParameter::Level => self.lvl = value,
             _ => (),
         };
     }

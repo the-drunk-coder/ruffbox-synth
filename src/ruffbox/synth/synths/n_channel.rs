@@ -29,13 +29,13 @@ impl<const BUFSIZE: usize, const NCHAN: usize> SineSynth<BUFSIZE, NCHAN> {
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN> for SineSynth<BUFSIZE, NCHAN> {
-    fn set_parameter(&mut self, par: SynthParameter) {
-        self.oscillator.set_parameter(par);
-        self.envelope.set_parameter(par);
-        self.balance.set_parameter(par);
+    fn set_parameter(&mut self, par: SynthParameter, val: f32) {
+        self.oscillator.set_parameter(par, val);
+        self.envelope.set_parameter(par, val);
+        self.balance.set_parameter(par, val);
         match par {
-            SynthParameter::ReverbMix(rm) => self.reverb = rm,
-            SynthParameter::DelayMix(dm) => self.delay = dm,
+            SynthParameter::ReverbMix => self.reverb = val,
+            SynthParameter::DelayMix => self.delay = val,
             _ => (),
         };
     }
@@ -93,14 +93,14 @@ impl<const BUFSIZE: usize, const NCHAN: usize> LFCubSynth<BUFSIZE, NCHAN> {
 impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
     for LFCubSynth<BUFSIZE, NCHAN>
 {
-    fn set_parameter(&mut self, par: SynthParameter) {
-        self.oscillator.set_parameter(par);
-        self.envelope.set_parameter(par);
-        self.filter.set_parameter(par);
-        self.balance.set_parameter(par);
+    fn set_parameter(&mut self, par: SynthParameter, val: f32) {
+        self.oscillator.set_parameter(par, val);
+        self.envelope.set_parameter(par, val);
+        self.filter.set_parameter(par, val);
+        self.balance.set_parameter(par, val);
         match par {
-            SynthParameter::ReverbMix(rm) => self.reverb = rm,
-            SynthParameter::DelayMix(dm) => self.delay = dm,
+            SynthParameter::ReverbMix => self.reverb = val,
+            SynthParameter::DelayMix => self.delay = val,
             _ => (),
         };
     }
@@ -156,13 +156,13 @@ impl<const BUFSIZE: usize, const NCHAN: usize> LFTriSynth<BUFSIZE, NCHAN> {
 impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
     for LFTriSynth<BUFSIZE, NCHAN>
 {
-    fn set_parameter(&mut self, par: SynthParameter) {
-        self.oscillator.set_parameter(par);
-        self.envelope.set_parameter(par);
-        self.balance.set_parameter(par);
+    fn set_parameter(&mut self, par: SynthParameter, val: f32) {
+        self.oscillator.set_parameter(par, val);
+        self.envelope.set_parameter(par, val);
+        self.balance.set_parameter(par, val);
         match par {
-            SynthParameter::ReverbMix(rm) => self.reverb = rm,
-            SynthParameter::DelayMix(dm) => self.delay = dm,
+            SynthParameter::ReverbMix => self.reverb = val,
+            SynthParameter::DelayMix => self.delay = val,
             _ => (),
         };
     }
@@ -220,15 +220,15 @@ impl<const BUFSIZE: usize, const NCHAN: usize> LFSawSynth<BUFSIZE, NCHAN> {
 impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
     for LFSawSynth<BUFSIZE, NCHAN>
 {
-    fn set_parameter(&mut self, par: SynthParameter) {
-        self.oscillator.set_parameter(par);
-        self.filter.set_parameter(par);
-        self.envelope.set_parameter(par);
-        self.balance.set_parameter(par);
+    fn set_parameter(&mut self, par: SynthParameter, val: f32) {
+        self.oscillator.set_parameter(par, val);
+        self.filter.set_parameter(par, val);
+        self.envelope.set_parameter(par, val);
+        self.balance.set_parameter(par, val);
 
         match par {
-            SynthParameter::ReverbMix(rm) => self.reverb = rm,
-            SynthParameter::DelayMix(dm) => self.delay = dm,
+            SynthParameter::ReverbMix => self.reverb = val,
+            SynthParameter::DelayMix => self.delay = val,
             _ => (),
         };
     }
@@ -287,15 +287,15 @@ impl<const BUFSIZE: usize, const NCHAN: usize> LFSquareSynth<BUFSIZE, NCHAN> {
 impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
     for LFSquareSynth<BUFSIZE, NCHAN>
 {
-    fn set_parameter(&mut self, par: SynthParameter) {
-        self.oscillator.set_parameter(par);
-        self.filter.set_parameter(par);
-        self.envelope.set_parameter(par);
-        self.balance.set_parameter(par);
+    fn set_parameter(&mut self, par: SynthParameter, val: f32) {
+        self.oscillator.set_parameter(par, val);
+        self.filter.set_parameter(par, val);
+        self.envelope.set_parameter(par, val);
+        self.balance.set_parameter(par, val);
 
         match par {
-            SynthParameter::ReverbMix(rm) => self.reverb = rm,
-            SynthParameter::DelayMix(dm) => self.delay = dm,
+            SynthParameter::ReverbMix => self.reverb = val,
+            SynthParameter::DelayMix => self.delay = val,
             _ => (),
         };
     }
@@ -364,17 +364,17 @@ impl<const BUFSIZE: usize, const NCHAN: usize> NChannelSampler<BUFSIZE, NCHAN> {
 impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
     for NChannelSampler<BUFSIZE, NCHAN>
 {
-    fn set_parameter(&mut self, par: SynthParameter) {
-        self.sampler.set_parameter(par);
-        self.hpf.set_parameter(par);
-        self.peak_eq.set_parameter(par);
-        self.lpf.set_parameter(par);
-        self.envelope.set_parameter(par);
-        self.balance.set_parameter(par);
+    fn set_parameter(&mut self, par: SynthParameter, val: f32) {
+        self.sampler.set_parameter(par, val);
+        self.hpf.set_parameter(par, val);
+        self.peak_eq.set_parameter(par, val);
+        self.lpf.set_parameter(par, val);
+        self.envelope.set_parameter(par, val);
+        self.balance.set_parameter(par, val);
 
         match par {
-            SynthParameter::ReverbMix(rm) => self.reverb = rm,
-            SynthParameter::DelayMix(dm) => self.delay = dm,
+            SynthParameter::ReverbMix => self.reverb = val,
+            SynthParameter::DelayMix => self.delay = val,
             _ => (),
         };
     }
@@ -459,13 +459,14 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RissetBell<BUFSIZE, NCHAN> {
         let length = 0.8;
         for i in 0..11 {
             // set envelope params
-            bell.envelopes[i].set_parameter(SynthParameter::Level(bell.amps[i] * bell.main_level));
-            bell.envelopes[i].set_parameter(SynthParameter::Release(bell.durs[i] * length));
+            bell.envelopes[i].set_parameter(SynthParameter::Level, bell.amps[i] * bell.main_level);
+            bell.envelopes[i].set_parameter(SynthParameter::Release, bell.durs[i] * length);
 
             // set oscillator params
-            bell.oscillators[i].set_parameter(SynthParameter::PitchFrequency(
+            bell.oscillators[i].set_parameter(
+                SynthParameter::PitchFrequency,
                 freq * bell.freqs[i] + bell.dets[i],
-            ))
+            );
         }
 
         bell
@@ -475,33 +476,33 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RissetBell<BUFSIZE, NCHAN> {
 impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
     for RissetBell<BUFSIZE, NCHAN>
 {
-    fn set_parameter(&mut self, par: SynthParameter) {
-        self.lpf.set_parameter(par);
-        self.main_envelope.set_parameter(par);
-        self.balance.set_parameter(par);
+    fn set_parameter(&mut self, par: SynthParameter, val: f32) {
+        self.lpf.set_parameter(par, val);
+        self.main_envelope.set_parameter(par, val);
+        self.balance.set_parameter(par, val);
 
         let mut update_internals = false;
         match par {
-            SynthParameter::ReverbMix(rm) => self.reverb = rm,
-            SynthParameter::DelayMix(dm) => self.delay = dm,
-            SynthParameter::PitchFrequency(f) => {
-                self.freq = f;
+            SynthParameter::ReverbMix => self.reverb = val,
+            SynthParameter::DelayMix => self.delay = val,
+            SynthParameter::PitchFrequency => {
+                self.freq = val;
                 update_internals = true;
             }
-            SynthParameter::Attack(a) => {
-                self.atk = a;
+            SynthParameter::Attack => {
+                self.atk = val;
                 update_internals = true;
             }
-            SynthParameter::Sustain(s) => {
-                self.sus = s;
+            SynthParameter::Sustain => {
+                self.sus = val;
                 update_internals = true;
             }
-            SynthParameter::Release(r) => {
-                self.rel = r;
+            SynthParameter::Release => {
+                self.rel = val;
                 update_internals = true;
             }
-            SynthParameter::Level(l) => {
-                self.main_level = l;
+            SynthParameter::Level => {
+                self.main_level = val;
                 update_internals = true;
             }
             _ => (),
@@ -512,13 +513,14 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
             for i in 0..11 {
                 // set envelope params
                 self.envelopes[i]
-                    .set_parameter(SynthParameter::Level(self.amps[i] * self.main_level));
-                self.envelopes[i].set_parameter(SynthParameter::Release(self.durs[i] * length));
+                    .set_parameter(SynthParameter::Level, self.amps[i] * self.main_level);
+                self.envelopes[i].set_parameter(SynthParameter::Release, self.durs[i] * length);
 
                 // set oscillator params
-                self.oscillators[i].set_parameter(SynthParameter::PitchFrequency(
+                self.oscillators[i].set_parameter(
+                    SynthParameter::PitchFrequency,
                     self.freq * self.freqs[i] + self.dets[i],
-                ));
+                );
             }
         }
     }

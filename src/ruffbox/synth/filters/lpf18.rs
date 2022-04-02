@@ -76,11 +76,11 @@ impl<const BUFSIZE: usize> Lpf18<BUFSIZE> {
 
 impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for Lpf18<BUFSIZE> {
     // some parameter limits might be nice ...
-    fn set_parameter(&mut self, par: SynthParameter) {
+    fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         match par {
-            SynthParameter::LowpassCutoffFrequency(f) => self.cutoff = f,
-            SynthParameter::LowpassQFactor(q) => self.res = q,
-            SynthParameter::LowpassFilterDistortion(d) => self.dist = d,
+            SynthParameter::LowpassCutoffFrequency => self.cutoff = value,
+            SynthParameter::LowpassQFactor => self.res = value,
+            SynthParameter::LowpassFilterDistortion => self.dist = value,
             _ => (),
         };
 

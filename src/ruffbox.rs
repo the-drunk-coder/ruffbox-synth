@@ -57,8 +57,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> ScheduledEvent<BUFSIZE, NCHAN> {
         }
     }
 
-    pub fn set_parameter(&mut self, par: SynthParameter) {
-        self.source.set_parameter(par);
+    pub fn set_parameter(&mut self, par: SynthParameter, value: f32) {
+        self.source.set_parameter(par, value);
     }
 }
 
@@ -70,7 +70,7 @@ pub enum ReverbMode {
 
 pub(crate) enum ControlMessage<const BUFSIZE: usize, const NCHAN: usize> {
     LoadSample(usize, usize, Vec<f32>), // num, len, samples
-    SetGlobalParam(SynthParameter),
+    SetGlobalParam(SynthParameter, f32),
     ScheduleEvent(ScheduledEvent<BUFSIZE, NCHAN>),
     FreezeBuffer(usize, usize),
 }

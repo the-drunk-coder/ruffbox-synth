@@ -30,15 +30,15 @@ impl<const BUFSIZE: usize> LFSaw<BUFSIZE> {
 
 impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSaw<BUFSIZE> {
     // some parameter limits might be nice ...
-    fn set_parameter(&mut self, par: SynthParameter) {
+    fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         match par {
-            SynthParameter::PitchFrequency(f) => {
-                self.freq = f;
-                self.period_samples = (self.samplerate / f).round() as usize;
-                self.lvl_inc = (2.0 * self.lvl) / (self.samplerate / f).round();
+            SynthParameter::PitchFrequency => {
+                self.freq = value;
+                self.period_samples = (self.samplerate / value).round() as usize;
+                self.lvl_inc = (2.0 * self.lvl) / (self.samplerate / value).round();
             }
-            SynthParameter::Level(l) => {
-                self.lvl = l;
+            SynthParameter::Level => {
+                self.lvl = value;
                 self.lvl_inc = (2.0 * self.lvl) / (self.samplerate / self.freq).round();
             }
             _ => (),

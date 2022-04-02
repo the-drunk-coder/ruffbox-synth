@@ -25,13 +25,13 @@ impl<const BUFSIZE: usize> LFCub<BUFSIZE> {
 
 impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFCub<BUFSIZE> {
     // some parameter limits might be nice ...
-    fn set_parameter(&mut self, par: SynthParameter) {
+    fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         match par {
-            SynthParameter::PitchFrequency(f) => {
-                self.freq = f * (1.0 / self.samplerate);
+            SynthParameter::PitchFrequency => {
+                self.freq = value * (1.0 / self.samplerate);
             }
-            SynthParameter::Level(l) => {
-                self.lvl = l;
+            SynthParameter::Level => {
+                self.lvl = value;
             }
             _ => (),
         };

@@ -55,27 +55,27 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for ASREnvelope<BUFSIZE> {
         matches!(self.state, SynthState::Finished)
     }
 
-    fn set_parameter(&mut self, par: SynthParameter) {
+    fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         let mut update_internals = false;
         match par {
-            SynthParameter::Attack(a) => {
-                self.atk = a;
+            SynthParameter::Attack => {
+                self.atk = value;
                 update_internals = true;
             }
-            SynthParameter::Sustain(s) => {
-                self.sus = s;
+            SynthParameter::Sustain => {
+                self.sus = value;
                 update_internals = true;
             }
-            SynthParameter::Release(r) => {
-                self.rel = r;
+            SynthParameter::Release => {
+                self.rel = value;
                 update_internals = true;
             }
-            SynthParameter::Level(l) => {
-                self.max_lvl = l;
+            SynthParameter::Level => {
+                self.max_lvl = value;
                 update_internals = true;
             }
-            SynthParameter::Samplerate(sr) => {
-                self.samplerate = sr;
+            SynthParameter::Samplerate => {
+                self.samplerate = value;
                 update_internals = true;
             }
             _ => (),
@@ -189,26 +189,26 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for ExpPercEnvelope<BUFSIZE> {
         matches!(self.state, SynthState::Finished)
     }
 
-    fn set_parameter(&mut self, par: SynthParameter) {
+    fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         let mut update_internals = false;
         match par {
-            SynthParameter::Attack(a) => {
-                self.atk = a;
+            SynthParameter::Attack => {
+                self.atk = value;
                 update_internals = true;
             }
-            SynthParameter::Sustain(s) => {
-                self.sus = s;
+            SynthParameter::Sustain => {
+                self.sus = value;
                 update_internals = true;
             }
-            SynthParameter::Release(r) => {
-                self.rel = r;
+            SynthParameter::Release => {
+                self.rel = value;
                 update_internals = true;
             }
-            SynthParameter::Level(l) => {
-                self.max_lvl = l;
+            SynthParameter::Level => {
+                self.max_lvl = value;
             }
-            SynthParameter::Samplerate(sr) => {
-                self.samplerate = sr;
+            SynthParameter::Samplerate => {
+                self.samplerate = value;
                 update_internals = true;
             }
             _ => (),

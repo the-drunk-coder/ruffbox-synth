@@ -369,10 +369,10 @@ impl<const BUFSIZE: usize, const NCHAN: usize> MultichannelFreeverb<BUFSIZE, NCH
 impl<const BUFSIZE: usize, const NCHAN: usize> MultichannelReverb<BUFSIZE, NCHAN>
     for MultichannelFreeverb<BUFSIZE, NCHAN>
 {
-    fn set_parameter(&mut self, par: SynthParameter) {
+    fn set_parameter(&mut self, par: SynthParameter, val: f32) {
         match par {
-            SynthParameter::ReverbRoomsize(rs) => self.set_roomsize(rs),
-            SynthParameter::ReverbDampening(rd) => self.set_damp(rd),
+            SynthParameter::ReverbRoomsize => self.set_roomsize(val),
+            SynthParameter::ReverbDampening => self.set_damp(val),
             _ => (),
         };
     }

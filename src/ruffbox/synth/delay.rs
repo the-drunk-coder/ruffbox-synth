@@ -26,13 +26,13 @@ impl<const BUFSIZE: usize> MonoDelay<BUFSIZE> {
 
 impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for MonoDelay<BUFSIZE> {
     // some parameter limits might be nice ...
-    fn set_parameter(&mut self, par: SynthParameter) {
+    fn set_parameter(&mut self, par: SynthParameter, val: f32) {
         match par {
-            SynthParameter::DelayDampeningFrequency(f) => self
+            SynthParameter::DelayDampeningFrequency => self
                 .dampening_filter
-                .set_parameter(SynthParameter::LowpassCutoffFrequency(f)),
-            SynthParameter::DelayFeedback(df) => self.feedback = df,
-            SynthParameter::DelayTime(dt) => self.max_buffer_idx = (self.samplerate * dt) as usize,
+                .set_parameter(SynthParameter::LowpassCutoffFrequency, val),
+            SynthParameter::DelayFeedback => self.feedback = val,
+            SynthParameter::DelayTime => self.max_buffer_idx = (self.samplerate * val) as usize,
             _ => (),
         };
     }
@@ -80,9 +80,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> MultichannelDelay<BUFSIZE, NCHAN>
         MultichannelDelay { delays }
     }
 
-    pub fn set_parameter(&mut self, par: SynthParameter) {
+    pub fn set_parameter(&mut self, par: SynthParameter, val: f32) {
         for c in 0..NCHAN {
-            self.delays[c].set_parameter(par);
+            self.delays[c].set_parameter(par, val);
         }
     }
 
