@@ -1,7 +1,7 @@
 // parent imports
 use crate::ruffbox::synth::MonoSource;
-use crate::ruffbox::synth::SynthParameter;
 use crate::ruffbox::synth::SynthState;
+use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
 
 /**
  * a very simple sample player ...
@@ -97,28 +97,34 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
-    fn set_parameter(&mut self, par: SynthParameter, value: f32) {
+    fn set_parameter(&mut self, par: SynthParameterLabel, val: SynthParameterValue) {
         match par {
-            SynthParameter::PlaybackStart => {
-                let mut value_clamped = value;
-                // clamp value
-                if value > 1.0 {
-                    value_clamped = value - ((value as usize) as f32);
-                } else if value < 0.0 {
-                    value_clamped = 1.0 + (value - ((value as i32) as f32));
-                }
+            SynthParameterLabel::PlaybackStart => {
+                if let SynthParameterValue::FloatingPoint(value) = val {
+                    let mut value_clamped = value;
+                    // clamp value
+                    if value > 1.0 {
+                        value_clamped = value - ((value as usize) as f32);
+                    } else if value < 0.0 {
+                        value_clamped = 1.0 + (value - ((value as i32) as f32));
+                    }
 
-                let offset = ((self.buflen - 1) as f32 * value_clamped) as usize;
-                self.index = offset + 1; // start counting at one, due to interpolation
-                                         //println!("setting starting point to sample {}", self.index);
-                self.frac_index = self.index as f32;
+                    let offset = ((self.buflen - 1) as f32 * value_clamped) as usize;
+                    self.index = offset + 1; // start counting at one, due to interpolation
+                                             //println!("setting starting point to sample {}", self.index);
+                    self.frac_index = self.index as f32;
+                }
             }
-            SynthParameter::PlaybackRate => {
-                self.playback_rate = value;
-                self.frac_index_increment = 1.0 * value;
+            SynthParameterLabel::PlaybackRate => {
+                if let SynthParameterValue::FloatingPoint(value) = val {
+                    self.playback_rate = value;
+                    self.frac_index_increment = 1.0 * value;
+                }
             }
-            SynthParameter::Level => {
-                self.level = value;
+            SynthParameterLabel::Level => {
+                if let SynthParameterValue::FloatingPoint(value) = val {
+                    self.level = value;
+                }
             }
             _ => (),
         };

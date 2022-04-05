@@ -1,6 +1,6 @@
 use crate::ruffbox::synth::filters::*;
 use crate::ruffbox::synth::MonoEffect;
-use crate::ruffbox::synth::SynthParameter;
+use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
 
 pub struct MonoDelay<const BUFSIZE: usize> {
     buffer: Vec<f32>, // max 2 sec for now
@@ -26,15 +26,19 @@ impl<const BUFSIZE: usize> MonoDelay<BUFSIZE> {
 
 impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for MonoDelay<BUFSIZE> {
     // some parameter limits might be nice ...
-    fn set_parameter(&mut self, par: SynthParameter, val: f32) {
-        match par {
-            SynthParameter::DelayDampeningFrequency => self
-                .dampening_filter
-                .set_parameter(SynthParameter::LowpassCutoffFrequency, val),
-            SynthParameter::DelayFeedback => self.feedback = val,
-            SynthParameter::DelayTime => self.max_buffer_idx = (self.samplerate * val) as usize,
-            _ => (),
-        };
+    fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue) {
+        if let SynthParameterValue::FloatingPoint(val) = value {
+            match par {
+                SynthParameterLabel::DelayDampeningFrequency => self
+                    .dampening_filter
+                    .set_parameter(SynthParameterLabel::LowpassCutoffFrequency, value),
+                SynthParameterLabel::DelayFeedback => self.feedback = val,
+                SynthParameterLabel::DelayTime => {
+                    self.max_buffer_idx = (self.samplerate * val) as usize
+                }
+                _ => (),
+            };
+        }
     }
 
     fn finish(&mut self) {} // this effect is stateless
@@ -80,7 +84,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> MultichannelDelay<BUFSIZE, NCHAN>
         MultichannelDelay { delays }
     }
 
-    pub fn set_parameter(&mut self, par: SynthParameter, val: f32) {
+    pub fn set_parameter(&mut self, par: SynthParameterLabel, val: SynthParameterValue) {
         for c in 0..NCHAN {
             self.delays[c].set_parameter(par, val);
         }

@@ -1,5 +1,5 @@
 use crate::ruffbox::synth::MonoEffect;
-use crate::ruffbox::synth::SynthParameter;
+use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
 
 /**
  * Peak/Eq Filter
@@ -52,30 +52,32 @@ impl<const BUFSIZE: usize> PeakEq<BUFSIZE> {
 
 impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for PeakEq<BUFSIZE> {
     // some parameter limits might be nice ...
-    fn set_parameter(&mut self, par: SynthParameter, value: f32) {
-        match par {
-            SynthParameter::PeakFrequency => self.center = value,
-            SynthParameter::PeakGain => self.gain = value,
-            SynthParameter::PeakQFactor => self.bw = value,
-            _ => (),
-        };
+    fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue) {
+        if let SynthParameterValue::FloatingPoint(val) = value {
+            match par {
+                SynthParameterLabel::PeakFrequency => self.center = val,
+                SynthParameterLabel::PeakGain => self.gain = val,
+                SynthParameterLabel::PeakQFactor => self.bw = val,
+                _ => (),
+            };
 
-        // reset delay
-        self.del1 = 0.0;
-        self.del2 = 0.0;
+            // reset delay
+            self.del1 = 0.0;
+            self.del2 = 0.0;
 
-        let w_c = (2.0 * self.center) / self.samplerate;
-        let w_b = (2.0 * self.bw) / self.samplerate;
-        self.d = -((std::f32::consts::PI * w_c).cos());
-        self.v_zero = (10.0_f32).powf(self.gain / 20.0);
-        self.h_zero = self.v_zero - 1.0;
-        let cf_tan = (std::f32::consts::PI * w_b / 2.0).tan();
+            let w_c = (2.0 * self.center) / self.samplerate;
+            let w_b = (2.0 * self.bw) / self.samplerate;
+            self.d = -((std::f32::consts::PI * w_c).cos());
+            self.v_zero = (10.0_f32).powf(self.gain / 20.0);
+            self.h_zero = self.v_zero - 1.0;
+            let cf_tan = (std::f32::consts::PI * w_b / 2.0).tan();
 
-        self.c = if self.gain >= 0.0 {
-            (cf_tan - 1.0) / (cf_tan + 1.0)
-        } else {
-            (cf_tan - self.v_zero) / (cf_tan + self.v_zero)
-        };
+            self.c = if self.gain >= 0.0 {
+                (cf_tan - 1.0) / (cf_tan + 1.0)
+            } else {
+                (cf_tan - self.v_zero) / (cf_tan + self.v_zero)
+            };
+        }
     }
 
     fn finish(&mut self) {} // this effect is stateless

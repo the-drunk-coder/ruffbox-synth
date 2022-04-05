@@ -12,7 +12,7 @@ pub mod synths;
 
 #[derive(Clone, Copy)]
 pub enum SynthState {
-    Fresh,
+    Fresh, // Fresh Synths for everyone !!!
     Finished,
 }
 
@@ -20,7 +20,7 @@ pub enum SynthState {
 #[allow(dead_code)]
 #[repr(C)]
 #[derive(Hash, Eq, PartialEq, Clone, Copy)]
-pub enum SynthParameter {
+pub enum SynthParameterLabel {
     Attack,                  // 0
     Decay,                   // 1
     DelayDampeningFrequency, // 2
@@ -55,6 +55,13 @@ pub enum SynthParameter {
     Sustain,                 // 31
 }
 
+#[derive(Clone, Copy)]
+pub enum SynthParameterValue {
+    FloatingPoint(f32),
+    UInt32(u32),
+    Size(usize),
+}
+
 #[repr(C)]
 pub enum SourceType {
     Sampler,
@@ -70,7 +77,7 @@ pub enum SourceType {
 }
 
 pub trait MonoSource<const BUFSIZE: usize> {
-    fn set_parameter(&mut self, par: SynthParameter, value: f32);
+    fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue);
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
     fn get_next_block(&mut self, start_sample: usize, in_buffers: &[Vec<f32>]) -> [f32; BUFSIZE];
@@ -79,17 +86,17 @@ pub trait MonoSource<const BUFSIZE: usize> {
 pub trait MonoEffect<const BUFSIZE: usize> {
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
-    fn set_parameter(&mut self, par: SynthParameter, value: f32);
+    fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue);
     fn process_block(&mut self, block: [f32; BUFSIZE], start_sample: usize) -> [f32; BUFSIZE];
 }
 
 pub trait MultichannelReverb<const BUFSIZE: usize, const NCHAN: usize> {
-    fn set_parameter(&mut self, par: SynthParameter, value: f32);
+    fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue);
     fn process(&mut self, block: [[f32; BUFSIZE]; NCHAN]) -> [[f32; BUFSIZE]; NCHAN];
 }
 
 pub trait Synth<const BUFSIZE: usize, const NCHAN: usize> {
-    fn set_parameter(&mut self, par: SynthParameter, value: f32);
+    fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue);
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
     fn get_next_block(

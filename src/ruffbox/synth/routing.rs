@@ -1,4 +1,4 @@
-use crate::ruffbox::synth::SynthParameter;
+use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
 use std::f32::consts::PI;
 
 pub struct PanChan<const BUFSIZE: usize, const NCHAN: usize> {
@@ -20,21 +20,23 @@ impl<const BUFSIZE: usize, const NCHAN: usize> PanChan<BUFSIZE, NCHAN> {
     }
 
     /// Set the parameter for this panner.
-    pub fn set_parameter(&mut self, par: SynthParameter, value: f32) {
+    pub fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue) {
         // if it was more parameters, match would be better,
         // but this way clippy doesn't complain
-        if par == SynthParameter::ChannelPosition {
-            let mut lvls = [0.0; NCHAN];
+        if par == SynthParameterLabel::ChannelPosition {
+            if let SynthParameterValue::FloatingPoint(p) = value {
+                let mut lvls = [0.0; NCHAN];
 
-            let lower = value.floor();
-            let angle_rad = (value - lower) * PI * 0.5;
+                let lower = p.floor();
+                let angle_rad = (p - lower) * PI * 0.5;
 
-            let upper = lower + 1.0;
+                let upper = lower + 1.0;
 
-            lvls[lower as usize % (NCHAN as usize)] = angle_rad.cos();
-            lvls[upper as usize % (NCHAN as usize)] = angle_rad.sin();
+                lvls[lower as usize % (NCHAN as usize)] = angle_rad.cos();
+                lvls[upper as usize % (NCHAN as usize)] = angle_rad.sin();
 
-            self.levels = lvls;
+                self.levels = lvls;
+            }
         }
     }
 
@@ -65,7 +67,7 @@ mod tests {
         let mut block = [0.0; 128];
         block[0] = 1.0;
 
-        pchan.set_parameter(SynthParameter::ChannelPosition, 0.5);
+        pchan.set_parameter(SynthParameterLabel::ChannelPosition, 0.5);
 
         let block_out = pchan.process_block(block);
 
@@ -77,7 +79,7 @@ mod tests {
     fn panchan_test_left_pan() {
         let mut pchan = PanChan::<128, 2>::new();
 
-        pchan.set_parameter(SynthParameter::ChannelPosition, 0.0);
+        pchan.set_parameter(SynthParameterLabel::ChannelPosition, 0.0);
 
         let mut block = [0.0; 128];
         block[0] = 1.0;
@@ -92,7 +94,7 @@ mod tests {
     fn panchan_test_right_pan() {
         let mut pchan = PanChan::<128, 2>::new();
 
-        pchan.set_parameter(SynthParameter::ChannelPosition, 1.0);
+        pchan.set_parameter(SynthParameterLabel::ChannelPosition, 1.0);
 
         let mut block = [0.0; 128];
         block[0] = 1.0;
@@ -110,7 +112,7 @@ mod tests {
         let mut block = [0.0; 128];
         block[0] = 1.0;
 
-        pchan.set_parameter(SynthParameter::ChannelPosition, 6.0);
+        pchan.set_parameter(SynthParameterLabel::ChannelPosition, 6.0);
         let mut block_out = pchan.process_block(block);
 
         assert_approx_eq::assert_approx_eq!(block_out[0][0], 0.0, 0.0001);
@@ -122,7 +124,7 @@ mod tests {
         assert_approx_eq::assert_approx_eq!(block_out[6][0], 1.0, 0.0001);
         assert_approx_eq::assert_approx_eq!(block_out[7][0], 0.0, 0.0001);
 
-        pchan.set_parameter(SynthParameter::ChannelPosition, 2.0);
+        pchan.set_parameter(SynthParameterLabel::ChannelPosition, 2.0);
         block_out = pchan.process_block(block);
 
         assert_approx_eq::assert_approx_eq!(block_out[0][0], 0.0, 0.0001);
@@ -134,7 +136,7 @@ mod tests {
         assert_approx_eq::assert_approx_eq!(block_out[6][0], 0.0, 0.0001);
         assert_approx_eq::assert_approx_eq!(block_out[7][0], 0.0, 0.0001);
 
-        pchan.set_parameter(SynthParameter::ChannelPosition, 0.0);
+        pchan.set_parameter(SynthParameterLabel::ChannelPosition, 0.0);
         block_out = pchan.process_block(block);
 
         assert_approx_eq::assert_approx_eq!(block_out[0][0], 1.0, 0.0001);
@@ -146,7 +148,7 @@ mod tests {
         assert_approx_eq::assert_approx_eq!(block_out[6][0], 0.0, 0.0001);
         assert_approx_eq::assert_approx_eq!(block_out[7][0], 0.0, 0.0001);
 
-        pchan.set_parameter(SynthParameter::ChannelPosition, 8.0);
+        pchan.set_parameter(SynthParameterLabel::ChannelPosition, 8.0);
         block_out = pchan.process_block(block);
 
         assert_approx_eq::assert_approx_eq!(block_out[0][0], 1.0, 0.0001);

@@ -1,5 +1,5 @@
 use crate::ruffbox::synth::MonoSource;
-use crate::ruffbox::synth::SynthParameter;
+use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
 
 use std::f32::consts::PI;
 
@@ -29,10 +29,18 @@ impl<const BUFSIZE: usize> SineOsc<BUFSIZE> {
 
 impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
     // some parameter limits might be nice ...
-    fn set_parameter(&mut self, par: SynthParameter, value: f32) {
+    fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue) {
         match par {
-            SynthParameter::PitchFrequency => self.pi_slice = 2.0 * PI * value,
-            SynthParameter::Level => self.lvl = value,
+            SynthParameterLabel::PitchFrequency => {
+                if let SynthParameterValue::FloatingPoint(f) = value {
+                    self.pi_slice = 2.0 * PI * f;
+                };
+            }
+            SynthParameterLabel::Level => {
+                if let SynthParameterValue::FloatingPoint(l) = value {
+                    self.lvl = l
+                }
+            }
             _ => (),
         };
     }

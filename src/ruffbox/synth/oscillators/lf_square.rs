@@ -1,5 +1,5 @@
 use crate::ruffbox::synth::MonoSource;
-use crate::ruffbox::synth::SynthParameter;
+use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
 
 /**
  * A non-band-limited square-wave oscillator.
@@ -30,19 +30,26 @@ impl<const BUFSIZE: usize> LFSquare<BUFSIZE> {
 
 impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSquare<BUFSIZE> {
     // some parameter limits might be nice ...
-    fn set_parameter(&mut self, par: SynthParameter, value: f32) {
+    fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue) {
         match par {
-            SynthParameter::PitchFrequency => {
-                //self.freq = value;
-                self.period_samples = (self.samplerate / value).round() as usize;
-                self.flank_point = (self.period_samples as f32 * self.pulsewidth).round() as usize;
+            SynthParameterLabel::PitchFrequency => {
+                if let SynthParameterValue::FloatingPoint(f) = value {
+                    //self.freq = value;
+                    self.period_samples = (self.samplerate / f).round() as usize;
+                    self.flank_point =
+                        (self.period_samples as f32 * self.pulsewidth).round() as usize;
+                }
             }
-            SynthParameter::Pulsewidth => {
-                self.pulsewidth = value;
-                self.flank_point = (self.period_samples as f32 * value).round() as usize;
+            SynthParameterLabel::Pulsewidth => {
+                if let SynthParameterValue::FloatingPoint(pw) = value {
+                    self.pulsewidth = pw;
+                    self.flank_point = (self.period_samples as f32 * pw).round() as usize;
+                }
             }
-            SynthParameter::Level => {
-                self.lvl = value;
+            SynthParameterLabel::Level => {
+                if let SynthParameterValue::FloatingPoint(l) = value {
+                    self.lvl = l;
+                }
             }
             _ => (),
         }

@@ -4,7 +4,7 @@ use crate::ruffbox::synth::filters::*;
 use crate::ruffbox::synth::oscillators::*;
 use crate::ruffbox::synth::sampler::Sampler;
 use crate::ruffbox::synth::Synth;
-use crate::ruffbox::synth::SynthParameter;
+use crate::ruffbox::synth::SynthParameterLabel;
 use crate::ruffbox::synth::*;
 
 /// a sinusoidal synth with envelope etc.
@@ -29,13 +29,21 @@ impl<const BUFSIZE: usize> SineSynthAmbiO1<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for SineSynthAmbiO1<BUFSIZE> {
-    fn set_parameter(&mut self, par: SynthParameter, val: f32) {
+    fn set_parameter(&mut self, par: SynthParameterLabel, val: SynthParameterValue) {
         self.oscillator.set_parameter(par, val);
         self.envelope.set_parameter(par, val);
         self.encoder.set_parameter(par, val);
         match par {
-            SynthParameter::ReverbMix => self.reverb = val,
-            SynthParameter::DelayMix => self.delay = val,
+            SynthParameterLabel::ReverbMix => {
+                if let SynthParameterValue::FloatingPoint(r) = val {
+                    self.reverb = r
+                }
+            }
+            SynthParameterLabel::DelayMix => {
+                if let SynthParameterValue::FloatingPoint(d) = val {
+                    self.delay = d
+                }
+            }
             _ => (),
         };
     }
@@ -89,13 +97,21 @@ impl<const BUFSIZE: usize> LFTriSynthAmbiO1<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for LFTriSynthAmbiO1<BUFSIZE> {
-    fn set_parameter(&mut self, par: SynthParameter, val: f32) {
+    fn set_parameter(&mut self, par: SynthParameterLabel, val: SynthParameterValue) {
         self.oscillator.set_parameter(par, val);
         self.envelope.set_parameter(par, val);
         self.encoder.set_parameter(par, val);
         match par {
-            SynthParameter::ReverbMix => self.reverb = val,
-            SynthParameter::DelayMix => self.delay = val,
+            SynthParameterLabel::ReverbMix => {
+                if let SynthParameterValue::FloatingPoint(r) = val {
+                    self.reverb = r
+                }
+            }
+            SynthParameterLabel::DelayMix => {
+                if let SynthParameterValue::FloatingPoint(d) = val {
+                    self.delay = d
+                }
+            }
             _ => (),
         };
     }
@@ -151,15 +167,23 @@ impl<const BUFSIZE: usize> LFSawSynthAmbiO1<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for LFSawSynthAmbiO1<BUFSIZE> {
-    fn set_parameter(&mut self, par: SynthParameter, val: f32) {
+    fn set_parameter(&mut self, par: SynthParameterLabel, val: SynthParameterValue) {
         self.oscillator.set_parameter(par, val);
         self.filter.set_parameter(par, val);
         self.envelope.set_parameter(par, val);
         self.encoder.set_parameter(par, val);
 
         match par {
-            SynthParameter::ReverbMix => self.reverb = val,
-            SynthParameter::DelayMix => self.delay = val,
+            SynthParameterLabel::ReverbMix => {
+                if let SynthParameterValue::FloatingPoint(r) = val {
+                    self.reverb = r
+                }
+            }
+            SynthParameterLabel::DelayMix => {
+                if let SynthParameterValue::FloatingPoint(d) = val {
+                    self.delay = d
+                }
+            }
             _ => (),
         };
     }
@@ -216,15 +240,23 @@ impl<const BUFSIZE: usize> LFSquareSynthAmbiO1<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for LFSquareSynthAmbiO1<BUFSIZE> {
-    fn set_parameter(&mut self, par: SynthParameter, val: f32) {
+    fn set_parameter(&mut self, par: SynthParameterLabel, val: SynthParameterValue) {
         self.oscillator.set_parameter(par, val);
         self.filter.set_parameter(par, val);
         self.envelope.set_parameter(par, val);
         self.encoder.set_parameter(par, val);
 
         match par {
-            SynthParameter::ReverbMix => self.reverb = val,
-            SynthParameter::DelayMix => self.delay = val,
+            SynthParameterLabel::ReverbMix => {
+                if let SynthParameterValue::FloatingPoint(r) = val {
+                    self.reverb = r
+                }
+            }
+            SynthParameterLabel::DelayMix => {
+                if let SynthParameterValue::FloatingPoint(d) = val {
+                    self.delay = d
+                }
+            }
             _ => (),
         };
     }
@@ -287,7 +319,7 @@ impl<const BUFSIZE: usize> AmbiSamplerO1<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for AmbiSamplerO1<BUFSIZE> {
-    fn set_parameter(&mut self, par: SynthParameter, val: f32) {
+    fn set_parameter(&mut self, par: SynthParameterLabel, val: SynthParameterValue) {
         self.sampler.set_parameter(par, val);
         self.hpf.set_parameter(par, val);
         self.peak_eq.set_parameter(par, val);
@@ -296,8 +328,16 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for AmbiSamplerO1<BUFSIZE> {
         self.encoder.set_parameter(par, val);
 
         match par {
-            SynthParameter::ReverbMix => self.reverb = val,
-            SynthParameter::DelayMix => self.delay = val,
+            SynthParameterLabel::ReverbMix => {
+                if let SynthParameterValue::FloatingPoint(r) = val {
+                    self.reverb = r
+                }
+            }
+            SynthParameterLabel::DelayMix => {
+                if let SynthParameterValue::FloatingPoint(d) = val {
+                    self.delay = d
+                }
+            }
             _ => (),
         };
     }

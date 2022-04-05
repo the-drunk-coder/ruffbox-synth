@@ -1,6 +1,6 @@
 use crate::ruffbox::synth::convolver::uniform_partitioned_convolution::UniformPartitionedConvolution;
 use crate::ruffbox::synth::MultichannelReverb;
-use crate::ruffbox::synth::SynthParameter;
+use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
 
 pub struct MultichannelConvolutionReverb<const BUFSIZE: usize, const NCHAN: usize> {
     channel_convolvers: Vec<UniformPartitionedConvolution<BUFSIZE>>,
@@ -19,7 +19,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> MultichannelConvolutionReverb<BUF
 impl<const BUFSIZE: usize, const NCHAN: usize> MultichannelReverb<BUFSIZE, NCHAN>
     for MultichannelConvolutionReverb<BUFSIZE, NCHAN>
 {
-    fn set_parameter(&mut self, _par: SynthParameter, _val: f32) {
+    fn set_parameter(&mut self, _par: SynthParameterLabel, _val: SynthParameterValue) {
         // nothing to do here ...
     }
 

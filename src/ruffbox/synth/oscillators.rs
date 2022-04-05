@@ -1,26 +1,25 @@
-/// A collection of oscillators, some of which are modeled
-/// after scsynth, csound, etc ...
-
-pub mod sine_osc;
-pub mod lf_saw;
 pub mod lf_cub;
+pub mod lf_saw;
 pub mod lf_square;
 pub mod lf_tri;
+/// A collection of oscillators, some of which are modeled
+/// after scsynth, csound, etc ...
+pub mod sine_osc;
 
-pub use crate::ruffbox::synth::oscillators::sine_osc::SineOsc;
-pub use crate::ruffbox::synth::oscillators::lf_saw::LFSaw;
 pub use crate::ruffbox::synth::oscillators::lf_cub::LFCub;
+pub use crate::ruffbox::synth::oscillators::lf_saw::LFSaw;
 pub use crate::ruffbox::synth::oscillators::lf_square::LFSquare;
 pub use crate::ruffbox::synth::oscillators::lf_tri::LFTri;
+pub use crate::ruffbox::synth::oscillators::sine_osc::SineOsc;
 
 // TEST TEST TEST
 #[cfg(test)]
 mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
-    use std::f32::consts::PI;
     use crate::ruffbox::synth::MonoSource;
-    
+    use std::f32::consts::PI;
+
     #[test]
     fn sine_osc_test_at_block_start() {
         let mut osc = SineOsc::<128>::new(440.0, 1.0, 44100.0);

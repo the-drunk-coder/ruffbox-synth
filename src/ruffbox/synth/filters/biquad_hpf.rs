@@ -1,5 +1,5 @@
 use crate::ruffbox::synth::MonoEffect;
-use crate::ruffbox::synth::SynthParameter;
+use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
 
 /**
  * Biquad HiPass Filter, 12dB/oct
@@ -44,25 +44,27 @@ impl<const BUFSIZE: usize> BiquadHpf<BUFSIZE> {
 
 impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for BiquadHpf<BUFSIZE> {
     // some parameter limits might be nice ...
-    fn set_parameter(&mut self, par: SynthParameter, value: f32) {
-        match par {
-            SynthParameter::HighpassCutoffFrequency => self.cutoff = value,
-            SynthParameter::HighpassQFactor => self.q = value,
-            _ => (),
-        };
+    fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue) {
+        if let SynthParameterValue::FloatingPoint(val) = value {
+            match par {
+                SynthParameterLabel::HighpassCutoffFrequency => self.cutoff = val,
+                SynthParameterLabel::HighpassQFactor => self.q = val,
+                _ => (),
+            };
 
-        // reset delay
-        self.del1 = 0.0;
-        self.del2 = 0.0;
+            // reset delay
+            self.del1 = 0.0;
+            self.del2 = 0.0;
 
-        self.k = ((std::f32::consts::PI * self.cutoff) / self.samplerate).tanh();
-        let k_pow_two = self.k.powf(2.0);
-        self.a1 = (2.0 * self.q * (k_pow_two - 1.0)) / ((k_pow_two * self.q) + self.k + self.q);
-        self.a2 =
-            ((k_pow_two * self.q) - self.k + self.q) / ((k_pow_two * self.q) + self.k + self.q);
-        self.b0 = self.q / ((k_pow_two * self.q) + self.k + self.q);
-        self.b1 = -1.0 * ((2.0 * self.q) / ((k_pow_two * self.q) + self.k + self.q));
-        self.b2 = self.b0;
+            self.k = ((std::f32::consts::PI * self.cutoff) / self.samplerate).tanh();
+            let k_pow_two = self.k.powf(2.0);
+            self.a1 = (2.0 * self.q * (k_pow_two - 1.0)) / ((k_pow_two * self.q) + self.k + self.q);
+            self.a2 =
+                ((k_pow_two * self.q) - self.k + self.q) / ((k_pow_two * self.q) + self.k + self.q);
+            self.b0 = self.q / ((k_pow_two * self.q) + self.k + self.q);
+            self.b1 = -1.0 * ((2.0 * self.q) / ((k_pow_two * self.q) + self.k + self.q));
+            self.b2 = self.b0;
+        }
     }
 
     fn finish(&mut self) {} // this effect is stateless

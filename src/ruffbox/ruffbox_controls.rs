@@ -5,7 +5,7 @@ use crossbeam::atomic::AtomicCell;
 
 use crate::ruffbox::synth::synths::*;
 use crate::ruffbox::synth::SourceType;
-use crate::ruffbox::synth::SynthParameter;
+use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
 use crate::ruffbox::ControlMessage;
 use crate::ruffbox::ScheduledEvent;
 use dashmap::DashMap;
@@ -17,7 +17,7 @@ pub struct PreparedInstance<const BUFSIZE: usize, const NCHAN: usize> {
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> PreparedInstance<BUFSIZE, NCHAN> {
-    pub fn set_instance_parameter(&mut self, par: SynthParameter, val: f32) {
+    pub fn set_instance_parameter(&mut self, par: SynthParameterLabel, val: SynthParameterValue) {
         self.ev.set_parameter(par, val);
     }
 }
@@ -153,7 +153,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
         })
     }
 
-    pub fn set_master_parameter(&self, par: SynthParameter, val: f32) {
+    pub fn set_master_parameter(&self, par: SynthParameterLabel, val: SynthParameterValue) {
         self.control_q_send
             .send(ControlMessage::SetGlobalParam(par, val))
             .unwrap();

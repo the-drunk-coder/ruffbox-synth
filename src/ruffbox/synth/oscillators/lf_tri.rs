@@ -1,5 +1,5 @@
 use crate::ruffbox::synth::MonoSource;
-use crate::ruffbox::synth::SynthParameter;
+use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
 
 /**
  * A non-band-limited triangle oscillator.
@@ -39,23 +39,27 @@ impl<const BUFSIZE: usize> LFTri<BUFSIZE> {
 
 impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFTri<BUFSIZE> {
     // some parameter limits might be nice ...
-    fn set_parameter(&mut self, par: SynthParameter, value: f32) {
+    fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue) {
         match par {
-            SynthParameter::PitchFrequency => {
-                let period_samples = (self.samplerate / value).round() as usize;
-                // the segment-wise implementation is a bit strange but works for now ...
-                self.segment_samples = period_samples / 4;
-                self.period_second_ascent_samples = period_samples;
-                self.period_descent_samples = period_samples - self.segment_samples;
-                self.period_first_ascent_samples =
-                    self.period_descent_samples - (2 * self.segment_samples);
-                self.lvl_inc_dec = self.lvl / self.segment_samples as f32;
-                self.lvl_first_inc = self.lvl / self.period_first_ascent_samples as f32;
+            SynthParameterLabel::PitchFrequency => {
+                if let SynthParameterValue::FloatingPoint(f) = value {
+                    let period_samples = (self.samplerate / f).round() as usize;
+                    // the segment-wise implementation is a bit strange but works for now ...
+                    self.segment_samples = period_samples / 4;
+                    self.period_second_ascent_samples = period_samples;
+                    self.period_descent_samples = period_samples - self.segment_samples;
+                    self.period_first_ascent_samples =
+                        self.period_descent_samples - (2 * self.segment_samples);
+                    self.lvl_inc_dec = self.lvl / self.segment_samples as f32;
+                    self.lvl_first_inc = self.lvl / self.period_first_ascent_samples as f32;
+                }
             }
-            SynthParameter::Level => {
-                self.lvl = value;
-                self.lvl_inc_dec = self.lvl / self.segment_samples as f32;
-                self.lvl_first_inc = self.lvl / self.period_first_ascent_samples as f32;
+            SynthParameterLabel::Level => {
+                if let SynthParameterValue::FloatingPoint(l) = value {
+                    self.lvl = l;
+                    self.lvl_inc_dec = self.lvl / self.segment_samples as f32;
+                    self.lvl_first_inc = self.lvl / self.period_first_ascent_samples as f32;
+                }
             }
             _ => (),
         };

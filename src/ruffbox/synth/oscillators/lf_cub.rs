@@ -1,5 +1,5 @@
 use crate::ruffbox::synth::MonoSource;
-use crate::ruffbox::synth::SynthParameter;
+use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
 
 /**
  * A non-band-limited cubic sine approximation oscillator.
@@ -25,13 +25,17 @@ impl<const BUFSIZE: usize> LFCub<BUFSIZE> {
 
 impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFCub<BUFSIZE> {
     // some parameter limits might be nice ...
-    fn set_parameter(&mut self, par: SynthParameter, value: f32) {
+    fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue) {
         match par {
-            SynthParameter::PitchFrequency => {
-                self.freq = value * (1.0 / self.samplerate);
+            SynthParameterLabel::PitchFrequency => {
+                if let SynthParameterValue::FloatingPoint(f) = value {
+                    self.freq = f * (1.0 / self.samplerate);
+                }
             }
-            SynthParameter::Level => {
-                self.lvl = value;
+            SynthParameterLabel::Level => {
+                if let SynthParameterValue::FloatingPoint(l) = value {
+                    self.lvl = l;
+                }
             }
             _ => (),
         };

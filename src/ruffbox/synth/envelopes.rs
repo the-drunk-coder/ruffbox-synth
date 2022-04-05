@@ -1,6 +1,6 @@
 use crate::ruffbox::synth::MonoEffect;
-use crate::ruffbox::synth::SynthParameter;
 use crate::ruffbox::synth::SynthState;
+use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
 
 /// simple linear attack-sustain-release envelope
 #[derive(Clone, Copy)]
@@ -55,31 +55,33 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for ASREnvelope<BUFSIZE> {
         matches!(self.state, SynthState::Finished)
     }
 
-    fn set_parameter(&mut self, par: SynthParameter, value: f32) {
+    fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue) {
         let mut update_internals = false;
-        match par {
-            SynthParameter::Attack => {
-                self.atk = value;
-                update_internals = true;
+        if let SynthParameterValue::FloatingPoint(val) = value {
+            match par {
+                SynthParameterLabel::Attack => {
+                    self.atk = val;
+                    update_internals = true;
+                }
+                SynthParameterLabel::Sustain => {
+                    self.sus = val;
+                    update_internals = true;
+                }
+                SynthParameterLabel::Release => {
+                    self.rel = val;
+                    update_internals = true;
+                }
+                SynthParameterLabel::Level => {
+                    self.max_lvl = val;
+                    update_internals = true;
+                }
+                SynthParameterLabel::Samplerate => {
+                    self.samplerate = val;
+                    update_internals = true;
+                }
+                _ => (),
             }
-            SynthParameter::Sustain => {
-                self.sus = value;
-                update_internals = true;
-            }
-            SynthParameter::Release => {
-                self.rel = value;
-                update_internals = true;
-            }
-            SynthParameter::Level => {
-                self.max_lvl = value;
-                update_internals = true;
-            }
-            SynthParameter::Samplerate => {
-                self.samplerate = value;
-                update_internals = true;
-            }
-            _ => (),
-        };
+        }
 
         if update_internals {
             self.atk_samples = (self.samplerate * self.atk).round() as usize;
@@ -189,31 +191,32 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for ExpPercEnvelope<BUFSIZE> {
         matches!(self.state, SynthState::Finished)
     }
 
-    fn set_parameter(&mut self, par: SynthParameter, value: f32) {
+    fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue) {
         let mut update_internals = false;
-        match par {
-            SynthParameter::Attack => {
-                self.atk = value;
-                update_internals = true;
-            }
-            SynthParameter::Sustain => {
-                self.sus = value;
-                update_internals = true;
-            }
-            SynthParameter::Release => {
-                self.rel = value;
-                update_internals = true;
-            }
-            SynthParameter::Level => {
-                self.max_lvl = value;
-            }
-            SynthParameter::Samplerate => {
-                self.samplerate = value;
-                update_internals = true;
-            }
-            _ => (),
-        };
-
+        if let SynthParameterValue::FloatingPoint(val) = value {
+            match par {
+                SynthParameterLabel::Attack => {
+                    self.atk = val;
+                    update_internals = true;
+                }
+                SynthParameterLabel::Sustain => {
+                    self.sus = val;
+                    update_internals = true;
+                }
+                SynthParameterLabel::Release => {
+                    self.rel = val;
+                    update_internals = true;
+                }
+                SynthParameterLabel::Level => {
+                    self.max_lvl = val;
+                }
+                SynthParameterLabel::Samplerate => {
+                    self.samplerate = val;
+                    update_internals = true;
+                }
+                _ => (),
+            };
+        }
         if update_internals {
             self.atk_samples = (self.samplerate * self.atk).round() as usize;
             self.sus_samples = self.atk_samples + (self.samplerate * self.sus).round() as usize;
@@ -321,10 +324,10 @@ mod tests {
         let mut env = ASREnvelope::<128>::new(0.0, 0.0, 0.0, 0.0, 44100.0);
 
         // use paramter setter to set parameters ...
-        env.set_parameter(SynthParameter::Attack, 0.0014512);
-        env.set_parameter(SynthParameter::Sustain, 0.0029024);
-        env.set_parameter(SynthParameter::Release, 0.0014512);
-        env.set_parameter(SynthParameter::Level, 0.5);
+        env.set_parameter(SynthParameterLabel::Attack, 0.0014512);
+        env.set_parameter(SynthParameterLabel::Sustain, 0.0029024);
+        env.set_parameter(SynthParameterLabel::Release, 0.0014512);
+        env.set_parameter(SynthParameterLabel::Level, 0.5);
 
         let out_1: [f32; 128] = env.process_block(test_block, 0);
         let out_2: [f32; 128] = env.process_block(test_block, 0);
@@ -377,16 +380,16 @@ mod tests {
 
         // use paramter setter to set parameters ...
         println!("Set parameters for env at start:");
-        env_at_start.set_parameter(SynthParameter::Level, 1.0);
-        env_at_start.set_parameter(SynthParameter::Attack, 0.001);
-        env_at_start.set_parameter(SynthParameter::Sustain, 0.019);
-        env_at_start.set_parameter(SynthParameter::Release, 0.07);
+        env_at_start.set_parameter(SynthParameterLabel::Level, 1.0);
+        env_at_start.set_parameter(SynthParameterLabel::Attack, 0.001);
+        env_at_start.set_parameter(SynthParameterLabel::Sustain, 0.019);
+        env_at_start.set_parameter(SynthParameterLabel::Release, 0.07);
 
         println!("\nSet parameters for env with offset:\n");
-        env_with_offset.set_parameter(SynthParameter::Level, 1.0);
-        env_with_offset.set_parameter(SynthParameter::Attack, 0.001);
-        env_with_offset.set_parameter(SynthParameter::Sustain, 0.019);
-        env_with_offset.set_parameter(SynthParameter::Release, 0.07);
+        env_with_offset.set_parameter(SynthParameterLabel::Level, 1.0);
+        env_with_offset.set_parameter(SynthParameterLabel::Attack, 0.001);
+        env_with_offset.set_parameter(SynthParameterLabel::Sustain, 0.019);
+        env_with_offset.set_parameter(SynthParameterLabel::Release, 0.07);
 
         let mut out_start = env_at_start.process_block(test_block, 0);
         let mut out_offset = env_with_offset.process_block(test_block, 60);

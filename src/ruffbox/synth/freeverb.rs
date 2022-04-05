@@ -1,5 +1,5 @@
 use crate::ruffbox::synth::MultichannelReverb;
-use crate::ruffbox::synth::SynthParameter;
+use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
 
 struct FreeverbDefaultTuning;
 
@@ -369,12 +369,14 @@ impl<const BUFSIZE: usize, const NCHAN: usize> MultichannelFreeverb<BUFSIZE, NCH
 impl<const BUFSIZE: usize, const NCHAN: usize> MultichannelReverb<BUFSIZE, NCHAN>
     for MultichannelFreeverb<BUFSIZE, NCHAN>
 {
-    fn set_parameter(&mut self, par: SynthParameter, val: f32) {
-        match par {
-            SynthParameter::ReverbRoomsize => self.set_roomsize(val),
-            SynthParameter::ReverbDampening => self.set_damp(val),
-            _ => (),
-        };
+    fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue) {
+        if let SynthParameterValue::FloatingPoint(val) = value {
+            match par {
+                SynthParameterLabel::ReverbRoomsize => self.set_roomsize(val),
+                SynthParameterLabel::ReverbDampening => self.set_damp(val),
+                _ => (),
+            };
+        }
     }
 
     /**

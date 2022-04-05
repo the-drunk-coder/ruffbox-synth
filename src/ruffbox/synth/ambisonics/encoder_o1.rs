@@ -1,4 +1,4 @@
-use crate::ruffbox::synth::SynthParameter;
+use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
 
 /**
  * a simple first order ambisonics encoder
@@ -29,22 +29,24 @@ impl<const BUFSIZE: usize> EncoderO1<BUFSIZE> {
     }
 
     // some parameter limits might be nice ...
-    pub fn set_parameter(&mut self, par: SynthParameter, value: f32) {
-        match par {
-            SynthParameter::AmbisonicAzimuth => self.azimuth = value,
-            SynthParameter::AmbisonicElevation => self.elevation = value,
-            _ => (),
-        };
+    pub fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue) {
+        if let SynthParameterValue::FloatingPoint(val) = value {
+            match par {
+                SynthParameterLabel::AmbisonicAzimuth => self.azimuth = val,
+                SynthParameterLabel::AmbisonicElevation => self.elevation = val,
+                _ => (),
+            };
 
-        let sin_a = self.azimuth.sin();
-        let cos_a = self.azimuth.cos();
-        let sin_e = self.elevation.sin();
-        let cos_e = self.elevation.cos();
+            let sin_a = self.azimuth.sin();
+            let cos_a = self.azimuth.cos();
+            let sin_e = self.elevation.sin();
+            let cos_e = self.elevation.cos();
 
-        self.coefs[0] = 1.0;
-        self.coefs[1] = self.a_1_1 * sin_a * sin_e;
-        self.coefs[2] = self.a_1_0 * cos_e;
-        self.coefs[3] = self.a_1_1 * cos_a * sin_e;
+            self.coefs[0] = 1.0;
+            self.coefs[1] = self.a_1_1 * sin_a * sin_e;
+            self.coefs[2] = self.a_1_0 * cos_e;
+            self.coefs[3] = self.a_1_1 * cos_a * sin_e;
+        }
     }
 
     pub fn process_block(&mut self, input: [f32; BUFSIZE]) -> [[f32; BUFSIZE]; 4] {

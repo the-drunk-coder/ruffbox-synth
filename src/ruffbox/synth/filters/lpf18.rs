@@ -1,5 +1,5 @@
 use crate::ruffbox::synth::MonoEffect;
-use crate::ruffbox::synth::SynthParameter;
+use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
 
 /**
  * Three-pole, 18dB/octave filter with tanh distortion
@@ -76,21 +76,23 @@ impl<const BUFSIZE: usize> Lpf18<BUFSIZE> {
 
 impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for Lpf18<BUFSIZE> {
     // some parameter limits might be nice ...
-    fn set_parameter(&mut self, par: SynthParameter, value: f32) {
-        match par {
-            SynthParameter::LowpassCutoffFrequency => self.cutoff = value,
-            SynthParameter::LowpassQFactor => self.res = value,
-            SynthParameter::LowpassFilterDistortion => self.dist = value,
-            _ => (),
-        };
+    fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue) {
+        if let SynthParameterValue::FloatingPoint(val) = value {
+            match par {
+                SynthParameterLabel::LowpassCutoffFrequency => self.cutoff = val,
+                SynthParameterLabel::LowpassQFactor => self.res = val,
+                SynthParameterLabel::LowpassFilterDistortion => self.dist = val,
+                _ => (),
+            };
 
-        self.kfcn = 2.0 * self.cutoff * (1.0 / self.samplerate);
-        self.kp = ((-2.7528 * self.kfcn + 3.0429) * self.kfcn + 1.718) * self.kfcn - 0.9984;
-        self.kp1 = self.kp + 1.0;
-        self.kp1h = 0.5 * self.kp1;
-        self.kres =
-            self.res * (((-2.7079 * self.kp1 + 10.963) * self.kp1 - 14.934) * self.kp1 + 8.4974);
-        self.value = 1.0 + (self.dist * (1.5 + 2.0 * self.res * (1.0 - self.kfcn)));
+            self.kfcn = 2.0 * self.cutoff * (1.0 / self.samplerate);
+            self.kp = ((-2.7528 * self.kfcn + 3.0429) * self.kfcn + 1.718) * self.kfcn - 0.9984;
+            self.kp1 = self.kp + 1.0;
+            self.kp1h = 0.5 * self.kp1;
+            self.kres = self.res
+                * (((-2.7079 * self.kp1 + 10.963) * self.kp1 - 14.934) * self.kp1 + 8.4974);
+            self.value = 1.0 + (self.dist * (1.5 + 2.0 * self.res * (1.0 - self.kfcn)));
+        }
     }
 
     fn finish(&mut self) {} // this effect is stateless
