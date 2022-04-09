@@ -57,7 +57,7 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for ASREnvelope<BUFSIZE> {
 
     fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue) {
         let mut update_internals = false;
-        if let SynthParameterValue::FloatingPoint(val) = value {
+        if let SynthParameterValue::ScalarF32(val) = value {
             match par {
                 SynthParameterLabel::Attack => {
                     self.atk = val;
@@ -193,7 +193,7 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for ExpPercEnvelope<BUFSIZE> {
 
     fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue) {
         let mut update_internals = false;
-        if let SynthParameterValue::FloatingPoint(val) = value {
+        if let SynthParameterValue::ScalarF32(val) = value {
             match par {
                 SynthParameterLabel::Attack => {
                     self.atk = val;

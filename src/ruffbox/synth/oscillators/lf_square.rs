@@ -33,7 +33,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSquare<BUFSIZE> {
     fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue) {
         match par {
             SynthParameterLabel::PitchFrequency => {
-                if let SynthParameterValue::FloatingPoint(f) = value {
+                if let SynthParameterValue::ScalarF32(f) = value {
                     //self.freq = value;
                     self.period_samples = (self.samplerate / f).round() as usize;
                     self.flank_point =
@@ -41,13 +41,13 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSquare<BUFSIZE> {
                 }
             }
             SynthParameterLabel::Pulsewidth => {
-                if let SynthParameterValue::FloatingPoint(pw) = value {
+                if let SynthParameterValue::ScalarF32(pw) = value {
                     self.pulsewidth = pw;
                     self.flank_point = (self.period_samples as f32 * pw).round() as usize;
                 }
             }
             SynthParameterLabel::Level => {
-                if let SynthParameterValue::FloatingPoint(l) = value {
+                if let SynthParameterValue::ScalarF32(l) = value {
                     self.lvl = l;
                 }
             }

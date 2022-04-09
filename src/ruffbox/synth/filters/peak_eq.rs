@@ -53,7 +53,7 @@ impl<const BUFSIZE: usize> PeakEq<BUFSIZE> {
 impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for PeakEq<BUFSIZE> {
     // some parameter limits might be nice ...
     fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue) {
-        if let SynthParameterValue::FloatingPoint(val) = value {
+        if let SynthParameterValue::ScalarF32(val) = value {
             match par {
                 SynthParameterLabel::PeakFrequency => self.center = val,
                 SynthParameterLabel::PeakGain => self.gain = val,

@@ -24,7 +24,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> PanChan<BUFSIZE, NCHAN> {
         // if it was more parameters, match would be better,
         // but this way clippy doesn't complain
         if par == SynthParameterLabel::ChannelPosition {
-            if let SynthParameterValue::FloatingPoint(p) = value {
+            if let SynthParameterValue::ScalarF32(p) = value {
                 let mut lvls = [0.0; NCHAN];
 
                 let lower = p.floor();

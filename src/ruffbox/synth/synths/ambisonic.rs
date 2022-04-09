@@ -35,12 +35,12 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for SineSynthAmbiO1<BUFSIZE> {
         self.encoder.set_parameter(par, val);
         match par {
             SynthParameterLabel::ReverbMix => {
-                if let SynthParameterValue::FloatingPoint(r) = val {
+                if let SynthParameterValue::ScalarF32(r) = val {
                     self.reverb = r
                 }
             }
             SynthParameterLabel::DelayMix => {
-                if let SynthParameterValue::FloatingPoint(d) = val {
+                if let SynthParameterValue::ScalarF32(d) = val {
                     self.delay = d
                 }
             }
@@ -103,12 +103,12 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for LFTriSynthAmbiO1<BUFSIZE> {
         self.encoder.set_parameter(par, val);
         match par {
             SynthParameterLabel::ReverbMix => {
-                if let SynthParameterValue::FloatingPoint(r) = val {
+                if let SynthParameterValue::ScalarF32(r) = val {
                     self.reverb = r
                 }
             }
             SynthParameterLabel::DelayMix => {
-                if let SynthParameterValue::FloatingPoint(d) = val {
+                if let SynthParameterValue::ScalarF32(d) = val {
                     self.delay = d
                 }
             }
@@ -175,12 +175,12 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for LFSawSynthAmbiO1<BUFSIZE> {
 
         match par {
             SynthParameterLabel::ReverbMix => {
-                if let SynthParameterValue::FloatingPoint(r) = val {
+                if let SynthParameterValue::ScalarF32(r) = val {
                     self.reverb = r
                 }
             }
             SynthParameterLabel::DelayMix => {
-                if let SynthParameterValue::FloatingPoint(d) = val {
+                if let SynthParameterValue::ScalarF32(d) = val {
                     self.delay = d
                 }
             }
@@ -248,12 +248,12 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for LFSquareSynthAmbiO1<BUFSIZE> {
 
         match par {
             SynthParameterLabel::ReverbMix => {
-                if let SynthParameterValue::FloatingPoint(r) = val {
+                if let SynthParameterValue::ScalarF32(r) = val {
                     self.reverb = r
                 }
             }
             SynthParameterLabel::DelayMix => {
-                if let SynthParameterValue::FloatingPoint(d) = val {
+                if let SynthParameterValue::ScalarF32(d) = val {
                     self.delay = d
                 }
             }
@@ -329,12 +329,12 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for AmbiSamplerO1<BUFSIZE> {
 
         match par {
             SynthParameterLabel::ReverbMix => {
-                if let SynthParameterValue::FloatingPoint(r) = val {
+                if let SynthParameterValue::ScalarF32(r) = val {
                     self.reverb = r
                 }
             }
             SynthParameterLabel::DelayMix => {
-                if let SynthParameterValue::FloatingPoint(d) = val {
+                if let SynthParameterValue::ScalarF32(d) = val {
                     self.delay = d
                 }
             }

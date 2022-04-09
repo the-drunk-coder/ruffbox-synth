@@ -77,7 +77,7 @@ impl<const BUFSIZE: usize> Lpf18<BUFSIZE> {
 impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for Lpf18<BUFSIZE> {
     // some parameter limits might be nice ...
     fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue) {
-        if let SynthParameterValue::FloatingPoint(val) = value {
+        if let SynthParameterValue::ScalarF32(val) = value {
             match par {
                 SynthParameterLabel::LowpassCutoffFrequency => self.cutoff = val,
                 SynthParameterLabel::LowpassQFactor => self.res = val,

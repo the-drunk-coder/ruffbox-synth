@@ -32,12 +32,12 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
     fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue) {
         match par {
             SynthParameterLabel::PitchFrequency => {
-                if let SynthParameterValue::FloatingPoint(f) = value {
+                if let SynthParameterValue::ScalarF32(f) = value {
                     self.pi_slice = 2.0 * PI * f;
                 };
             }
             SynthParameterLabel::Level => {
-                if let SynthParameterValue::FloatingPoint(l) = value {
+                if let SynthParameterValue::ScalarF32(l) = value {
                     self.lvl = l
                 }
             }

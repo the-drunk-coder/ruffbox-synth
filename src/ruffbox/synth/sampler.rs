@@ -100,7 +100,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
     fn set_parameter(&mut self, par: SynthParameterLabel, val: SynthParameterValue) {
         match par {
             SynthParameterLabel::PlaybackStart => {
-                if let SynthParameterValue::FloatingPoint(value) = val {
+                if let SynthParameterValue::ScalarF32(value) = val {
                     let mut value_clamped = value;
                     // clamp value
                     if value > 1.0 {
@@ -116,13 +116,13 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
                 }
             }
             SynthParameterLabel::PlaybackRate => {
-                if let SynthParameterValue::FloatingPoint(value) = val {
+                if let SynthParameterValue::ScalarF32(value) = val {
                     self.playback_rate = value;
                     self.frac_index_increment = 1.0 * value;
                 }
             }
             SynthParameterLabel::Level => {
-                if let SynthParameterValue::FloatingPoint(value) = val {
+                if let SynthParameterValue::ScalarF32(value) = val {
                     self.level = value;
                 }
             }

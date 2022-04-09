@@ -57,9 +57,9 @@ pub enum SynthParameterLabel {
 
 #[derive(Clone, Copy)]
 pub enum SynthParameterValue {
-    FloatingPoint(f32),
-    UInt32(u32),
-    Size(usize),
+    ScalarF32(f32),
+    ScalarU32(u32),
+    ScalarUsize(usize),
 }
 
 #[repr(C)]

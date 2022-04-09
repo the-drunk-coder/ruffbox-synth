@@ -42,7 +42,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFTri<BUFSIZE> {
     fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue) {
         match par {
             SynthParameterLabel::PitchFrequency => {
-                if let SynthParameterValue::FloatingPoint(f) = value {
+                if let SynthParameterValue::ScalarF32(f) = value {
                     let period_samples = (self.samplerate / f).round() as usize;
                     // the segment-wise implementation is a bit strange but works for now ...
                     self.segment_samples = period_samples / 4;
@@ -55,7 +55,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFTri<BUFSIZE> {
                 }
             }
             SynthParameterLabel::Level => {
-                if let SynthParameterValue::FloatingPoint(l) = value {
+                if let SynthParameterValue::ScalarF32(l) = value {
                     self.lvl = l;
                     self.lvl_inc_dec = self.lvl / self.segment_samples as f32;
                     self.lvl_first_inc = self.lvl / self.period_first_ascent_samples as f32;
