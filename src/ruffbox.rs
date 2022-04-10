@@ -57,7 +57,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> ScheduledEvent<BUFSIZE, NCHAN> {
         }
     }
 
-    pub fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue) {
+    pub fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
         self.source.set_parameter(par, value);
     }
 }

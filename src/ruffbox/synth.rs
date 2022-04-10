@@ -55,7 +55,6 @@ pub enum SynthParameterLabel {
     Sustain,                 // 31
 }
 
-#[derive(Clone, Copy)]
 pub enum SynthParameterValue {
     ScalarF32(f32),
     ScalarU32(u32),
@@ -77,7 +76,7 @@ pub enum SourceType {
 }
 
 pub trait MonoSource<const BUFSIZE: usize> {
-    fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue);
+    fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue);
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
     fn get_next_block(&mut self, start_sample: usize, in_buffers: &[Vec<f32>]) -> [f32; BUFSIZE];
@@ -86,17 +85,17 @@ pub trait MonoSource<const BUFSIZE: usize> {
 pub trait MonoEffect<const BUFSIZE: usize> {
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
-    fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue);
+    fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue);
     fn process_block(&mut self, block: [f32; BUFSIZE], start_sample: usize) -> [f32; BUFSIZE];
 }
 
 pub trait MultichannelReverb<const BUFSIZE: usize, const NCHAN: usize> {
-    fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue);
+    fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue);
     fn process(&mut self, block: [[f32; BUFSIZE]; NCHAN]) -> [[f32; BUFSIZE]; NCHAN];
 }
 
 pub trait Synth<const BUFSIZE: usize, const NCHAN: usize> {
-    fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue);
+    fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue);
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
     fn get_next_block(

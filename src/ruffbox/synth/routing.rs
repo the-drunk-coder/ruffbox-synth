@@ -20,7 +20,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> PanChan<BUFSIZE, NCHAN> {
     }
 
     /// Set the parameter for this panner.
-    pub fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue) {
+    pub fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
         // if it was more parameters, match would be better,
         // but this way clippy doesn't complain
         if par == SynthParameterLabel::ChannelPosition {

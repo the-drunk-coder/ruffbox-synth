@@ -39,7 +39,7 @@ impl<const BUFSIZE: usize> LFTri<BUFSIZE> {
 
 impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFTri<BUFSIZE> {
     // some parameter limits might be nice ...
-    fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue) {
+    fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
         match par {
             SynthParameterLabel::PitchFrequency => {
                 if let SynthParameterValue::ScalarF32(f) = value {
@@ -56,7 +56,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFTri<BUFSIZE> {
             }
             SynthParameterLabel::Level => {
                 if let SynthParameterValue::ScalarF32(l) = value {
-                    self.lvl = l;
+                    self.lvl = *l;
                     self.lvl_inc_dec = self.lvl / self.segment_samples as f32;
                     self.lvl_first_inc = self.lvl / self.period_first_ascent_samples as f32;
                 }

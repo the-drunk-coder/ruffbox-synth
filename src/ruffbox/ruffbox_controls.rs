@@ -17,7 +17,7 @@ pub struct PreparedInstance<const BUFSIZE: usize, const NCHAN: usize> {
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> PreparedInstance<BUFSIZE, NCHAN> {
-    pub fn set_instance_parameter(&mut self, par: SynthParameterLabel, val: SynthParameterValue) {
+    pub fn set_instance_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {
         self.ev.set_parameter(par, val);
     }
 }

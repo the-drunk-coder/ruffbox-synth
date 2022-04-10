@@ -32,16 +32,16 @@ impl<const BUFSIZE: usize> Wavetable<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavetable<BUFSIZE> {
-    fn set_parameter(&mut self, par: SynthParameterLabel, val: SynthParameterValue) {
+    fn set_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {
         match par {
             SynthParameterLabel::PitchFrequency => {
                 if let SynthParameterValue::ScalarF32(value) = val {
-                    self.phase_inc = self.tablesize as f32 * value * self.sample_period;
+                    self.phase_inc = self.tablesize as f32 * *value * self.sample_period;
                 }
             }
             SynthParameterLabel::Level => {
                 if let SynthParameterValue::ScalarF32(value) = val {
-                    self.level = value;
+                    self.level = *value;
                 }
             }
             _ => (),

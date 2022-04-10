@@ -55,28 +55,28 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for ASREnvelope<BUFSIZE> {
         matches!(self.state, SynthState::Finished)
     }
 
-    fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue) {
+    fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
         let mut update_internals = false;
         if let SynthParameterValue::ScalarF32(val) = value {
             match par {
                 SynthParameterLabel::Attack => {
-                    self.atk = val;
+                    self.atk = *val;
                     update_internals = true;
                 }
                 SynthParameterLabel::Sustain => {
-                    self.sus = val;
+                    self.sus = *val;
                     update_internals = true;
                 }
                 SynthParameterLabel::Release => {
-                    self.rel = val;
+                    self.rel = *val;
                     update_internals = true;
                 }
                 SynthParameterLabel::Level => {
-                    self.max_lvl = val;
+                    self.max_lvl = *val;
                     update_internals = true;
                 }
                 SynthParameterLabel::Samplerate => {
-                    self.samplerate = val;
+                    self.samplerate = *val;
                     update_internals = true;
                 }
                 _ => (),
@@ -191,27 +191,27 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for ExpPercEnvelope<BUFSIZE> {
         matches!(self.state, SynthState::Finished)
     }
 
-    fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue) {
+    fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
         let mut update_internals = false;
         if let SynthParameterValue::ScalarF32(val) = value {
             match par {
                 SynthParameterLabel::Attack => {
-                    self.atk = val;
+                    self.atk = *val;
                     update_internals = true;
                 }
                 SynthParameterLabel::Sustain => {
-                    self.sus = val;
+                    self.sus = *val;
                     update_internals = true;
                 }
                 SynthParameterLabel::Release => {
-                    self.rel = val;
+                    self.rel = *val;
                     update_internals = true;
                 }
                 SynthParameterLabel::Level => {
-                    self.max_lvl = val;
+                    self.max_lvl = *val;
                 }
                 SynthParameterLabel::Samplerate => {
-                    self.samplerate = val;
+                    self.samplerate = *val;
                     update_internals = true;
                 }
                 _ => (),

@@ -29,11 +29,11 @@ impl<const BUFSIZE: usize> EncoderO1<BUFSIZE> {
     }
 
     // some parameter limits might be nice ...
-    pub fn set_parameter(&mut self, par: SynthParameterLabel, value: SynthParameterValue) {
+    pub fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
         if let SynthParameterValue::ScalarF32(val) = value {
             match par {
-                SynthParameterLabel::AmbisonicAzimuth => self.azimuth = val,
-                SynthParameterLabel::AmbisonicElevation => self.elevation = val,
+                SynthParameterLabel::AmbisonicAzimuth => self.azimuth = *val,
+                SynthParameterLabel::AmbisonicElevation => self.elevation = *val,
                 _ => (),
             };
 
