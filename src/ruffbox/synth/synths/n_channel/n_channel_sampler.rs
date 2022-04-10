@@ -9,7 +9,7 @@ use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
 /// a sampler with envelope etc.
 pub struct NChannelSampler<const BUFSIZE: usize, const NCHAN: usize> {
     sampler: Sampler<BUFSIZE>,
-    envelope: ASREnvelope<BUFSIZE>,
+    envelope: LinearASREnvelope<BUFSIZE>,
     hpf: BiquadHpf<BUFSIZE>,
     peak_eq: PeakEq<BUFSIZE>,
     lpf: Lpf18<BUFSIZE>,
@@ -28,7 +28,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> NChannelSampler<BUFSIZE, NCHAN> {
 
         NChannelSampler {
             sampler: Sampler::with_bufnum_len(bufnum, buflen, true),
-            envelope: ASREnvelope::new(1.0, 0.0001, dur, 0.0001, sr),
+            envelope: LinearASREnvelope::new(1.0, 0.0001, dur, 0.0001, sr),
             hpf: BiquadHpf::new(20.0, 0.3, sr),
             peak_eq: PeakEq::new(700.0, 100.0, 0.0, sr),
             lpf: Lpf18::new(19500.0, 0.01, 0.01, sr),

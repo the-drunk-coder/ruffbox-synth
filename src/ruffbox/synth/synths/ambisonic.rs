@@ -10,7 +10,7 @@ use crate::ruffbox::synth::*;
 /// a sinusoidal synth with envelope etc.
 pub struct SineSynthAmbiO1<const BUFSIZE: usize> {
     oscillator: SineOsc<BUFSIZE>,
-    envelope: ASREnvelope<BUFSIZE>,
+    envelope: LinearASREnvelope<BUFSIZE>,
     encoder: EncoderO1<BUFSIZE>,
     reverb: f32,
     delay: f32,
@@ -20,7 +20,7 @@ impl<const BUFSIZE: usize> SineSynthAmbiO1<BUFSIZE> {
     pub fn new(sr: f32) -> Self {
         SineSynthAmbiO1 {
             oscillator: SineOsc::new(440.0, 0.5, sr),
-            envelope: ASREnvelope::new(0.3, 0.05, 0.1, 0.05, sr),
+            envelope: LinearASREnvelope::new(0.3, 0.05, 0.1, 0.05, sr),
             encoder: EncoderO1::new(),
             reverb: 0.0,
             delay: 0.0,
@@ -78,7 +78,7 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for SineSynthAmbiO1<BUFSIZE> {
 /// a lf triangle synth with envelope etc.
 pub struct LFTriSynthAmbiO1<const BUFSIZE: usize> {
     oscillator: LFTri<BUFSIZE>,
-    envelope: ASREnvelope<BUFSIZE>,
+    envelope: LinearASREnvelope<BUFSIZE>,
     encoder: EncoderO1<BUFSIZE>,
     reverb: f32,
     delay: f32,
@@ -88,7 +88,7 @@ impl<const BUFSIZE: usize> LFTriSynthAmbiO1<BUFSIZE> {
     pub fn new(sr: f32) -> Self {
         LFTriSynthAmbiO1 {
             oscillator: LFTri::new(440.0, 0.5, sr),
-            envelope: ASREnvelope::new(0.3, 0.05, 0.1, 0.05, sr),
+            envelope: LinearASREnvelope::new(0.3, 0.05, 0.1, 0.05, sr),
             encoder: EncoderO1::new(),
             reverb: 0.0,
             delay: 0.0,
@@ -147,7 +147,7 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for LFTriSynthAmbiO1<BUFSIZE> {
 pub struct LFSawSynthAmbiO1<const BUFSIZE: usize> {
     oscillator: LFSaw<BUFSIZE>,
     filter: Lpf18<BUFSIZE>,
-    envelope: ASREnvelope<BUFSIZE>,
+    envelope: LinearASREnvelope<BUFSIZE>,
     encoder: EncoderO1<BUFSIZE>,
     reverb: f32,
     delay: f32,
@@ -158,7 +158,7 @@ impl<const BUFSIZE: usize> LFSawSynthAmbiO1<BUFSIZE> {
         LFSawSynthAmbiO1 {
             oscillator: LFSaw::new(100.0, 0.8, sr),
             filter: Lpf18::new(1500.0, 0.5, 0.1, sr),
-            envelope: ASREnvelope::new(1.0, 0.002, 0.02, 0.08, sr),
+            envelope: LinearASREnvelope::new(1.0, 0.002, 0.02, 0.08, sr),
             encoder: EncoderO1::new(),
             reverb: 0.0,
             delay: 0.0,
@@ -220,7 +220,7 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for LFSawSynthAmbiO1<BUFSIZE> {
 pub struct LFSquareSynthAmbiO1<const BUFSIZE: usize> {
     oscillator: LFSquare<BUFSIZE>,
     filter: Lpf18<BUFSIZE>,
-    envelope: ASREnvelope<BUFSIZE>,
+    envelope: LinearASREnvelope<BUFSIZE>,
     encoder: EncoderO1<BUFSIZE>,
     reverb: f32,
     delay: f32,
@@ -231,7 +231,7 @@ impl<const BUFSIZE: usize> LFSquareSynthAmbiO1<BUFSIZE> {
         LFSquareSynthAmbiO1 {
             oscillator: LFSquare::new(100.0, 0.4, 0.8, sr),
             filter: Lpf18::new(1500.0, 0.5, 0.1, sr),
-            envelope: ASREnvelope::new(1.0, 0.002, 0.02, 0.08, sr),
+            envelope: LinearASREnvelope::new(1.0, 0.002, 0.02, 0.08, sr),
             encoder: EncoderO1::new(),
             reverb: 0.0,
             delay: 0.0,
@@ -292,7 +292,7 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for LFSquareSynthAmbiO1<BUFSIZE> {
 /// a sampler with envelope etc.
 pub struct AmbiSamplerO1<const BUFSIZE: usize> {
     sampler: Sampler<BUFSIZE>,
-    envelope: ASREnvelope<BUFSIZE>,
+    envelope: LinearASREnvelope<BUFSIZE>,
     hpf: BiquadHpf<BUFSIZE>,
     peak_eq: PeakEq<BUFSIZE>,
     lpf: Lpf18<BUFSIZE>,
@@ -307,7 +307,7 @@ impl<const BUFSIZE: usize> AmbiSamplerO1<BUFSIZE> {
 
         AmbiSamplerO1 {
             sampler: Sampler::with_bufnum_len(bufnum, buflen, true),
-            envelope: ASREnvelope::new(1.0, 0.0001, dur, 0.0001, sr),
+            envelope: LinearASREnvelope::new(1.0, 0.0001, dur, 0.0001, sr),
             hpf: BiquadHpf::new(10.0, 0.01, sr),
             peak_eq: PeakEq::new(700.0, 100.0, 0.0, sr),
             lpf: Lpf18::new(19500.0, 0.01, 0.01, sr),

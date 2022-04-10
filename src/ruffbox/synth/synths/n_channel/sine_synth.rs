@@ -8,7 +8,7 @@ use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
 /// a sinusoidal synth with envelope etc.
 pub struct SineSynth<const BUFSIZE: usize, const NCHAN: usize> {
     oscillator: SineOsc<BUFSIZE>,
-    envelope: ASREnvelope<BUFSIZE>,
+    envelope: LinearASREnvelope<BUFSIZE>,
     balance: PanChan<BUFSIZE, NCHAN>,
     reverb: f32,
     delay: f32,
@@ -18,7 +18,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> SineSynth<BUFSIZE, NCHAN> {
     pub fn new(sr: f32) -> Self {
         SineSynth {
             oscillator: SineOsc::new(440.0, 0.5, sr),
-            envelope: ASREnvelope::new(0.3, 0.05, 0.1, 0.05, sr),
+            envelope: LinearASREnvelope::new(0.3, 0.05, 0.1, 0.05, sr),
             balance: PanChan::new(),
             reverb: 0.0,
             delay: 0.0,

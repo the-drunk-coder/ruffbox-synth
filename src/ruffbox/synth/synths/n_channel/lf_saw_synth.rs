@@ -10,7 +10,7 @@ use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
 pub struct LFSawSynth<const BUFSIZE: usize, const NCHAN: usize> {
     oscillator: LFSaw<BUFSIZE>,
     filter: Lpf18<BUFSIZE>,
-    envelope: ASREnvelope<BUFSIZE>,
+    envelope: LinearASREnvelope<BUFSIZE>,
     balance: PanChan<BUFSIZE, NCHAN>,
     reverb: f32,
     delay: f32,
@@ -21,7 +21,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> LFSawSynth<BUFSIZE, NCHAN> {
         LFSawSynth {
             oscillator: LFSaw::new(100.0, 0.8, sr),
             filter: Lpf18::new(1500.0, 0.5, 0.1, sr),
-            envelope: ASREnvelope::new(1.0, 0.002, 0.02, 0.08, sr),
+            envelope: LinearASREnvelope::new(1.0, 0.002, 0.02, 0.08, sr),
             balance: PanChan::new(),
             reverb: 0.0,
             delay: 0.0,

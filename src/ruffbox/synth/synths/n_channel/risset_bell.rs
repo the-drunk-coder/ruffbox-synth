@@ -10,7 +10,7 @@ use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
 pub struct RissetBell<const BUFSIZE: usize, const NCHAN: usize> {
     oscillators: [SineOsc<BUFSIZE>; 11],
     envelopes: [ExpPercEnvelope<BUFSIZE>; 11],
-    main_envelope: ASREnvelope<BUFSIZE>,
+    main_envelope: LinearASREnvelope<BUFSIZE>,
     amps: [f32; 11],
     durs: [f32; 11],
     freqs: [f32; 11],
@@ -31,7 +31,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RissetBell<BUFSIZE, NCHAN> {
         let mut bell = RissetBell {
             oscillators: [SineOsc::new(440.0, 1.0, sr); 11],
             envelopes: [ExpPercEnvelope::new(1.0, 0.005, 0.0, 0.05, sr); 11],
-            main_envelope: ASREnvelope::new(1.0, 0.05, 0.5, 0.05, sr),
+            main_envelope: LinearASREnvelope::new(1.0, 0.05, 0.5, 0.05, sr),
             amps: [1.0, 0.67, 1.0, 1.8, 2.67, 1.67, 1.46, 1.33, 1.33, 1.0, 1.33],
             durs: [
                 1.0, 0.9, 0.65, 0.55, 0.325, 0.35, 0.25, 0.2, 0.15, 0.1, 0.075,
