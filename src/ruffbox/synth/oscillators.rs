@@ -1,16 +1,18 @@
+/// A collection of oscillators, some of which are modeled
+/// after scsynth, csound, etc ...
 pub mod lf_cub;
 pub mod lf_saw;
 pub mod lf_square;
 pub mod lf_tri;
-/// A collection of oscillators, some of which are modeled
-/// after scsynth, csound, etc ...
 pub mod sine_osc;
+pub mod wavetable;
 
 pub use crate::ruffbox::synth::oscillators::lf_cub::LFCub;
 pub use crate::ruffbox::synth::oscillators::lf_saw::LFSaw;
 pub use crate::ruffbox::synth::oscillators::lf_square::LFSquare;
 pub use crate::ruffbox::synth::oscillators::lf_tri::LFTri;
 pub use crate::ruffbox::synth::oscillators::sine_osc::SineOsc;
+pub use crate::ruffbox::synth::oscillators::wavetable::Wavetable;
 
 // TEST TEST TEST
 #[cfg(test)]
