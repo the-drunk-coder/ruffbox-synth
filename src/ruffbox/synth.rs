@@ -53,12 +53,14 @@ pub enum SynthParameterLabel {
     AmbisonicAzimuth,        // 29
     AmbisonicElevation,      // 30
     Sustain,                 // 31
+    Wavetable,
 }
 
 pub enum SynthParameterValue {
     ScalarF32(f32),
     ScalarU32(u32),
     ScalarUsize(usize),
+    VecF32(Vec<f32>),
 }
 
 #[repr(C)]

@@ -14,6 +14,7 @@ pub struct Wavetable<const BUFSIZE: usize> {
     state: SynthState,
     level: f32,
     sample_period: f32,
+    freq: f32,
 }
 
 impl<const BUFSIZE: usize> Wavetable<BUFSIZE> {
@@ -27,6 +28,7 @@ impl<const BUFSIZE: usize> Wavetable<BUFSIZE> {
             state: SynthState::Fresh,
             level: 1.0,
             sample_period,
+            freq: 46.875,
         }
     }
 }
@@ -36,7 +38,15 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavetable<BUFSIZE> {
         match par {
             SynthParameterLabel::PitchFrequency => {
                 if let SynthParameterValue::ScalarF32(value) = val {
-                    self.phase_inc = self.tablesize as f32 * *value * self.sample_period;
+                    self.freq = *value;
+                    self.phase_inc = self.tablesize as f32 * self.freq * self.sample_period;
+                }
+            }
+            SynthParameterLabel::Wavetable => {
+                if let SynthParameterValue::VecF32(tab) = val {
+                    self.tablesize = std::cmp::min(tab.len(), 2048);
+                    self.wavetable[..self.tablesize].copy_from_slice(&tab[..self.tablesize]);
+                    self.phase_inc = self.tablesize as f32 * self.freq * self.sample_period;
                 }
             }
             SynthParameterLabel::Level => {
