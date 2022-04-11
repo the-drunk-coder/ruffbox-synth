@@ -56,6 +56,7 @@ pub enum SynthParameterLabel {
     Wavetable,
 }
 
+#[derive(Clone)]
 pub enum SynthParameterValue {
     ScalarF32(f32),
     ScalarU32(u32),
@@ -75,6 +76,7 @@ pub enum SourceType {
     LFSquareSynth,
     LFTriangleSynth,
     RissetBell,
+    Wavetable,
 }
 
 pub trait MonoSource<const BUFSIZE: usize> {
