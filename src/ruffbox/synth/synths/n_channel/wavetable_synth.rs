@@ -1,14 +1,14 @@
 use crate::ruffbox::synth::envelopes::*;
 use crate::ruffbox::synth::filters::*;
+use crate::ruffbox::synth::oscillators::wavetable::Wavetable;
 use crate::ruffbox::synth::routing::PanChan;
-use crate::ruffbox::synth::sampler::Sampler;
 use crate::ruffbox::synth::Synth;
 use crate::ruffbox::synth::*;
 use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
 
 /// a simple wavetable synth with envelope etc.
 pub struct WavetableSynth<const BUFSIZE: usize, const NCHAN: usize> {
-    sampler: Sampler<BUFSIZE>,
+    wavetable: Wavetable<BUFSIZE>,
     envelope: LinearASREnvelope<BUFSIZE>,
     hpf: BiquadHpf<BUFSIZE>,
     lpf: Lpf18<BUFSIZE>,
@@ -18,16 +18,10 @@ pub struct WavetableSynth<const BUFSIZE: usize, const NCHAN: usize> {
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> WavetableSynth<BUFSIZE, NCHAN> {
-    pub fn with_bufnum_len(
-        bufnum: usize,
-        buflen: usize,
-        sr: f32,
-    ) -> WavetableSynth<BUFSIZE, NCHAN> {
-        let dur = (buflen as f32 / sr) - 0.0002;
-
+    pub fn new(sr: f32) -> WavetableSynth<BUFSIZE, NCHAN> {
         WavetableSynth {
-            sampler: Sampler::with_bufnum_len(bufnum, buflen, true),
-            envelope: LinearASREnvelope::new(1.0, 0.0001, dur, 0.0001, sr),
+            wavetable: Wavetable::new(sr),
+            envelope: LinearASREnvelope::new(1.0, 0.0001, 0.1, 0.0001, sr),
             hpf: BiquadHpf::new(20.0, 0.3, sr),
             lpf: Lpf18::new(19500.0, 0.01, 0.01, sr),
             balance: PanChan::new(),
@@ -41,7 +35,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
     for WavetableSynth<BUFSIZE, NCHAN>
 {
     fn set_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {
-        self.sampler.set_parameter(par, val);
+        self.wavetable.set_parameter(par, val);
         self.hpf.set_parameter(par, val);
         self.lpf.set_parameter(par, val);
         self.envelope.set_parameter(par, val);
@@ -75,7 +69,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
         start_sample: usize,
         sample_buffers: &[Vec<f32>],
     ) -> [[f32; BUFSIZE]; NCHAN] {
-        let mut out: [f32; BUFSIZE] = self.sampler.get_next_block(start_sample, sample_buffers);
+        let mut out: [f32; BUFSIZE] = self.wavetable.get_next_block(start_sample, sample_buffers);
         out = self.hpf.process_block(out, start_sample);
         out = self.lpf.process_block(out, start_sample);
         out = self.envelope.process_block(out, start_sample);

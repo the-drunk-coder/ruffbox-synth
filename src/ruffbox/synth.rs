@@ -53,7 +53,7 @@ pub enum SynthParameterLabel {
     AmbisonicAzimuth,        // 29
     AmbisonicElevation,      // 30
     Sustain,                 // 31
-    Wavetable,
+    Wavetable,               // 32
 }
 
 #[derive(Clone)]

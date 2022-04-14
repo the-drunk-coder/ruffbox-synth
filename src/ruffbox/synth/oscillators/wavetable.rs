@@ -21,7 +21,7 @@ impl<const BUFSIZE: usize> Wavetable<BUFSIZE> {
     pub fn new(sr: f32) -> Wavetable<BUFSIZE> {
         let sample_period = 1.0 / sr;
         Wavetable {
-            wavetable: [0.0; 2048],
+            wavetable: [0.5; 2048],
             tablesize: 2048,
             phase_inc: 1.0,
             table_ptr: 0.0,
@@ -83,6 +83,9 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavetable<BUFSIZE> {
             };
 
             self.table_ptr += self.phase_inc;
+            if self.table_ptr as usize >= self.tablesize {
+                self.table_ptr -= self.tablesize as f32;
+            }
         }
 
         out_buf

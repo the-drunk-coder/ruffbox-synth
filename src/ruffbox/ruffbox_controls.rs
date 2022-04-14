@@ -146,6 +146,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
                 SourceType::LFCubSynth => {
                     ScheduledEvent::new(timestamp, Box::new(LFCubSynth::new(self.samplerate)))
                 }
+                SourceType::Wavetable => {
+                    ScheduledEvent::new(timestamp, Box::new(WavetableSynth::new(self.samplerate)))
+                }
                 _ => {
                     return None;
                 } // jump out
