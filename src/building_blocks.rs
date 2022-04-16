@@ -8,6 +8,9 @@ pub mod freeverb;
 pub mod oscillators;
 pub mod routing;
 pub mod sampler;
+pub mod modulator;
+
+pub use crate::building_blocks::modulator::Modulator;
 
 #[derive(Clone, Copy)]
 pub enum SynthState {
@@ -76,24 +79,6 @@ pub enum SynthType {
     LFTriangleSynth,
     RissetBell,
     Wavetable,
-}
-
-/// what to do with a modulator ??
-#[derive(Clone)]
-pub enum ModulatorOperation {
-    Replace,
-    Add,
-    Subtract,
-    Multiply,
-    Divide,
-}
-
-/// modulate things ...
-pub struct Modulator<const BUFSIZE: usize> {
-    pub source: Box<dyn MonoSource<BUFSIZE> + Sync + Send>,
-    pub param: SynthParameterLabel,
-    pub op: ModulatorOperation,
-    pub outlet_block: [f32; BUFSIZE],
 }
 
 /// oscillators, the sampler, etc are sources
