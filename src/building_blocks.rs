@@ -64,7 +64,7 @@ pub enum SynthParameterValue {
 }
 
 #[repr(C)]
-pub enum SourceType {
+pub enum SynthType {
     Sampler,
     LiveSampler,
     FrozenSampler,
@@ -78,6 +78,7 @@ pub enum SourceType {
     Wavetable,
 }
 
+/// what to do with a modulator ??
 #[derive(Clone)]
 pub enum ModulatorOperation {
     Replace,
@@ -87,6 +88,7 @@ pub enum ModulatorOperation {
     Divide,
 }
 
+/// modulate things ...
 pub struct Modulator<const BUFSIZE: usize> {
     pub source: Box<dyn MonoSource<BUFSIZE> + Sync + Send>,
     pub param: SynthParameterLabel,
@@ -120,6 +122,7 @@ pub trait MonoEffect<const BUFSIZE: usize> {
     ) -> [f32; BUFSIZE];
 }
 
+/// there's a freeverb- and a convolution-based implementation
 pub trait MultichannelReverb<const BUFSIZE: usize, const NCHAN: usize> {
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue);
     fn process(&mut self, block: [[f32; BUFSIZE]; NCHAN]) -> [[f32; BUFSIZE]; NCHAN];

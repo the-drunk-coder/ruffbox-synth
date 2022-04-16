@@ -6,7 +6,7 @@ use rubato::{FftFixedIn, Resampler};
 use crossbeam::atomic::AtomicCell;
 use dashmap::DashMap;
 
-use crate::building_blocks::{SourceType, SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{SynthType, SynthParameterLabel, SynthParameterValue};
 use crate::ruffbox::{ControlMessage, ScheduledEvent};
 use crate::synths::*;
 
@@ -80,25 +80,25 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
     /// prepare a sound source instance, return instance id
     pub fn prepare_instance(
         &self,
-        src_type: SourceType,
+        src_type: SynthType,
         timestamp: f64,
         sample_buf: usize,
     ) -> Option<PreparedInstance<BUFSIZE, NCHAN>> {
         Some(PreparedInstance {
             ev: match src_type {
-                SourceType::SineOsc => {
+                SynthType::SineOsc => {
                     ScheduledEvent::new(timestamp, Box::new(SineSynth::new(self.samplerate)))
                 }
-                SourceType::SineSynth => {
+                SynthType::SineSynth => {
                     ScheduledEvent::new(timestamp, Box::new(SineSynth::new(self.samplerate)))
                 }
-                SourceType::LFTriangleSynth => {
+                SynthType::LFTriangleSynth => {
                     ScheduledEvent::new(timestamp, Box::new(LFTriSynth::new(self.samplerate)))
                 }
-                SourceType::RissetBell => {
+                SynthType::RissetBell => {
                     ScheduledEvent::new(timestamp, Box::new(RissetBell::new(self.samplerate)))
                 }
-                SourceType::Sampler => ScheduledEvent::new(
+                SynthType::Sampler => ScheduledEvent::new(
                     timestamp,
                     Box::new(NChannelSampler::with_bufnum_len(
                         sample_buf,
@@ -106,7 +106,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
                         self.samplerate,
                     )),
                 ),
-                SourceType::LiveSampler if self.num_live_buffers > 0 => {
+                SynthType::LiveSampler if self.num_live_buffers > 0 => {
                     let final_bufnum = if sample_buf < self.num_live_buffers {
                         sample_buf
                     } else {
@@ -121,7 +121,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
                         )),
                     )
                 }
-                SourceType::FrozenSampler if self.num_freeze_buffers > 0 => {
+                SynthType::FrozenSampler if self.num_freeze_buffers > 0 => {
                     let final_bufnum = if sample_buf < self.num_freeze_buffers {
                         sample_buf + self.freeze_buffer_offset
                     } else {
@@ -136,16 +136,16 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
                         )),
                     )
                 }
-                SourceType::LFSawSynth => {
+                SynthType::LFSawSynth => {
                     ScheduledEvent::new(timestamp, Box::new(LFSawSynth::new(self.samplerate)))
                 }
-                SourceType::LFSquareSynth => {
+                SynthType::LFSquareSynth => {
                     ScheduledEvent::new(timestamp, Box::new(LFSquareSynth::new(self.samplerate)))
                 }
-                SourceType::LFCubSynth => {
+                SynthType::LFCubSynth => {
                     ScheduledEvent::new(timestamp, Box::new(LFCubSynth::new(self.samplerate)))
                 }
-                SourceType::Wavetable => {
+                SynthType::Wavetable => {
                     ScheduledEvent::new(timestamp, Box::new(WavetableSynth::new(self.samplerate)))
                 }
                 _ => {
