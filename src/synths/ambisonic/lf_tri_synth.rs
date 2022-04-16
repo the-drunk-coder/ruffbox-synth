@@ -65,7 +65,9 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for LFTriSynth<BUFSIZE> {
         let mut out: [f32; BUFSIZE] =
             self.oscillator
                 .get_next_block(start_sample, sample_buffers, &self.modulators);
-        out = self.envelope.process_block(out, start_sample);
+        out = self
+            .envelope
+            .process_block(out, start_sample, &self.modulators);
         self.encoder.process_block(out)
     }
 

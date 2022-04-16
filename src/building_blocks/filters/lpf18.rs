@@ -1,4 +1,4 @@
-use crate::building_blocks::{MonoEffect, SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{Modulator, MonoEffect, SynthParameterLabel, SynthParameterValue};
 
 /**
  * Three-pole, 18dB/octave filter with tanh distortion
@@ -100,7 +100,12 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for Lpf18<BUFSIZE> {
     } // it's never finished ..
 
     // start sample isn't really needed either ...
-    fn process_block(&mut self, block: [f32; BUFSIZE], _start_sample: usize) -> [f32; BUFSIZE] {
+    fn process_block(
+        &mut self,
+        block: [f32; BUFSIZE],
+        _: usize,
+        _: &[Modulator<BUFSIZE>],
+    ) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
         for i in 0..BUFSIZE {

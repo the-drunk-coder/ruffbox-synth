@@ -94,6 +94,7 @@ pub struct Modulator<const BUFSIZE: usize> {
     pub inlet_block: [f32; BUFSIZE],
 }
 
+/// oscillators, the sampler, etc are sources
 pub trait MonoSource<const BUFSIZE: usize> {
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue);
     fn finish(&mut self);
@@ -102,15 +103,21 @@ pub trait MonoSource<const BUFSIZE: usize> {
         &mut self,
         start_sample: usize,
         in_buffers: &[Vec<f32>],
-        inlets: &[Modulator<BUFSIZE>],
+        modulators: &[Modulator<BUFSIZE>],
     ) -> [f32; BUFSIZE];
 }
 
+/// filters etc are effects
 pub trait MonoEffect<const BUFSIZE: usize> {
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue);
-    fn process_block(&mut self, block: [f32; BUFSIZE], start_sample: usize) -> [f32; BUFSIZE];
+    fn process_block(
+        &mut self,
+        block: [f32; BUFSIZE],
+        start_sample: usize,
+        modulators: &[Modulator<BUFSIZE>],
+    ) -> [f32; BUFSIZE];
 }
 
 pub trait MultichannelReverb<const BUFSIZE: usize, const NCHAN: usize> {
@@ -118,6 +125,7 @@ pub trait MultichannelReverb<const BUFSIZE: usize, const NCHAN: usize> {
     fn process(&mut self, block: [[f32; BUFSIZE]; NCHAN]) -> [[f32; BUFSIZE]; NCHAN];
 }
 
+/// This is where the building blocks come together
 pub trait Synth<const BUFSIZE: usize, const NCHAN: usize> {
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue);
     fn finish(&mut self);

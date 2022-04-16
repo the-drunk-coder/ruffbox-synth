@@ -8,7 +8,7 @@ use std::sync::Arc;
 use crate::building_blocks::convolution_reverb::MultichannelConvolutionReverb;
 use crate::building_blocks::delay::MultichannelDelay;
 use crate::building_blocks::freeverb::MultichannelFreeverb;
-use crate::building_blocks::{MultichannelReverb, Synth};
+use crate::building_blocks::{Modulator, MultichannelReverb, Synth};
 
 use crate::ruffbox::{ControlMessage, ReverbMode, ScheduledEvent};
 
@@ -38,6 +38,7 @@ pub struct RuffboxPlayhead<const BUFSIZE: usize, const NCHAN: usize> {
     now: Arc<AtomicCell<f64>>,
     master_reverb: Box<dyn MultichannelReverb<BUFSIZE, NCHAN> + Send + Sync>,
     master_delay: MultichannelDelay<BUFSIZE, NCHAN>,
+    delay_modulators: Vec<Modulator<BUFSIZE>>,
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
@@ -147,6 +148,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
             now: Arc::clone(now),
             master_reverb: rev,
             master_delay: MultichannelDelay::new(samplerate as f32),
+            delay_modulators: Vec::new(),
         }
     }
 
@@ -303,7 +305,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
         }
 
         let reverb_out = self.master_reverb.process(master_reverb_in);
-        let delay_out = self.master_delay.process(master_delay_in);
+        let delay_out = self
+            .master_delay
+            .process(master_delay_in, &self.delay_modulators);
 
         //println!("{} {}", self.running_instances.len(), self.pending_events.len());
 

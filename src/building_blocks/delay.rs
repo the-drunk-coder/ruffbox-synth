@@ -1,5 +1,5 @@
 use crate::building_blocks::filters::*;
-use crate::building_blocks::{MonoEffect, SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{Modulator, MonoEffect, SynthParameterLabel, SynthParameterValue};
 
 pub struct MonoDelay<const BUFSIZE: usize> {
     buffer: Vec<f32>, // max 2 sec for now
@@ -46,7 +46,12 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for MonoDelay<BUFSIZE> {
     } // it's never finished ..
 
     // start sample isn't really needed either ...
-    fn process_block(&mut self, block: [f32; BUFSIZE], _start_sample: usize) -> [f32; BUFSIZE] {
+    fn process_block(
+        &mut self,
+        block: [f32; BUFSIZE],
+        _: usize,
+        _: &[Modulator<BUFSIZE>],
+    ) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
         for i in 0..BUFSIZE {
@@ -89,11 +94,15 @@ impl<const BUFSIZE: usize, const NCHAN: usize> MultichannelDelay<BUFSIZE, NCHAN>
         }
     }
 
-    pub fn process(&mut self, block: [[f32; BUFSIZE]; NCHAN]) -> [[f32; BUFSIZE]; NCHAN] {
+    pub fn process(
+        &mut self,
+        block: [[f32; BUFSIZE]; NCHAN],
+        modulators: &[Modulator<BUFSIZE>],
+    ) -> [[f32; BUFSIZE]; NCHAN] {
         let mut out_buf = [[0.0; BUFSIZE]; NCHAN];
 
         for c in 0..NCHAN {
-            out_buf[c] = self.delays[c].process_block(block[c], 0);
+            out_buf[c] = self.delays[c].process_block(block[c], 0, modulators);
         }
 
         out_buf
