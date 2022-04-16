@@ -5,11 +5,11 @@ use crossbeam::atomic::AtomicCell;
 
 use std::sync::Arc;
 
-use crate::ruffbox::synth::convolution_reverb::MultichannelConvolutionReverb;
-use crate::ruffbox::synth::delay::MultichannelDelay;
-use crate::ruffbox::synth::freeverb::MultichannelFreeverb;
-use crate::ruffbox::synth::MultichannelReverb;
-use crate::ruffbox::synth::Synth;
+use crate::convolution_reverb::MultichannelConvolutionReverb;
+use crate::delay::MultichannelDelay;
+use crate::freeverb::MultichannelFreeverb;
+use crate::MultichannelReverb;
+use crate::building_blocks::Synth;
 use crate::ruffbox::ControlMessage;
 use crate::ruffbox::ReverbMode;
 use crate::ruffbox::ScheduledEvent;

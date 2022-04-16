@@ -1,6 +1,5 @@
 pub mod ruffbox_controls;
 pub mod ruffbox_playhead;
-pub mod synth;
 
 // crossbeam for the event queue
 use crossbeam::atomic::AtomicCell;
@@ -10,8 +9,8 @@ use crossbeam::channel::Sender;
 use std::cmp::Ordering;
 use std::sync::Arc;
 
-use crate::ruffbox::synth::Synth;
-use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::Synth;
+use crate::{SynthParameterLabel, SynthParameterValue};
 pub use crate::ruffbox::{ruffbox_controls::*, ruffbox_playhead::*};
 
 /// timed event, to be created in the trigger method, then
@@ -123,7 +122,7 @@ pub fn init_ruffbox<const BUFSIZE: usize, const NCHAN: usize>(
 mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
-    use crate::ruffbox::synth::SourceType;
+    use crate::SourceType;
     use std::f32::consts::PI;
 
     #[test]

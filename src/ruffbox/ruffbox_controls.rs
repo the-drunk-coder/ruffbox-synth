@@ -3,9 +3,9 @@ use rubato::{FftFixedIn, Resampler};
 // crossbeam for the event queue
 use crossbeam::atomic::AtomicCell;
 
-use crate::ruffbox::synth::synths::*;
-use crate::ruffbox::synth::SourceType;
-use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
+use crate::synths::*;
+use crate::SourceType;
+use crate::{SynthParameterLabel, SynthParameterValue};
 use crate::ruffbox::ControlMessage;
 use crate::ruffbox::ScheduledEvent;
 use dashmap::DashMap;
