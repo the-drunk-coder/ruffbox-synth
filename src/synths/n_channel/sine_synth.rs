@@ -23,7 +23,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> SineSynth<BUFSIZE, NCHAN> {
             reverb: 0.0,
             delay: 0.0,
         }
-    }
+    }    
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN> for SineSynth<BUFSIZE, NCHAN> {

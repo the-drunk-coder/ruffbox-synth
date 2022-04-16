@@ -5,13 +5,14 @@ use std::f32::consts::PI;
 /**
  * A simple sine oscillator
  */
-#[derive(Clone, Copy)]
 pub struct SineOsc<const BUFSIZE: usize> {
     lvl: f32,
     sin_time: f32,
     sin_delta_time: f32,
     pi_slice: f32,
     sample_count: u64,
+    freq_mod: Option<Modulator<BUFSIZE>>,
+    lvl_mod: Option<Modulator<BUFSIZE>>,
 }
 
 impl<const BUFSIZE: usize> SineOsc<BUFSIZE> {
@@ -22,7 +23,17 @@ impl<const BUFSIZE: usize> SineOsc<BUFSIZE> {
             sin_delta_time: 1.0 / sr,
             pi_slice: 2.0 * PI * freq,
             sample_count: 0,
+	    freq_mod: None,
+	    lvl_mod: None,
         }
+    }
+
+    fn set_freq(&mut self, f: f32) {
+	self.pi_slice = 2.0 * PI * f;
+    }
+
+    fn set_lvl(&mut self, l: f32) {
+	self.lvl = l;
     }
 }
 
@@ -31,13 +42,16 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
         match par {
             SynthParameterLabel::PitchFrequency => {
-                if let SynthParameterValue::ScalarF32(f) = value {
-                    self.pi_slice = 2.0 * PI * f;
-                };
+                match value {
+		    SynthParameterValue::ScalarF32(f) => {
+			self.set_freq(*f);
+                    },
+		    _ => { /* nothing to do, don't know how to handle this ... */ }
+		} 
             }
             SynthParameterLabel::Level => {
                 if let SynthParameterValue::ScalarF32(l) = value {
-                    self.lvl = *l
+		    self.set_lvl(*l);
                 }
             }
             _ => (),

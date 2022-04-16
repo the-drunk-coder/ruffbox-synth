@@ -6,6 +6,7 @@ use crate::building_blocks::{
 /**
  * a very simple sample player ...
  */
+#[derive(Clone)]
 pub struct Sampler<const BUFSIZE: usize> {
     index: usize,
     frac_index: f32,
