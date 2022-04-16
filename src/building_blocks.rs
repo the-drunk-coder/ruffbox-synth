@@ -87,11 +87,11 @@ pub enum ModulatorOperation {
     Divide,
 }
 
-#[derive(Clone)]
 pub struct Modulator<const BUFSIZE: usize> {
+    pub source: Box<dyn MonoSource<BUFSIZE> + Sync + Send>,
     pub param: SynthParameterLabel,
     pub op: ModulatorOperation,
-    pub inlet_block: [f32; BUFSIZE],
+    pub outlet_block: [f32; BUFSIZE],
 }
 
 /// oscillators, the sampler, etc are sources
