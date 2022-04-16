@@ -7,6 +7,7 @@ use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
 
 /// a sinusoidal synth with envelope etc.
 pub struct SineSynth<const BUFSIZE: usize, const NCHAN: usize> {
+    modulators: Vec<Modulator<BUFSIZE>>,
     oscillator: SineOsc<BUFSIZE>,
     envelope: LinearASREnvelope<BUFSIZE>,
     balance: PanChan<BUFSIZE, NCHAN>,
@@ -17,6 +18,7 @@ pub struct SineSynth<const BUFSIZE: usize, const NCHAN: usize> {
 impl<const BUFSIZE: usize, const NCHAN: usize> SineSynth<BUFSIZE, NCHAN> {
     pub fn new(sr: f32) -> Self {
         SineSynth {
+            modulators: Vec::new(),
             oscillator: SineOsc::new(440.0, 0.5, sr),
             envelope: LinearASREnvelope::new(0.3, 0.05, 0.1, 0.05, sr),
             balance: PanChan::new(),
@@ -59,7 +61,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN> for SineSyn
         start_sample: usize,
         sample_buffers: &[Vec<f32>],
     ) -> [[f32; BUFSIZE]; NCHAN] {
-        let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample, sample_buffers);
+        let mut out: [f32; BUFSIZE] =
+            self.oscillator
+                .get_next_block(start_sample, sample_buffers, &self.modulators);
         out = self.envelope.process_block(out, start_sample);
         self.balance.process_block(out)
     }

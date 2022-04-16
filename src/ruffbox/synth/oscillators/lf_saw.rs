@@ -1,3 +1,4 @@
+use crate::ruffbox::synth::Modulator;
 use crate::ruffbox::synth::MonoSource;
 use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
 
@@ -55,7 +56,12 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSaw<BUFSIZE> {
         false
     }
 
-    fn get_next_block(&mut self, start_sample: usize, _: &[Vec<f32>]) -> [f32; BUFSIZE] {
+    fn get_next_block(
+        &mut self,
+        start_sample: usize,
+        _: &[Vec<f32>],
+        _: &[Modulator<BUFSIZE>],
+    ) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
         for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {

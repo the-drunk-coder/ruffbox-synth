@@ -9,6 +9,7 @@ use crate::ruffbox::synth::*;
 
 /// a sinusoidal synth with envelope etc.
 pub struct SineSynthAmbiO1<const BUFSIZE: usize> {
+    modulators: Vec<Modulator<BUFSIZE>>,
     oscillator: SineOsc<BUFSIZE>,
     envelope: LinearASREnvelope<BUFSIZE>,
     encoder: EncoderO1<BUFSIZE>,
@@ -19,6 +20,7 @@ pub struct SineSynthAmbiO1<const BUFSIZE: usize> {
 impl<const BUFSIZE: usize> SineSynthAmbiO1<BUFSIZE> {
     pub fn new(sr: f32) -> Self {
         SineSynthAmbiO1 {
+            modulators: Vec::new(),
             oscillator: SineOsc::new(440.0, 0.5, sr),
             envelope: LinearASREnvelope::new(0.3, 0.05, 0.1, 0.05, sr),
             encoder: EncoderO1::new(),
@@ -61,7 +63,9 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for SineSynthAmbiO1<BUFSIZE> {
         start_sample: usize,
         sample_buffers: &[Vec<f32>],
     ) -> [[f32; BUFSIZE]; 4] {
-        let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample, sample_buffers);
+        let mut out: [f32; BUFSIZE] =
+            self.oscillator
+                .get_next_block(start_sample, sample_buffers, &self.modulators);
         out = self.envelope.process_block(out, start_sample);
         self.encoder.process_block(out)
     }
@@ -77,6 +81,7 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for SineSynthAmbiO1<BUFSIZE> {
 
 /// a lf triangle synth with envelope etc.
 pub struct LFTriSynthAmbiO1<const BUFSIZE: usize> {
+    modulators: Vec<Modulator<BUFSIZE>>,
     oscillator: LFTri<BUFSIZE>,
     envelope: LinearASREnvelope<BUFSIZE>,
     encoder: EncoderO1<BUFSIZE>,
@@ -87,6 +92,7 @@ pub struct LFTriSynthAmbiO1<const BUFSIZE: usize> {
 impl<const BUFSIZE: usize> LFTriSynthAmbiO1<BUFSIZE> {
     pub fn new(sr: f32) -> Self {
         LFTriSynthAmbiO1 {
+            modulators: Vec::new(),
             oscillator: LFTri::new(440.0, 0.5, sr),
             envelope: LinearASREnvelope::new(0.3, 0.05, 0.1, 0.05, sr),
             encoder: EncoderO1::new(),
@@ -129,7 +135,9 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for LFTriSynthAmbiO1<BUFSIZE> {
         start_sample: usize,
         sample_buffers: &[Vec<f32>],
     ) -> [[f32; BUFSIZE]; 4] {
-        let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample, sample_buffers);
+        let mut out: [f32; BUFSIZE] =
+            self.oscillator
+                .get_next_block(start_sample, sample_buffers, &self.modulators);
         out = self.envelope.process_block(out, start_sample);
         self.encoder.process_block(out)
     }
@@ -145,6 +153,7 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for LFTriSynthAmbiO1<BUFSIZE> {
 
 /// a low-frequency sawtooth synth with envelope and lpf18 filter
 pub struct LFSawSynthAmbiO1<const BUFSIZE: usize> {
+    modulators: Vec<Modulator<BUFSIZE>>,
     oscillator: LFSaw<BUFSIZE>,
     filter: Lpf18<BUFSIZE>,
     envelope: LinearASREnvelope<BUFSIZE>,
@@ -156,6 +165,7 @@ pub struct LFSawSynthAmbiO1<const BUFSIZE: usize> {
 impl<const BUFSIZE: usize> LFSawSynthAmbiO1<BUFSIZE> {
     pub fn new(sr: f32) -> Self {
         LFSawSynthAmbiO1 {
+            modulators: Vec::new(),
             oscillator: LFSaw::new(100.0, 0.8, sr),
             filter: Lpf18::new(1500.0, 0.5, 0.1, sr),
             envelope: LinearASREnvelope::new(1.0, 0.002, 0.02, 0.08, sr),
@@ -201,7 +211,9 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for LFSawSynthAmbiO1<BUFSIZE> {
         start_sample: usize,
         sample_buffers: &[Vec<f32>],
     ) -> [[f32; BUFSIZE]; 4] {
-        let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample, sample_buffers);
+        let mut out: [f32; BUFSIZE] =
+            self.oscillator
+                .get_next_block(start_sample, sample_buffers, &self.modulators);
         out = self.filter.process_block(out, start_sample);
         out = self.envelope.process_block(out, start_sample);
         self.encoder.process_block(out)
@@ -218,6 +230,7 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for LFSawSynthAmbiO1<BUFSIZE> {
 
 /// a low-frequency (non-bandlimited) squarewave synth with envelope and lpf18 filter
 pub struct LFSquareSynthAmbiO1<const BUFSIZE: usize> {
+    modulators: Vec<Modulator<BUFSIZE>>,
     oscillator: LFSquare<BUFSIZE>,
     filter: Lpf18<BUFSIZE>,
     envelope: LinearASREnvelope<BUFSIZE>,
@@ -229,6 +242,7 @@ pub struct LFSquareSynthAmbiO1<const BUFSIZE: usize> {
 impl<const BUFSIZE: usize> LFSquareSynthAmbiO1<BUFSIZE> {
     pub fn new(sr: f32) -> Self {
         LFSquareSynthAmbiO1 {
+            modulators: Vec::new(),
             oscillator: LFSquare::new(100.0, 0.4, 0.8, sr),
             filter: Lpf18::new(1500.0, 0.5, 0.1, sr),
             envelope: LinearASREnvelope::new(1.0, 0.002, 0.02, 0.08, sr),
@@ -274,7 +288,9 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for LFSquareSynthAmbiO1<BUFSIZE> {
         start_sample: usize,
         sample_buffers: &[Vec<f32>],
     ) -> [[f32; BUFSIZE]; 4] {
-        let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample, sample_buffers);
+        let mut out: [f32; BUFSIZE] =
+            self.oscillator
+                .get_next_block(start_sample, sample_buffers, &self.modulators);
         out = self.filter.process_block(out, start_sample);
         out = self.envelope.process_block(out, start_sample);
         self.encoder.process_block(out)
@@ -291,6 +307,7 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for LFSquareSynthAmbiO1<BUFSIZE> {
 
 /// a sampler with envelope etc.
 pub struct AmbiSamplerO1<const BUFSIZE: usize> {
+    modulators: Vec<Modulator<BUFSIZE>>,
     sampler: Sampler<BUFSIZE>,
     envelope: LinearASREnvelope<BUFSIZE>,
     hpf: BiquadHpf<BUFSIZE>,
@@ -306,6 +323,7 @@ impl<const BUFSIZE: usize> AmbiSamplerO1<BUFSIZE> {
         let dur = (buflen as f32 / sr) - 0.0002;
 
         AmbiSamplerO1 {
+            modulators: Vec::new(),
             sampler: Sampler::with_bufnum_len(bufnum, buflen, true),
             envelope: LinearASREnvelope::new(1.0, 0.0001, dur, 0.0001, sr),
             hpf: BiquadHpf::new(10.0, 0.01, sr),
@@ -355,7 +373,9 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for AmbiSamplerO1<BUFSIZE> {
         start_sample: usize,
         sample_buffers: &[Vec<f32>],
     ) -> [[f32; BUFSIZE]; 4] {
-        let mut out: [f32; BUFSIZE] = self.sampler.get_next_block(start_sample, sample_buffers);
+        let mut out: [f32; BUFSIZE] =
+            self.sampler
+                .get_next_block(start_sample, sample_buffers, &self.modulators);
         out = self.hpf.process_block(out, start_sample);
         out = self.peak_eq.process_block(out, start_sample);
         out = self.lpf.process_block(out, start_sample);

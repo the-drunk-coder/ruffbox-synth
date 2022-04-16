@@ -8,6 +8,7 @@ use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
 
 /// a triangle synth with envelope etc.
 pub struct LFTriSynth<const BUFSIZE: usize, const NCHAN: usize> {
+    modulators: Vec<Modulator<BUFSIZE>>,
     oscillator: LFTri<BUFSIZE>,
     filter: Lpf18<BUFSIZE>,
     envelope: LinearASREnvelope<BUFSIZE>,
@@ -19,6 +20,7 @@ pub struct LFTriSynth<const BUFSIZE: usize, const NCHAN: usize> {
 impl<const BUFSIZE: usize, const NCHAN: usize> LFTriSynth<BUFSIZE, NCHAN> {
     pub fn new(sr: f32) -> Self {
         LFTriSynth {
+            modulators: Vec::new(),
             oscillator: LFTri::new(440.0, 0.5, sr),
             filter: Lpf18::new(1500.0, 0.5, 0.1, sr),
             envelope: LinearASREnvelope::new(0.3, 0.05, 0.1, 0.05, sr),
@@ -65,7 +67,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
         start_sample: usize,
         sample_buffers: &[Vec<f32>],
     ) -> [[f32; BUFSIZE]; NCHAN] {
-        let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample, sample_buffers);
+        let mut out: [f32; BUFSIZE] =
+            self.oscillator
+                .get_next_block(start_sample, sample_buffers, &self.modulators);
         out = self.filter.process_block(out, start_sample);
         out = self.envelope.process_block(out, start_sample);
         self.balance.process_block(out)

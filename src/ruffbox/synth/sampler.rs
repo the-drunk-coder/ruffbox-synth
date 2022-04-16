@@ -1,4 +1,5 @@
 // parent imports
+use crate::ruffbox::synth::Modulator;
 use crate::ruffbox::synth::MonoSource;
 use crate::ruffbox::synth::SynthState;
 use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
@@ -143,6 +144,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
         &mut self,
         start_sample: usize,
         sample_buffers: &[Vec<f32>],
+        _: &[Modulator<BUFSIZE>],
     ) -> [f32; BUFSIZE] {
         if self.playback_rate == 1.0 {
             self.get_next_block_no_interp(start_sample, sample_buffers)

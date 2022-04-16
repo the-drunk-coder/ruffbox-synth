@@ -8,6 +8,7 @@ use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
 
 /// 11-partial risset bell, modeled after Frederik Oloffson's Supercollider port
 pub struct RissetBell<const BUFSIZE: usize, const NCHAN: usize> {
+    modulators: Vec<Modulator<BUFSIZE>>,
     oscillators: [SineOsc<BUFSIZE>; 11],
     envelopes: [ExpPercEnvelope<BUFSIZE>; 11],
     main_envelope: LinearASREnvelope<BUFSIZE>,
@@ -29,6 +30,7 @@ pub struct RissetBell<const BUFSIZE: usize, const NCHAN: usize> {
 impl<const BUFSIZE: usize, const NCHAN: usize> RissetBell<BUFSIZE, NCHAN> {
     pub fn new(sr: f32) -> RissetBell<BUFSIZE, NCHAN> {
         let mut bell = RissetBell {
+            modulators: Vec::new(),
             oscillators: [SineOsc::new(440.0, 1.0, sr); 11],
             envelopes: [ExpPercEnvelope::new(1.0, 0.005, 0.0, 0.05, sr); 11],
             main_envelope: LinearASREnvelope::new(1.0, 0.05, 0.5, 0.05, sr),
@@ -166,13 +168,13 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
     ) -> [[f32; BUFSIZE]; NCHAN] {
         // first osc
         let mut out: [f32; BUFSIZE] =
-            self.oscillators[0].get_next_block(start_sample, sample_buffers);
+            self.oscillators[0].get_next_block(start_sample, sample_buffers, &self.modulators);
         out = self.envelopes[0].process_block(out, start_sample);
 
         // rest
         for i in 1..11 {
             let mut tmp_out: [f32; BUFSIZE] =
-                self.oscillators[i].get_next_block(start_sample, sample_buffers);
+                self.oscillators[i].get_next_block(start_sample, sample_buffers, &self.modulators);
             tmp_out = self.envelopes[i].process_block(tmp_out, start_sample);
 
             for s in 0..BUFSIZE {

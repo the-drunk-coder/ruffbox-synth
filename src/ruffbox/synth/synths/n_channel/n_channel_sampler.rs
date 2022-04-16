@@ -8,6 +8,7 @@ use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
 
 /// a sampler with envelope etc.
 pub struct NChannelSampler<const BUFSIZE: usize, const NCHAN: usize> {
+    modulators: Vec<Modulator<BUFSIZE>>,
     sampler: Sampler<BUFSIZE>,
     envelope: LinearASREnvelope<BUFSIZE>,
     hpf: BiquadHpf<BUFSIZE>,
@@ -27,6 +28,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> NChannelSampler<BUFSIZE, NCHAN> {
         let dur = (buflen as f32 / sr) - 0.0002;
 
         NChannelSampler {
+            modulators: Vec::new(),
             sampler: Sampler::with_bufnum_len(bufnum, buflen, true),
             envelope: LinearASREnvelope::new(1.0, 0.0001, dur, 0.0001, sr),
             hpf: BiquadHpf::new(20.0, 0.3, sr),
@@ -78,7 +80,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
         start_sample: usize,
         sample_buffers: &[Vec<f32>],
     ) -> [[f32; BUFSIZE]; NCHAN] {
-        let mut out: [f32; BUFSIZE] = self.sampler.get_next_block(start_sample, sample_buffers);
+        let mut out: [f32; BUFSIZE] =
+            self.sampler
+                .get_next_block(start_sample, sample_buffers, &self.modulators);
         out = self.hpf.process_block(out, start_sample);
         out = self.peak_eq.process_block(out, start_sample);
         out = self.lpf.process_block(out, start_sample);

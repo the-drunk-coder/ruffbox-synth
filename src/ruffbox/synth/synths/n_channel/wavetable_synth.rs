@@ -8,6 +8,7 @@ use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
 
 /// a simple wavetable synth with envelope etc.
 pub struct WavetableSynth<const BUFSIZE: usize, const NCHAN: usize> {
+    modulators: Vec<Modulator<BUFSIZE>>,
     wavetable: Wavetable<BUFSIZE>,
     envelope: LinearASREnvelope<BUFSIZE>,
     hpf: BiquadHpf<BUFSIZE>,
@@ -20,6 +21,7 @@ pub struct WavetableSynth<const BUFSIZE: usize, const NCHAN: usize> {
 impl<const BUFSIZE: usize, const NCHAN: usize> WavetableSynth<BUFSIZE, NCHAN> {
     pub fn new(sr: f32) -> WavetableSynth<BUFSIZE, NCHAN> {
         WavetableSynth {
+            modulators: Vec::new(),
             wavetable: Wavetable::new(sr),
             envelope: LinearASREnvelope::new(1.0, 0.0001, 0.1, 0.0001, sr),
             hpf: BiquadHpf::new(20.0, 0.3, sr),
@@ -69,7 +71,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
         start_sample: usize,
         sample_buffers: &[Vec<f32>],
     ) -> [[f32; BUFSIZE]; NCHAN] {
-        let mut out: [f32; BUFSIZE] = self.wavetable.get_next_block(start_sample, sample_buffers);
+        let mut out: [f32; BUFSIZE] =
+            self.wavetable
+                .get_next_block(start_sample, sample_buffers, &self.modulators);
         out = self.hpf.process_block(out, start_sample);
         out = self.lpf.process_block(out, start_sample);
         out = self.envelope.process_block(out, start_sample);

@@ -2,12 +2,13 @@ use crate::ruffbox::synth::envelopes::*;
 use crate::ruffbox::synth::filters::*;
 use crate::ruffbox::synth::oscillators::*;
 use crate::ruffbox::synth::routing::PanChan;
-use crate::ruffbox::synth::Synth;
 use crate::ruffbox::synth::*;
+use crate::ruffbox::synth::{Modulator, Synth};
 use crate::ruffbox::synth::{SynthParameterLabel, SynthParameterValue};
 
 /// a cubic sine approximation synth with envelope etc.
 pub struct LFCubSynth<const BUFSIZE: usize, const NCHAN: usize> {
+    modulators: Vec<Modulator<BUFSIZE>>,
     oscillator: LFCub<BUFSIZE>,
     filter: Lpf18<BUFSIZE>,
     envelope: LinearASREnvelope<BUFSIZE>,
@@ -19,6 +20,7 @@ pub struct LFCubSynth<const BUFSIZE: usize, const NCHAN: usize> {
 impl<const BUFSIZE: usize, const NCHAN: usize> LFCubSynth<BUFSIZE, NCHAN> {
     pub fn new(sr: f32) -> Self {
         LFCubSynth {
+            modulators: Vec::new(),
             oscillator: LFCub::new(440.0, 0.5, sr),
             envelope: LinearASREnvelope::new(0.3, 0.05, 0.1, 0.05, sr),
             filter: Lpf18::new(1500.0, 0.5, 0.1, sr),
@@ -65,7 +67,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
         start_sample: usize,
         sample_buffers: &[Vec<f32>],
     ) -> [[f32; BUFSIZE]; NCHAN] {
-        let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample, sample_buffers);
+        let mut out: [f32; BUFSIZE] =
+            self.oscillator
+                .get_next_block(start_sample, sample_buffers, &self.modulators);
         out = self.envelope.process_block(out, start_sample);
         self.balance.process_block(out)
     }

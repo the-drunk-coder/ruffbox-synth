@@ -79,11 +79,32 @@ pub enum SourceType {
     Wavetable,
 }
 
+#[derive(Clone)]
+pub enum ModulatorOperation {
+    Replace,
+    Add,
+    Subtract,
+    Multiply,
+    Divide,
+}
+
+#[derive(Clone)]
+pub struct Modulator<const BUFSIZE: usize> {
+    pub param: SynthParameterLabel,
+    pub op: ModulatorOperation,
+    pub inlet_block: [f32; BUFSIZE],
+}
+
 pub trait MonoSource<const BUFSIZE: usize> {
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue);
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
-    fn get_next_block(&mut self, start_sample: usize, in_buffers: &[Vec<f32>]) -> [f32; BUFSIZE];
+    fn get_next_block(
+        &mut self,
+        start_sample: usize,
+        in_buffers: &[Vec<f32>],
+        inlets: &[Modulator<BUFSIZE>],
+    ) -> [f32; BUFSIZE];
 }
 
 pub trait MonoEffect<const BUFSIZE: usize> {
