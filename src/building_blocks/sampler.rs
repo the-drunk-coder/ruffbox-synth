@@ -1,7 +1,5 @@
 // parent imports
-use crate::building_blocks::{
-    Modulator, MonoSource, SynthParameterLabel, SynthParameterValue, SynthState,
-};
+use crate::building_blocks::{MonoSource, SynthParameterLabel, SynthParameterValue, SynthState};
 
 /**
  * a very simple sample player ...

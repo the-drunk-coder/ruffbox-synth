@@ -49,7 +49,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
                 match value {
                     SynthParameterValue::ScalarF32(f) => {
                         self.set_freq(*f);
-			self.freq = *f;
+                        self.freq = *f;
                     }
                     SynthParameterValue::Lfo(freq, range, op) => {
                         self.freq_mod = Some(Modulator::lfo(*op, *freq, *range, self.samplerate))

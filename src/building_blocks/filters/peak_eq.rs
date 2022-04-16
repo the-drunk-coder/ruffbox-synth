@@ -1,4 +1,4 @@
-use crate::building_blocks::{Modulator, MonoEffect, SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{MonoEffect, SynthParameterLabel, SynthParameterValue};
 
 /**
  * Peak/Eq Filter

@@ -1,10 +1,10 @@
 use crate::building_blocks::oscillators::*;
-use crate::building_blocks::{MonoSource, SynthParameterLabel, ValOp};
+use crate::building_blocks::{MonoSource, ValOp};
 
 /// modulate things ...
 pub struct Modulator<const BUFSIZE: usize> {
     pub source: Box<dyn MonoSource<BUFSIZE> + Sync + Send>,
-    pub op: ValOp,   
+    pub op: ValOp,
 }
 
 impl<const BUFSIZE: usize> Modulator<BUFSIZE> {

@@ -1,4 +1,4 @@
-use crate::building_blocks::{Modulator, MonoEffect, SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{MonoEffect, SynthParameterLabel, SynthParameterValue};
 
 /**
  * Three-pole, 18dB/octave filter with tanh distortion

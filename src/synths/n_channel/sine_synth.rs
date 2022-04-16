@@ -2,7 +2,7 @@ use crate::building_blocks::envelopes::*;
 use crate::building_blocks::oscillators::*;
 use crate::building_blocks::routing::PanChan;
 use crate::building_blocks::{
-    Modulator, MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
+    MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
 };
 
 /// a sinusoidal synth with envelope etc.

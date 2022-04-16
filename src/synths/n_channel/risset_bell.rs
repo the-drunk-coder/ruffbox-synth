@@ -3,7 +3,7 @@ use crate::building_blocks::filters::*;
 use crate::building_blocks::oscillators::*;
 use crate::building_blocks::routing::PanChan;
 use crate::building_blocks::{
-    Modulator, MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
+    MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
 };
 
 /// 11-partial risset bell, modeled after Frederik Oloffson's SuperCollider port

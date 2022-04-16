@@ -3,7 +3,7 @@ use crate::building_blocks::envelopes::*;
 use crate::building_blocks::filters::*;
 use crate::building_blocks::sampler::Sampler;
 use crate::building_blocks::{
-    Modulator, MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
+    MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
 };
 
 /// a sampler with envelope etc.
