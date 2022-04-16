@@ -1,4 +1,5 @@
-use crate::{SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{SynthParameterLabel, SynthParameterValue};
+
 use std::f32::consts::PI;
 
 pub struct PanChan<const BUFSIZE: usize, const NCHAN: usize> {

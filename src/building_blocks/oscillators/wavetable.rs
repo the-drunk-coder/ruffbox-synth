@@ -1,7 +1,6 @@
-use crate::Modulator;
-use crate::MonoSource;
-use crate::building_blocks::SynthState;
-use crate::{SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{
+    Modulator, MonoSource, SynthParameterLabel, SynthParameterValue, SynthState,
+};
 
 /**
  * A simple, raw wavetable oscillator

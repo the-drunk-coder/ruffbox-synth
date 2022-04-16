@@ -1,10 +1,10 @@
 use crate::building_blocks::envelopes::*;
 use crate::building_blocks::filters::*;
 use crate::building_blocks::oscillators::*;
-use crate::routing::PanChan;
-use crate::building_blocks::Synth;
-use 
-use crate::{SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::routing::PanChan;
+use crate::building_blocks::{
+    Modulator, MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
+};
 
 /// a triangle synth with envelope etc.
 pub struct LFTriSynth<const BUFSIZE: usize, const NCHAN: usize> {

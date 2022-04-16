@@ -1,6 +1,4 @@
-use crate::MonoEffect;
-use crate::building_blocks::SynthState;
-use crate::{SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{MonoEffect, SynthParameterLabel, SynthParameterValue, SynthState};
 
 /// simple linear attack-sustain-release envelope
 #[derive(Clone, Copy)]

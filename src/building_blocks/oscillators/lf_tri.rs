@@ -1,6 +1,4 @@
-use crate::Modulator;
-use crate::MonoSource;
-use crate::{SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{Modulator, MonoSource, SynthParameterLabel, SynthParameterValue};
 
 /**
  * A non-band-limited triangle oscillator.

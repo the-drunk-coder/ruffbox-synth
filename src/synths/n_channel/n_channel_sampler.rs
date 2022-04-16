@@ -1,10 +1,10 @@
 use crate::building_blocks::envelopes::*;
 use crate::building_blocks::filters::*;
-use crate::routing::PanChan;
+use crate::building_blocks::routing::PanChan;
 use crate::building_blocks::sampler::Sampler;
-use crate::building_blocks::Synth;
-use 
-use crate::{SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{
+    Modulator, MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
+};
 
 /// a sampler with envelope etc.
 pub struct NChannelSampler<const BUFSIZE: usize, const NCHAN: usize> {

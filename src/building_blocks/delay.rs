@@ -1,6 +1,5 @@
 use crate::building_blocks::filters::*;
-use crate::MonoEffect;
-use crate::{SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{MonoEffect, SynthParameterLabel, SynthParameterValue};
 
 pub struct MonoDelay<const BUFSIZE: usize> {
     buffer: Vec<f32>, // max 2 sec for now

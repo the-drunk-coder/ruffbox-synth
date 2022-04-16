@@ -2,9 +2,9 @@ use crate::building_blocks::ambisonics::encoder_o1::EncoderO1;
 use crate::building_blocks::envelopes::*;
 use crate::building_blocks::filters::*;
 use crate::building_blocks::oscillators::*;
-use crate::building_blocks::Synth;
-use crate::building_blocks::SynthParameterLabel;
-use 
+use crate::building_blocks::{
+    Modulator, MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
+};
 
 /// a low-frequency (non-bandlimited) squarewave synth with envelope and lpf18 filter
 pub struct LFSquareSynth<const BUFSIZE: usize> {

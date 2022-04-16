@@ -1,6 +1,4 @@
-use crate::MonoEffect;
-use crate::building_blocks::SynthState;
-use crate::{SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{MonoEffect, SynthParameterLabel, SynthParameterValue, SynthState};
 
 /// Exponential/Linear Percussion Envelope (currently with fixed curve value)
 #[derive(Clone, Copy)]

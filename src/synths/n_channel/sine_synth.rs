@@ -1,9 +1,9 @@
 use crate::building_blocks::envelopes::*;
 use crate::building_blocks::oscillators::*;
-use crate::routing::PanChan;
-use crate::building_blocks::Synth;
-use 
-use crate::{SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::routing::PanChan;
+use crate::building_blocks::{
+    Modulator, MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
+};
 
 /// a sinusoidal synth with envelope etc.
 pub struct SineSynth<const BUFSIZE: usize, const NCHAN: usize> {

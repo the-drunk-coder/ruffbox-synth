@@ -1,15 +1,14 @@
+use std::sync::Arc;
+
 use rubato::{FftFixedIn, Resampler};
 
 // crossbeam for the event queue
 use crossbeam::atomic::AtomicCell;
-
-use crate::synths::*;
-use crate::SourceType;
-use crate::{SynthParameterLabel, SynthParameterValue};
-use crate::ruffbox::ControlMessage;
-use crate::ruffbox::ScheduledEvent;
 use dashmap::DashMap;
-use std::sync::Arc;
+
+use crate::building_blocks::{SourceType, SynthParameterLabel, SynthParameterValue};
+use crate::ruffbox::{ControlMessage, ScheduledEvent};
+use crate::synths::*;
 
 /// thin wrapper around a scheduled event instasnce
 pub struct PreparedInstance<const BUFSIZE: usize, const NCHAN: usize> {

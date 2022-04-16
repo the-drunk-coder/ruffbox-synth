@@ -1,5 +1,4 @@
-use crate::MonoEffect;
-use crate::{SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{MonoEffect, SynthParameterLabel, SynthParameterValue};
 
 /**
  * Biquad HiPass Filter, 12dB/oct

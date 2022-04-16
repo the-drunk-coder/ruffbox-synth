@@ -2,7 +2,9 @@ use crate::building_blocks::ambisonics::encoder_o1::EncoderO1;
 use crate::building_blocks::envelopes::*;
 use crate::building_blocks::filters::*;
 use crate::building_blocks::oscillators::*;
-use crate::building_blocks::{Synth, SynthParameterLabel, SynthParameterValue, Modulator};
+use crate::building_blocks::{
+    Modulator, MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
+};
 
 /// a low-frequency sawtooth synth with envelope and lpf18 filter
 pub struct LFSawSynth<const BUFSIZE: usize> {

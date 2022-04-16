@@ -5,14 +5,12 @@ use crossbeam::atomic::AtomicCell;
 
 use std::sync::Arc;
 
-use crate::convolution_reverb::MultichannelConvolutionReverb;
-use crate::delay::MultichannelDelay;
-use crate::freeverb::MultichannelFreeverb;
-use crate::MultichannelReverb;
-use crate::building_blocks::Synth;
-use crate::ruffbox::ControlMessage;
-use crate::ruffbox::ReverbMode;
-use crate::ruffbox::ScheduledEvent;
+use crate::building_blocks::convolution_reverb::MultichannelConvolutionReverb;
+use crate::building_blocks::delay::MultichannelDelay;
+use crate::building_blocks::freeverb::MultichannelFreeverb;
+use crate::building_blocks::{MultichannelReverb, Synth};
+
+use crate::ruffbox::{ControlMessage, ReverbMode, ScheduledEvent};
 
 pub(crate) struct LiveBufferMetadata {
     live_buffer_idx: usize,

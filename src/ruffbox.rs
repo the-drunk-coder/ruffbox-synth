@@ -9,8 +9,8 @@ use crossbeam::channel::Sender;
 use std::cmp::Ordering;
 use std::sync::Arc;
 
-use crate::building_blocks::Synth;
-use crate::{SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{Synth, SynthParameterLabel, SynthParameterValue};
+
 pub use crate::ruffbox::{ruffbox_controls::*, ruffbox_playhead::*};
 
 /// timed event, to be created in the trigger method, then

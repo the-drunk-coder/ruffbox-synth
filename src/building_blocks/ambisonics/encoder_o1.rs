@@ -1,4 +1,4 @@
-use crate::{SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{SynthParameterLabel, SynthParameterValue};
 
 /**
  * a simple first order ambisonics encoder
