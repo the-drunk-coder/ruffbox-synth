@@ -5,10 +5,10 @@ pub mod delay;
 pub mod envelopes;
 pub mod filters;
 pub mod freeverb;
+pub mod modulator;
 pub mod oscillators;
 pub mod routing;
 pub mod sampler;
-pub mod modulator;
 
 pub use crate::building_blocks::modulator::Modulator;
 
@@ -86,12 +86,7 @@ pub trait MonoSource<const BUFSIZE: usize> {
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue);
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
-    fn get_next_block(
-        &mut self,
-        start_sample: usize,
-        in_buffers: &[Vec<f32>],
-        modulators: &[Modulator<BUFSIZE>],
-    ) -> [f32; BUFSIZE];
+    fn get_next_block(&mut self, start_sample: usize, in_buffers: &[Vec<f32>]) -> [f32; BUFSIZE];
 }
 
 /// filters etc are effects
@@ -99,12 +94,7 @@ pub trait MonoEffect<const BUFSIZE: usize> {
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue);
-    fn process_block(
-        &mut self,
-        block: [f32; BUFSIZE],
-        start_sample: usize,
-        modulators: &[Modulator<BUFSIZE>],
-    ) -> [f32; BUFSIZE];
+    fn process_block(&mut self, block: [f32; BUFSIZE], start_sample: usize) -> [f32; BUFSIZE];
 }
 
 /// there's a freeverb- and a convolution-based implementation

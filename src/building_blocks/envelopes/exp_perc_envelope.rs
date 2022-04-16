@@ -98,12 +98,7 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for ExpPercEnvelope<BUFSIZE> {
         }
     }
 
-    fn process_block(
-        &mut self,
-        block: [f32; BUFSIZE],
-        start_sample: usize,
-        _: &[Modulator<BUFSIZE>],
-    ) -> [f32; BUFSIZE] {
+    fn process_block(&mut self, block: [f32; BUFSIZE], start_sample: usize) -> [f32; BUFSIZE] {
         let mut out: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
         for i in start_sample..BUFSIZE {

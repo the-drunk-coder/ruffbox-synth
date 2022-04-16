@@ -6,7 +6,7 @@ use rubato::{FftFixedIn, Resampler};
 use crossbeam::atomic::AtomicCell;
 use dashmap::DashMap;
 
-use crate::building_blocks::{SynthType, SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{SynthParameterLabel, SynthParameterValue, SynthType};
 use crate::ruffbox::{ControlMessage, ScheduledEvent};
 use crate::synths::*;
 

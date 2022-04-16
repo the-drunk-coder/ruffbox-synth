@@ -74,17 +74,11 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for AmbisonicSamplerO1<BUFSIZE> {
         start_sample: usize,
         sample_buffers: &[Vec<f32>],
     ) -> [[f32; BUFSIZE]; 4] {
-        let mut out: [f32; BUFSIZE] =
-            self.sampler
-                .get_next_block(start_sample, sample_buffers, &self.modulators);
-        out = self.hpf.process_block(out, start_sample, &self.modulators);
-        out = self
-            .peak_eq
-            .process_block(out, start_sample, &self.modulators);
-        out = self.lpf.process_block(out, start_sample, &self.modulators);
-        out = self
-            .envelope
-            .process_block(out, start_sample, &self.modulators);
+        let mut out: [f32; BUFSIZE] = self.sampler.get_next_block(start_sample, sample_buffers);
+        out = self.hpf.process_block(out, start_sample);
+        out = self.peak_eq.process_block(out, start_sample);
+        out = self.lpf.process_block(out, start_sample);
+        out = self.envelope.process_block(out, start_sample);
         self.encoder.process_block(out)
     }
 

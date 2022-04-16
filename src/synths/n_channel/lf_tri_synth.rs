@@ -67,15 +67,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
         start_sample: usize,
         sample_buffers: &[Vec<f32>],
     ) -> [[f32; BUFSIZE]; NCHAN] {
-        let mut out: [f32; BUFSIZE] =
-            self.oscillator
-                .get_next_block(start_sample, sample_buffers, &self.modulators);
-        out = self
-            .filter
-            .process_block(out, start_sample, &self.modulators);
-        out = self
-            .envelope
-            .process_block(out, start_sample, &self.modulators);
+        let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample, sample_buffers);
+        out = self.filter.process_block(out, start_sample);
+        out = self.envelope.process_block(out, start_sample);
         self.balance.process_block(out)
     }
 

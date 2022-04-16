@@ -62,12 +62,8 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for SineSynth<BUFSIZE> {
         start_sample: usize,
         sample_buffers: &[Vec<f32>],
     ) -> [[f32; BUFSIZE]; 4] {
-        let mut out: [f32; BUFSIZE] =
-            self.oscillator
-                .get_next_block(start_sample, sample_buffers, &self.modulators);
-        out = self
-            .envelope
-            .process_block(out, start_sample, &self.modulators);
+        let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample, sample_buffers);
+        out = self.envelope.process_block(out, start_sample);
         self.encoder.process_block(out)
     }
 
