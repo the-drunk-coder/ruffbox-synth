@@ -8,7 +8,6 @@ use crate::building_blocks::{
 
 /// 11-partial risset bell, modeled after Frederik Oloffson's Supercollider port
 pub struct RissetBell<const BUFSIZE: usize, const NCHAN: usize> {
-    modulators: Vec<Modulator<BUFSIZE>>,
     oscillators: [SineOsc<BUFSIZE>; 11],
     envelopes: [ExpPercEnvelope<BUFSIZE>; 11],
     main_envelope: LinearASREnvelope<BUFSIZE>,
@@ -30,7 +29,6 @@ pub struct RissetBell<const BUFSIZE: usize, const NCHAN: usize> {
 impl<const BUFSIZE: usize, const NCHAN: usize> RissetBell<BUFSIZE, NCHAN> {
     pub fn new(sr: f32) -> RissetBell<BUFSIZE, NCHAN> {
         let mut bell = RissetBell {
-            modulators: Vec::new(),
             oscillators: [SineOsc::new(440.0, 1.0, sr); 11],
             envelopes: [ExpPercEnvelope::new(1.0, 0.005, 0.0, 0.05, sr); 11],
             main_envelope: LinearASREnvelope::new(1.0, 0.05, 0.5, 0.05, sr),

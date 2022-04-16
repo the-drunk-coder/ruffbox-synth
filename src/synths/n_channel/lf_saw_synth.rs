@@ -8,7 +8,6 @@ use crate::building_blocks::{
 
 /// a low-frequency sawtooth synth with envelope and lpf18 filter
 pub struct LFSawSynth<const BUFSIZE: usize, const NCHAN: usize> {
-    modulators: Vec<Modulator<BUFSIZE>>,
     oscillator: LFSaw<BUFSIZE>,
     filter: Lpf18<BUFSIZE>,
     envelope: LinearASREnvelope<BUFSIZE>,
@@ -20,7 +19,6 @@ pub struct LFSawSynth<const BUFSIZE: usize, const NCHAN: usize> {
 impl<const BUFSIZE: usize, const NCHAN: usize> LFSawSynth<BUFSIZE, NCHAN> {
     pub fn new(sr: f32) -> Self {
         LFSawSynth {
-            modulators: Vec::new(),
             oscillator: LFSaw::new(100.0, 0.8, sr),
             filter: Lpf18::new(1500.0, 0.5, 0.1, sr),
             envelope: LinearASREnvelope::new(1.0, 0.002, 0.02, 0.08, sr),

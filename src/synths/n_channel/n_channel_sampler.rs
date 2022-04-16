@@ -8,7 +8,6 @@ use crate::building_blocks::{
 
 /// a sampler with envelope etc.
 pub struct NChannelSampler<const BUFSIZE: usize, const NCHAN: usize> {
-    modulators: Vec<Modulator<BUFSIZE>>,
     sampler: Sampler<BUFSIZE>,
     envelope: LinearASREnvelope<BUFSIZE>,
     hpf: BiquadHpf<BUFSIZE>,
@@ -28,7 +27,6 @@ impl<const BUFSIZE: usize, const NCHAN: usize> NChannelSampler<BUFSIZE, NCHAN> {
         let dur = (buflen as f32 / sr) - 0.0002;
 
         NChannelSampler {
-            modulators: Vec::new(),
             sampler: Sampler::with_bufnum_len(bufnum, buflen, true),
             envelope: LinearASREnvelope::new(1.0, 0.0001, dur, 0.0001, sr),
             hpf: BiquadHpf::new(20.0, 0.3, sr),

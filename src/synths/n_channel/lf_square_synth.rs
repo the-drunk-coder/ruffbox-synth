@@ -8,7 +8,6 @@ use crate::building_blocks::{
 
 /// a low-frequency (non-bandlimited) squarewave synth with envelope and lpf18 filter
 pub struct LFSquareSynth<const BUFSIZE: usize, const NCHAN: usize> {
-    modulators: Vec<Modulator<BUFSIZE>>,
     oscillator: LFSquare<BUFSIZE>,
     filter: Lpf18<BUFSIZE>,
     envelope: LinearASREnvelope<BUFSIZE>,
@@ -20,7 +19,6 @@ pub struct LFSquareSynth<const BUFSIZE: usize, const NCHAN: usize> {
 impl<const BUFSIZE: usize, const NCHAN: usize> LFSquareSynth<BUFSIZE, NCHAN> {
     pub fn new(sr: f32) -> Self {
         LFSquareSynth {
-            modulators: Vec::new(),
             oscillator: LFSquare::new(100.0, 0.4, 0.8, sr),
             filter: Lpf18::new(1500.0, 0.5, 0.1, sr),
             envelope: LinearASREnvelope::new(1.0, 0.002, 0.02, 0.08, sr),

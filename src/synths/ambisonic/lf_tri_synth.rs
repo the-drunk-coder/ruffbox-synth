@@ -7,7 +7,6 @@ use crate::building_blocks::{
 
 /// a lf triangle synth with envelope etc.
 pub struct LFTriSynth<const BUFSIZE: usize> {
-    modulators: Vec<Modulator<BUFSIZE>>,
     oscillator: LFTri<BUFSIZE>,
     envelope: LinearASREnvelope<BUFSIZE>,
     encoder: EncoderO1<BUFSIZE>,
@@ -19,7 +18,6 @@ impl<const BUFSIZE: usize> LFTriSynth<BUFSIZE> {
     #[allow(dead_code)]
     pub fn new(sr: f32) -> Self {
         LFTriSynth {
-            modulators: Vec::new(),
             oscillator: LFTri::new(440.0, 0.5, sr),
             envelope: LinearASREnvelope::new(0.3, 0.05, 0.1, 0.05, sr),
             encoder: EncoderO1::new(),

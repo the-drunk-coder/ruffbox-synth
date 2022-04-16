@@ -8,7 +8,6 @@ use crate::building_blocks::{
 
 /// a cubic sine approximation synth with envelope etc.
 pub struct LFCubSynth<const BUFSIZE: usize, const NCHAN: usize> {
-    modulators: Vec<Modulator<BUFSIZE>>,
     oscillator: LFCub<BUFSIZE>,
     filter: Lpf18<BUFSIZE>,
     envelope: LinearASREnvelope<BUFSIZE>,
@@ -20,7 +19,6 @@ pub struct LFCubSynth<const BUFSIZE: usize, const NCHAN: usize> {
 impl<const BUFSIZE: usize, const NCHAN: usize> LFCubSynth<BUFSIZE, NCHAN> {
     pub fn new(sr: f32) -> Self {
         LFCubSynth {
-            modulators: Vec::new(),
             oscillator: LFCub::new(440.0, 0.5, sr),
             envelope: LinearASREnvelope::new(0.3, 0.05, 0.1, 0.05, sr),
             filter: Lpf18::new(1500.0, 0.5, 0.1, sr),

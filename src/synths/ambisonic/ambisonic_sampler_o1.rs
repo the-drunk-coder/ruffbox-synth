@@ -8,7 +8,6 @@ use crate::building_blocks::{
 
 /// a sampler with envelope etc.
 pub struct AmbisonicSamplerO1<const BUFSIZE: usize> {
-    modulators: Vec<Modulator<BUFSIZE>>,
     sampler: Sampler<BUFSIZE>,
     envelope: LinearASREnvelope<BUFSIZE>,
     hpf: BiquadHpf<BUFSIZE>,
@@ -24,7 +23,6 @@ impl<const BUFSIZE: usize> AmbisonicSamplerO1<BUFSIZE> {
         let dur = (buflen as f32 / sr) - 0.0002;
 
         AmbisonicSamplerO1 {
-            modulators: Vec::new(),
             sampler: Sampler::with_bufnum_len(bufnum, buflen, true),
             envelope: LinearASREnvelope::new(1.0, 0.0001, dur, 0.0001, sr),
             hpf: BiquadHpf::new(10.0, 0.01, sr),

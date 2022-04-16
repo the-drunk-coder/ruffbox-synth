@@ -7,7 +7,6 @@ use crate::building_blocks::{
 
 /// a sinusoidal synth with envelope etc.
 pub struct SineSynth<const BUFSIZE: usize, const NCHAN: usize> {
-    modulators: Vec<Modulator<BUFSIZE>>,
     oscillator: SineOsc<BUFSIZE>,
     envelope: LinearASREnvelope<BUFSIZE>,
     balance: PanChan<BUFSIZE, NCHAN>,
@@ -18,7 +17,6 @@ pub struct SineSynth<const BUFSIZE: usize, const NCHAN: usize> {
 impl<const BUFSIZE: usize, const NCHAN: usize> SineSynth<BUFSIZE, NCHAN> {
     pub fn new(sr: f32) -> Self {
         SineSynth {
-            modulators: Vec::new(),
             oscillator: SineOsc::new(440.0, 0.5, sr),
             envelope: LinearASREnvelope::new(0.3, 0.05, 0.1, 0.05, sr),
             balance: PanChan::new(),
