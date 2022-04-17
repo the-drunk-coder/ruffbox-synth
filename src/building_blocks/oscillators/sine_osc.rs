@@ -12,7 +12,7 @@ pub struct SineOsc<const BUFSIZE: usize> {
     samplerate: f32,
     freq: f32,
     pi_slice: f32,
-    sample_count: u64,
+
     freq_mod: Option<Modulator<BUFSIZE>>,
     lvl_mod: Option<Modulator<BUFSIZE>>,
 }
@@ -26,7 +26,7 @@ impl<const BUFSIZE: usize> SineOsc<BUFSIZE> {
             samplerate: sr,
             freq,
             pi_slice: 2.0 * PI * freq,
-            sample_count: 0,
+
             freq_mod: None,
             lvl_mod: None,
         }
@@ -80,83 +80,12 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
         false
     }
 
-    fn get_next_block(&mut self, start_sample: usize, in_buffers: &[Vec<f32>]) -> [f32; BUFSIZE] {
+    fn get_next_block(&mut self, start_sample: usize, _in_buffers: &[Vec<f32>]) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
-        if self.lvl_mod.is_some() && self.freq_mod.is_some() {
-            let freq_buf =
-                self.freq_mod
-                    .as_mut()
-                    .unwrap()
-                    .process(self.freq, start_sample, in_buffers);
-
-            let lvl_buf =
-                self.lvl_mod
-                    .as_mut()
-                    .unwrap()
-                    .process(self.lvl, start_sample, in_buffers);
-
-            for (idx, current_sample) in out_buf
-                .iter_mut()
-                .enumerate()
-                .take(BUFSIZE)
-                .skip(start_sample)
-            {
-                self.set_freq(freq_buf[idx]);
-
-                *current_sample = (self.pi_slice * self.sin_delta_time * self.sample_count as f32)
-                    .sin()
-                    * lvl_buf[idx];
-                self.sample_count += 1;
-                self.sin_time += self.sin_delta_time;
-            }
-        } else if self.freq_mod.is_some() {
-            let freq_buf =
-                self.freq_mod
-                    .as_mut()
-                    .unwrap()
-                    .process(self.freq, start_sample, in_buffers);
-
-            for (idx, current_sample) in out_buf
-                .iter_mut()
-                .enumerate()
-                .take(BUFSIZE)
-                .skip(start_sample)
-            {
-                self.set_freq(freq_buf[idx]);
-
-                *current_sample = (self.pi_slice * self.sin_delta_time * self.sample_count as f32)
-                    .sin()
-                    * self.lvl;
-                self.sample_count += 1;
-                self.sin_time += self.sin_delta_time;
-            }
-        } else if self.lvl_mod.is_some() {
-            let lvl_buf =
-                self.lvl_mod
-                    .as_mut()
-                    .unwrap()
-                    .process(self.lvl, start_sample, in_buffers);
-            for (idx, current_sample) in out_buf
-                .iter_mut()
-                .enumerate()
-                .take(BUFSIZE)
-                .skip(start_sample)
-            {
-                *current_sample = (self.pi_slice * self.sin_delta_time * self.sample_count as f32)
-                    .sin()
-                    * lvl_buf[idx];
-                self.sample_count += 1;
-                self.sin_time += self.sin_delta_time;
-            }
-        } else {
-            for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
-                *current_sample = (self.pi_slice * self.sin_delta_time * self.sample_count as f32)
-                    .sin()
-                    * self.lvl;
-                self.sample_count += 1;
-                self.sin_time += self.sin_delta_time;
-            }
+        for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
+            *current_sample = (self.pi_slice * self.sin_time as f32).sin() * self.lvl;
+            self.sin_time += self.sin_delta_time;
         }
 
         out_buf
