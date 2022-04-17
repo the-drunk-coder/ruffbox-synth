@@ -7,10 +7,12 @@ use std::f32::consts::PI;
  */
 pub struct SineOsc<const BUFSIZE: usize> {
     lvl: f32,
-    sin_time: f32,
-    sin_delta_time: f32,
     samplerate: f32,
+    //delta_t: f32,
     freq: f32,
+    x1_last: f32,
+    x2_last: f32,
+    mcf: f32,
     freq_mod: Option<Modulator<BUFSIZE>>,
     lvl_mod: Option<Modulator<BUFSIZE>>,
 }
@@ -19,14 +21,16 @@ impl<const BUFSIZE: usize> SineOsc<BUFSIZE> {
     pub fn new(freq: f32, lvl: f32, sr: f32) -> Self {
         SineOsc {
             lvl,
-            sin_time: 0.0,
-            sin_delta_time: 1.0 / sr,
+            //delta_t: 1.0 / sr,
             samplerate: sr,
-            freq,            
+            x1_last: 0.0,
+            x2_last: 1.0,
+            mcf: 2.0 * (PI * freq * 1.0 / sr).sin(),
+            freq,
             freq_mod: None,
             lvl_mod: None,
         }
-    }        
+    }
 }
 
 impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
@@ -37,6 +41,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
                 match value {
                     SynthParameterValue::ScalarF32(f) => {
                         self.freq = *f;
+                        self.mcf = 2.0 * (PI * f * 1.0 / self.samplerate).sin()
                     }
                     SynthParameterValue::Lfo(freq, range, op) => {
                         self.freq_mod = Some(Modulator::lfo(*op, *freq, *range, self.samplerate))
@@ -71,8 +76,11 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
         for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
-            *current_sample = (2.0 * PI * self.freq * self.sin_time as f32).sin() * self.lvl;
-            self.sin_time += self.sin_delta_time;
+            let x1 = self.x1_last + (self.mcf * self.x2_last);
+            let x2 = -self.mcf * x1 + self.x2_last;
+            *current_sample = x2 * self.lvl;
+            self.x1_last = x1;
+            self.x2_last = x2;
         }
 
         out_buf
