@@ -73,7 +73,7 @@ pub enum SynthParameterValue {
     ScalarU32(u32),
     ScalarUsize(usize),
     VecF32(Vec<f32>),
-    Lfo(f32, f32, ValOp), // sine lfo
+    Lfo(f32, f32, f32, ValOp), // sine lfo - init val, freq, range, operation (mul, add, sub, div, replace)
 }
 
 #[repr(C)]

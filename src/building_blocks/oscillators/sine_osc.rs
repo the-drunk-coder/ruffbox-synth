@@ -47,7 +47,8 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
                         self.freq = *f;
                         self.mcf_buf = [2.0 * (PI * f * 1.0 / self.samplerate).sin(); BUFSIZE];
                     }
-                    SynthParameterValue::Lfo(freq, range, op) => {
+                    SynthParameterValue::Lfo(init, freq, range, op) => {
+			self.freq = *init;
                         self.freq_mod = Some(Modulator::lfo(*op, *freq, *range, self.samplerate))
                     }
                     _ => { /* nothing to do, don't know how to handle this ... */ }
@@ -56,10 +57,11 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
             SynthParameterLabel::Level => {
                 match value {
                     SynthParameterValue::ScalarF32(l) => {
-                        self.lvl = *l;
-                        self.lvl_buf = [*l; BUFSIZE];
+                        self.lvl = l.clamp(-1.2, 1.2);
+                        self.lvl_buf = [self.lvl; BUFSIZE];
                     }
-                    SynthParameterValue::Lfo(freq, range, op) => {
+                    SynthParameterValue::Lfo(init, freq, range, op) => {
+			self.lvl = init.clamp(-1.2, 1.2);
                         // clamp to reasonable value ...
                         self.lvl_mod = Some(Modulator::lfo(
                             *op,
