@@ -11,8 +11,6 @@ pub struct SineOsc<const BUFSIZE: usize> {
     sin_delta_time: f32,
     samplerate: f32,
     freq: f32,
-    pi_slice: f32,
-
     freq_mod: Option<Modulator<BUFSIZE>>,
     lvl_mod: Option<Modulator<BUFSIZE>>,
 }
@@ -24,21 +22,11 @@ impl<const BUFSIZE: usize> SineOsc<BUFSIZE> {
             sin_time: 0.0,
             sin_delta_time: 1.0 / sr,
             samplerate: sr,
-            freq,
-            pi_slice: 2.0 * PI * freq,
-
+            freq,            
             freq_mod: None,
             lvl_mod: None,
         }
-    }
-
-    fn set_freq(&mut self, f: f32) {
-        self.pi_slice = 2.0 * PI * f;
-    }
-
-    fn set_lvl(&mut self, l: f32) {
-        self.lvl = l;
-    }
+    }        
 }
 
 impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
@@ -48,7 +36,6 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
             SynthParameterLabel::PitchFrequency => {
                 match value {
                     SynthParameterValue::ScalarF32(f) => {
-                        self.set_freq(*f);
                         self.freq = *f;
                     }
                     SynthParameterValue::Lfo(freq, range, op) => {
@@ -60,7 +47,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
             SynthParameterLabel::Level => {
                 match value {
                     SynthParameterValue::ScalarF32(l) => {
-                        self.set_lvl(*l);
+                        self.lvl = *l;
                     }
                     SynthParameterValue::Lfo(freq, range, op) => {
                         self.lvl_mod = Some(Modulator::lfo(*op, *freq, *range, self.samplerate))
@@ -84,7 +71,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
         for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
-            *current_sample = (self.pi_slice * self.sin_time as f32).sin() * self.lvl;
+            *current_sample = (2.0 * PI * self.freq * self.sin_time as f32).sin() * self.lvl;
             self.sin_time += self.sin_delta_time;
         }
 
