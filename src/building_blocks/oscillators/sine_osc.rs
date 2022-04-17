@@ -15,7 +15,7 @@ pub struct SineOsc<const BUFSIZE: usize> {
     lvl: f32,
     x1_last: f32,
     x2_last: f32,
-    mcf_buf: [f32; BUFSIZE],
+    mcf_buf: [f32; BUFSIZE], // the "magic circle" factors
     freq_mod: Option<Modulator<BUFSIZE>>,
     lvl_mod: Option<Modulator<BUFSIZE>>,
 }
@@ -87,8 +87,10 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
 
     fn get_next_block(&mut self, start_sample: usize, in_buffers: &[Vec<f32>]) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
-
+	
         if self.freq_mod.is_some() {
+	    // re-calculate magic circle factors if we have a
+	    // modulated frequency
             self.mcf_buf = self
                 .freq_mod
                 .as_mut()
@@ -98,6 +100,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
         }
 
         if self.lvl_mod.is_some() {
+	    // recalculate levels if we have modulated levels
             self.lvl_buf =
                 self.lvl_mod
                     .as_mut()
