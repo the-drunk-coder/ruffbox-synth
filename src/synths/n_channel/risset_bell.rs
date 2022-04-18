@@ -167,21 +167,23 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
         // first osc
         let mut out: [f32; BUFSIZE] =
             self.oscillators[0].get_next_block(start_sample, sample_buffers);
-        out = self.envelopes[0].process_block(out, start_sample);
+        out = self.envelopes[0].process_block(out, start_sample, sample_buffers);
 
         // rest
         for i in 1..11 {
             let mut tmp_out: [f32; BUFSIZE] =
                 self.oscillators[i].get_next_block(start_sample, sample_buffers);
-            tmp_out = self.envelopes[i].process_block(tmp_out, start_sample);
+            tmp_out = self.envelopes[i].process_block(tmp_out, start_sample, sample_buffers);
 
             for s in 0..BUFSIZE {
                 out[s] += tmp_out[s];
             }
         }
 
-        out = self.lpf.process_block(out, start_sample);
-        out = self.main_envelope.process_block(out, start_sample);
+        out = self.lpf.process_block(out, start_sample, sample_buffers);
+        out = self
+            .main_envelope
+            .process_block(out, start_sample, sample_buffers);
         self.balance
             .process_block(out, start_sample, sample_buffers) // needs the additional info for the modulators
     }

@@ -1,4 +1,4 @@
-use crate::building_blocks::{MonoEffect, SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{Modulator, MonoEffect, SynthParameterLabel, SynthParameterValue};
 
 /**
  * Three-pole, 18dB/octave filter with tanh distortion
@@ -28,6 +28,11 @@ pub struct Lpf18<const BUFSIZE: usize> {
     aout: f32,
     lastin: f32,
     samplerate: f32,
+
+    // modulator slots
+    cutoff_mod: Option<Modulator<BUFSIZE>>,
+    res_mod: Option<Modulator<BUFSIZE>>,
+    dist_mod: Option<Modulator<BUFSIZE>>,
 }
 
 impl<const BUFSIZE: usize> Lpf18<BUFSIZE> {
@@ -56,6 +61,9 @@ impl<const BUFSIZE: usize> Lpf18<BUFSIZE> {
             aout: 0.0,
             lastin: 0.0,
             samplerate,
+            cutoff_mod: None,
+            res_mod: None,
+            dist_mod: None,
         }
     }
 
@@ -71,26 +79,51 @@ impl<const BUFSIZE: usize> Lpf18<BUFSIZE> {
 
         (self.aout * self.value).tanh()
     }
+
+    fn update_internals(&mut self, cutoff: f32, res: f32, dist: f32) {
+        self.kfcn = 2.0 * cutoff * (1.0 / self.samplerate);
+        self.kp = ((-2.7528 * self.kfcn + 3.0429) * self.kfcn + 1.718) * self.kfcn - 0.9984;
+        self.kp1 = self.kp + 1.0;
+        self.kp1h = 0.5 * self.kp1;
+        self.kres = res * (((-2.7079 * self.kp1 + 10.963) * self.kp1 - 14.934) * self.kp1 + 8.4974);
+        self.value = 1.0 + (dist * (1.5 + 2.0 * res * (1.0 - self.kfcn)));
+    }
 }
 
 impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for Lpf18<BUFSIZE> {
     // some parameter limits might be nice ...
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
-        if let SynthParameterValue::ScalarF32(val) = value {
-            match par {
-                SynthParameterLabel::LowpassCutoffFrequency => self.cutoff = *val,
-                SynthParameterLabel::LowpassQFactor => self.res = *val,
-                SynthParameterLabel::LowpassFilterDistortion => self.dist = *val,
-                _ => (),
-            };
+        match value {
+            SynthParameterValue::ScalarF32(val) => {
+                match par {
+                    SynthParameterLabel::LowpassCutoffFrequency => self.cutoff = *val,
+                    SynthParameterLabel::LowpassQFactor => self.res = *val,
+                    SynthParameterLabel::LowpassFilterDistortion => self.dist = *val,
+                    _ => (),
+                };
 
-            self.kfcn = 2.0 * self.cutoff * (1.0 / self.samplerate);
-            self.kp = ((-2.7528 * self.kfcn + 3.0429) * self.kfcn + 1.718) * self.kfcn - 0.9984;
-            self.kp1 = self.kp + 1.0;
-            self.kp1h = 0.5 * self.kp1;
-            self.kres = self.res
-                * (((-2.7079 * self.kp1 + 10.963) * self.kp1 - 14.934) * self.kp1 + 8.4974);
-            self.value = 1.0 + (self.dist * (1.5 + 2.0 * self.res * (1.0 - self.kfcn)));
+                self.update_internals(self.cutoff, self.res, self.dist);
+            }
+            SynthParameterValue::Lfo(init, freq, range, op) => {
+                match par {
+                    SynthParameterLabel::LowpassCutoffFrequency => {
+                        self.cutoff = *init;
+                        self.cutoff_mod = Some(Modulator::lfo(*op, *freq, *range, self.samplerate));
+                    }
+                    SynthParameterLabel::LowpassQFactor => {
+                        self.res = *init;
+                        self.res_mod = Some(Modulator::lfo(*op, *freq, *range, self.samplerate));
+                    }
+                    SynthParameterLabel::LowpassFilterDistortion => {
+                        self.dist = *init;
+                        self.dist_mod = Some(Modulator::lfo(*op, *freq, *range, self.samplerate));
+                    }
+                    _ => (),
+                };
+
+                self.update_internals(self.cutoff, self.res, self.dist);
+            }
+            _ => {}
         }
     }
 
@@ -100,20 +133,60 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for Lpf18<BUFSIZE> {
     } // it's never finished ..
 
     // start sample isn't really needed either ...
-    fn process_block(&mut self, block: [f32; BUFSIZE], _: usize) -> [f32; BUFSIZE] {
+    fn process_block(
+        &mut self,
+        block: [f32; BUFSIZE],
+        start_sample: usize,
+        in_buffers: &[Vec<f32>],
+    ) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
-        for i in 0..BUFSIZE {
-            self.ax1 = self.lastin;
-            self.ay11 = self.ay1;
-            self.ay31 = self.ay2;
+        if self.cutoff_mod.is_some() || self.res_mod.is_some() || self.dist_mod.is_some() {
+            let cutoff_buf = if let Some(m) = self.cutoff_mod.as_mut() {
+                m.process(self.cutoff, start_sample, in_buffers)
+            } else {
+                [self.cutoff; BUFSIZE]
+            };
 
-            self.lastin = block[i] - (self.kres * self.aout).tanh();
-            self.ay1 = self.kp1h * (self.lastin + self.ax1) - self.kp * self.ay1;
-            self.ay2 = self.kp1h * (self.ay1 + self.ay11) - self.kp * self.ay2;
-            self.aout = self.kp1h * (self.ay2 + self.ay31) - self.kp * self.aout;
+            let res_buf = if let Some(m) = self.res_mod.as_mut() {
+                m.process(self.res, start_sample, in_buffers)
+            } else {
+                [self.res; BUFSIZE]
+            };
 
-            out_buf[i] = (self.aout * self.value).tanh();
+            let dist_buf = if let Some(m) = self.dist_mod.as_mut() {
+                m.process(self.dist, start_sample, in_buffers)
+            } else {
+                [self.dist; BUFSIZE]
+            };
+
+            for i in 0..BUFSIZE {
+                self.update_internals(cutoff_buf[i], res_buf[i], dist_buf[i]);
+
+                self.ax1 = self.lastin;
+                self.ay11 = self.ay1;
+                self.ay31 = self.ay2;
+
+                self.lastin = block[i] - (self.kres * self.aout).tanh();
+                self.ay1 = self.kp1h * (self.lastin + self.ax1) - self.kp * self.ay1;
+                self.ay2 = self.kp1h * (self.ay1 + self.ay11) - self.kp * self.ay2;
+                self.aout = self.kp1h * (self.ay2 + self.ay31) - self.kp * self.aout;
+
+                out_buf[i] = (self.aout * self.value).tanh();
+            }
+        } else {
+            for i in 0..BUFSIZE {
+                self.ax1 = self.lastin;
+                self.ay11 = self.ay1;
+                self.ay31 = self.ay2;
+
+                self.lastin = block[i] - (self.kres * self.aout).tanh();
+                self.ay1 = self.kp1h * (self.lastin + self.ax1) - self.kp * self.ay1;
+                self.ay2 = self.kp1h * (self.ay1 + self.ay11) - self.kp * self.ay2;
+                self.aout = self.kp1h * (self.ay2 + self.ay31) - self.kp * self.aout;
+
+                out_buf[i] = (self.aout * self.value).tanh();
+            }
         }
 
         out_buf

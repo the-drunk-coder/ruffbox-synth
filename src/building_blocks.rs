@@ -104,7 +104,12 @@ pub trait MonoEffect<const BUFSIZE: usize> {
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue);
-    fn process_block(&mut self, block: [f32; BUFSIZE], start_sample: usize) -> [f32; BUFSIZE];
+    fn process_block(
+        &mut self,
+        block: [f32; BUFSIZE],
+        start_sample: usize,
+        in_buffers: &[Vec<f32>],
+    ) -> [f32; BUFSIZE];
 }
 
 /// there's a freeverb- and a convolution-based implementation
