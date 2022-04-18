@@ -22,7 +22,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> LFTriSynth<BUFSIZE, NCHAN> {
             oscillator: LFTri::new(440.0, 0.5, sr),
             filter: Lpf18::new(1500.0, 0.5, 0.1, sr),
             envelope: LinearASREnvelope::new(0.3, 0.05, 0.1, 0.05, sr),
-            balance: PanChan::new(),
+            balance: PanChan::new(sr),
             reverb: 0.0,
             delay: 0.0,
         }

@@ -22,7 +22,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> LFSquareSynth<BUFSIZE, NCHAN> {
             oscillator: LFSquare::new(100.0, 0.4, 0.8, sr),
             filter: Lpf18::new(1500.0, 0.5, 0.1, sr),
             envelope: LinearASREnvelope::new(1.0, 0.002, 0.02, 0.08, sr),
-            balance: PanChan::new(),
+            balance: PanChan::new(sr),
             reverb: 0.0,
             delay: 0.0,
         }

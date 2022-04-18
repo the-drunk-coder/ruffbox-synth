@@ -21,7 +21,7 @@ pub enum SynthState {
 /// a collection of common parameters
 #[allow(dead_code)]
 #[repr(C)]
-#[derive(Hash, Eq, PartialEq, Clone, Copy)]
+#[derive(Hash, Eq, PartialEq, Clone, Copy, Debug)]
 pub enum SynthParameterLabel {
     Attack,                  // 0
     Decay,                   // 1

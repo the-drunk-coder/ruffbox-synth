@@ -13,11 +13,11 @@ pub struct SineOsc<const BUFSIZE: usize> {
     delta_t: f32,
     freq: f32,
     lvl: f32,
-    x1_last: f32,
-    x2_last: f32,
+    x1_last: f32, // delay line
+    x2_last: f32, // delay line 
     mcf_buf: [f32; BUFSIZE], // the "magic circle" factors
-    freq_mod: Option<Modulator<BUFSIZE>>,
-    lvl_mod: Option<Modulator<BUFSIZE>>,
+    freq_mod: Option<Modulator<BUFSIZE>>, // currently allows modulating frequency ..    
+    lvl_mod: Option<Modulator<BUFSIZE>>, // and level
 }
 
 impl<const BUFSIZE: usize> SineOsc<BUFSIZE> {

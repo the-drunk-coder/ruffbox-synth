@@ -32,7 +32,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> NChannelSampler<BUFSIZE, NCHAN> {
             hpf: BiquadHpf::new(20.0, 0.3, sr),
             peak_eq: PeakEq::new(700.0, 100.0, 0.0, sr),
             lpf: Lpf18::new(19500.0, 0.01, 0.01, sr),
-            balance: PanChan::new(),
+            balance: PanChan::new(sr),
             reverb: 0.0,
             delay: 0.0,
         }
