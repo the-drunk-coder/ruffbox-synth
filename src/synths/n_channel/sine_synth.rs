@@ -61,7 +61,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN> for SineSyn
     ) -> [[f32; BUFSIZE]; NCHAN] {
         let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample, sample_buffers);
         out = self.envelope.process_block(out, start_sample);
-        self.balance.process_block(out)
+        self.balance
+            .process_block(out, start_sample, sample_buffers) // needs the additional info for the modulators
     }
 
     fn reverb_level(&self) -> f32 {

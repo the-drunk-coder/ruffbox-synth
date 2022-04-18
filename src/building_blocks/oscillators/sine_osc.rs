@@ -13,11 +13,11 @@ pub struct SineOsc<const BUFSIZE: usize> {
     delta_t: f32,
     freq: f32,
     lvl: f32,
-    x1_last: f32, // delay line
-    x2_last: f32, // delay line 
-    mcf_buf: [f32; BUFSIZE], // the "magic circle" factors
-    freq_mod: Option<Modulator<BUFSIZE>>, // currently allows modulating frequency ..    
-    lvl_mod: Option<Modulator<BUFSIZE>>, // and level
+    x1_last: f32,                         // delay line
+    x2_last: f32,                         // delay line
+    mcf_buf: [f32; BUFSIZE],              // the "magic circle" factors
+    freq_mod: Option<Modulator<BUFSIZE>>, // currently allows modulating frequency ..
+    lvl_mod: Option<Modulator<BUFSIZE>>,  // and level
 }
 
 impl<const BUFSIZE: usize> SineOsc<BUFSIZE> {
@@ -48,7 +48,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
                         self.mcf_buf = [2.0 * (PI * f * 1.0 / self.samplerate).sin(); BUFSIZE];
                     }
                     SynthParameterValue::Lfo(init, freq, range, op) => {
-			self.freq = *init;
+                        self.freq = *init;
                         self.freq_mod = Some(Modulator::lfo(*op, *freq, *range, self.samplerate))
                     }
                     _ => { /* nothing to do, don't know how to handle this ... */ }
@@ -61,7 +61,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
                         self.lvl_buf = [self.lvl; BUFSIZE];
                     }
                     SynthParameterValue::Lfo(init, freq, range, op) => {
-			self.lvl = init.clamp(-1.2, 1.2);
+                        self.lvl = init.clamp(-1.2, 1.2);
                         // clamp to reasonable value ...
                         self.lvl_mod = Some(Modulator::lfo(
                             *op,
@@ -87,10 +87,10 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
 
     fn get_next_block(&mut self, start_sample: usize, in_buffers: &[Vec<f32>]) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
-	
+
         if self.freq_mod.is_some() {
-	    // re-calculate magic circle factors if we have a
-	    // modulated frequency
+            // re-calculate magic circle factors if we have a
+            // modulated frequency
             self.mcf_buf = self
                 .freq_mod
                 .as_mut()
@@ -100,7 +100,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
         }
 
         if self.lvl_mod.is_some() {
-	    // recalculate levels if we have modulated levels
+            // recalculate levels if we have modulated levels
             self.lvl_buf =
                 self.lvl_mod
                     .as_mut()

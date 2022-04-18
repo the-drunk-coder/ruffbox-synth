@@ -14,57 +14,67 @@ impl<const BUFSIZE: usize, const NCHAN: usize> PanChan<BUFSIZE, NCHAN> {
         let mut lvls = [[0.0; BUFSIZE]; NCHAN];
         lvls[0] = [1.0; BUFSIZE];
         // always start on first channel
-        PanChan { levels: lvls, pos_mod: None, pos: 0.0, samplerate: sr }
+        PanChan {
+            levels: lvls,
+            pos_mod: None,
+            pos: 0.0,
+            samplerate: sr,
+        }
     }
-    
+
     /// Set the parameter for this panner.
     pub fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
         // if it was more parameters, match would be better,
         // but this way clippy doesn't complain
         if par == SynthParameterLabel::ChannelPosition {
-	    match value {
-		SynthParameterValue::ScalarF32(p) => {
-		    self.pos = *p; // keep for later
-		    
-		    self.levels = [[0.0; BUFSIZE]; NCHAN];
-                    
+            match value {
+                SynthParameterValue::ScalarF32(p) => {
+                    self.pos = *p; // keep for later
+
+                    self.levels = [[0.0; BUFSIZE]; NCHAN];
+
                     let lower = p.floor();
-                    let angle_rad = (p - lower) * PI * 0.5;		    
+                    let angle_rad = (p - lower) * PI * 0.5;
                     let upper = lower + 1.0;
-		    
+
                     self.levels[lower as usize % (NCHAN as usize)] = [angle_rad.cos(); BUFSIZE];
-                    self.levels[upper as usize % (NCHAN as usize)] = [angle_rad.sin(); BUFSIZE];		                        
-		},
-		SynthParameterValue::Lfo(init, freq, range, op) => {
-		    self.pos = *init; // keep for later
-		    self.pos_mod = Some(Modulator::lfo(*op, *freq, *range, self.samplerate))
-		}
-		_ => {}
-	    }            
+                    self.levels[upper as usize % (NCHAN as usize)] = [angle_rad.sin(); BUFSIZE];
+                }
+                SynthParameterValue::Lfo(init, freq, range, op) => {
+                    self.pos = *init; // keep for later
+                    self.pos_mod = Some(Modulator::lfo(*op, *freq, *range, self.samplerate))
+                }
+                _ => {}
+            }
         }
     }
 
     /// pan mono to stereo
     #[allow(clippy::needless_range_loop)]
-    pub fn process_block(&mut self, block: [f32; BUFSIZE]) -> [[f32; BUFSIZE]; NCHAN] {
-	if self.pos_mod.is_some() {
-	    self.levels = [[0.0; BUFSIZE]; NCHAN];
-	    let pos_buf = self
-                .pos_mod
-                .as_mut()
-                .unwrap()
-                .process(self.pos, 0, &Vec::new());
-	    for (idx, p) in pos_buf.iter().enumerate() {
-		let lower = p.floor();
-                let angle_rad = (p - lower) * PI * 0.5;		
+    pub fn process_block(
+        &mut self,
+        block: [f32; BUFSIZE],
+        start_sample: usize,
+        sample_buffers: &[Vec<f32>],
+    ) -> [[f32; BUFSIZE]; NCHAN] {
+        if self.pos_mod.is_some() {
+            self.levels = [[0.0; BUFSIZE]; NCHAN];
+            let pos_buf =
+                self.pos_mod
+                    .as_mut()
+                    .unwrap()
+                    .process(self.pos, start_sample, sample_buffers);
+            for (idx, p) in pos_buf.iter().enumerate() {
+                let lower = p.floor();
+                let angle_rad = (p - lower) * PI * 0.5;
                 let upper = lower + 1.0;
-		    
+
                 self.levels[lower as usize % (NCHAN as usize)][idx] = angle_rad.cos();
                 self.levels[upper as usize % (NCHAN as usize)][idx] = angle_rad.sin();
-	    }	    
-	}
-	
-	// I think the range loop is way more intuitive and easy to read here ...
+            }
+        }
+
+        // I think the range loop is way more intuitive and easy to read here ...
         let mut out_buf = [[0.0; BUFSIZE]; NCHAN];
         for c in 0..NCHAN {
             for s in 0..BUFSIZE {

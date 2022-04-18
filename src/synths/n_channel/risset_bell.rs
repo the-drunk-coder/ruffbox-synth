@@ -182,7 +182,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
 
         out = self.lpf.process_block(out, start_sample);
         out = self.main_envelope.process_block(out, start_sample);
-        self.balance.process_block(out)
+        self.balance
+            .process_block(out, start_sample, sample_buffers) // needs the additional info for the modulators
     }
 
     fn reverb_level(&self) -> f32 {
