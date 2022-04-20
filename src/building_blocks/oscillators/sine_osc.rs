@@ -8,14 +8,19 @@ use std::f32::consts::PI;
  * https://www.dsprelated.com/freebooks/pasp/Digital_Sinusoid_Generators.html
  */
 pub struct SineOsc<const BUFSIZE: usize> {
-    lvl_buf: [f32; BUFSIZE],
-    samplerate: f32,
-    delta_t: f32,
+    // user parameters
     freq: f32,
     lvl: f32,
+
+    // internal parameters
+    lvl_buf: [f32; BUFSIZE],
+    samplerate: f32,
+    delta_t: f32,    
     x1_last: f32,                         // delay line
     x2_last: f32,                         // delay line
     mcf_buf: [f32; BUFSIZE],              // the "magic circle" factors
+
+    // modulator slots
     freq_mod: Option<Modulator<BUFSIZE>>, // currently allows modulating frequency ..
     lvl_mod: Option<Modulator<BUFSIZE>>,  // and level
 }
@@ -23,6 +28,7 @@ pub struct SineOsc<const BUFSIZE: usize> {
 impl<const BUFSIZE: usize> SineOsc<BUFSIZE> {
     pub fn new(freq: f32, lvl: f32, sr: f32) -> Self {
         SineOsc {
+	    freq,
             lvl,
             lvl_buf: [lvl; BUFSIZE],
             delta_t: 1.0 / sr,
@@ -30,7 +36,6 @@ impl<const BUFSIZE: usize> SineOsc<BUFSIZE> {
             x1_last: 0.0,
             x2_last: 1.0,
             mcf_buf: [2.0 * (PI * freq * 1.0 / sr).sin(); BUFSIZE],
-            freq,
             freq_mod: None,
             lvl_mod: None,
         }
