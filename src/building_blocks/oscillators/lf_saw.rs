@@ -4,14 +4,19 @@ use crate::building_blocks::{Modulator, MonoSource, SynthParameterLabel, SynthPa
  * A non-band-limited sawtooth oscillator.
  */
 pub struct LFSaw<const BUFSIZE: usize> {
+    // user parameters
     freq: f32,
     lvl: f32,
+
+    // internal parameters
     samplerate: f32,
     period_samples: usize,
     lvl_inc: f32,
     cur_lvl: f32,
     period_count: usize,
-    freq_mod: Option<Modulator<BUFSIZE>>, // currently allows modulating frequency ..
+
+    // modulator slots
+    freq_mod: Option<Modulator<BUFSIZE>>, // allows modulating frequency ..
     lvl_mod: Option<Modulator<BUFSIZE>>,  // and level
 }
 
