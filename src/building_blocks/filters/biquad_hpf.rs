@@ -1,4 +1,4 @@
-use crate::building_blocks::{MonoEffect, SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{Modulator, MonoEffect, SynthParameterLabel, SynthParameterValue};
 
 /**
  * Biquad HiPass Filter, 12dB/oct
@@ -18,6 +18,10 @@ pub struct BiquadHpf<const BUFSIZE: usize> {
     del2: f32,
     k: f32,
     samplerate: f32,
+
+    // modulator slots
+    cutoff_mod: Option<Modulator<BUFSIZE>>,
+    q_mod: Option<Modulator<BUFSIZE>>,
 }
 
 impl<const BUFSIZE: usize> BiquadHpf<BUFSIZE> {
@@ -37,32 +41,53 @@ impl<const BUFSIZE: usize> BiquadHpf<BUFSIZE> {
             del2: 0.0,
             k,
             samplerate: sr,
+            cutoff_mod: None,
+            q_mod: None,
         }
+    }
+
+    fn update_internals(&mut self, cutoff: f32, q: f32) {
+        self.k = ((std::f32::consts::PI * cutoff) / self.samplerate).tanh();
+        let k_pow_two = self.k.powf(2.0);
+        self.a1 = (2.0 * q * (k_pow_two - 1.0)) / ((k_pow_two * q) + self.k + q);
+        self.a2 = ((k_pow_two * q) - self.k + q) / ((k_pow_two * q) + self.k + q);
+        self.b0 = q / ((k_pow_two * q) + self.k + q);
+        self.b1 = -1.0 * ((2.0 * q) / ((k_pow_two * q) + self.k + q));
+        self.b2 = self.b0;
     }
 }
 
 impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for BiquadHpf<BUFSIZE> {
     // some parameter limits might be nice ...
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
-        if let SynthParameterValue::ScalarF32(val) = value {
-            match par {
-                SynthParameterLabel::HighpassCutoffFrequency => self.cutoff = *val,
-                SynthParameterLabel::HighpassQFactor => self.q = *val,
-                _ => (),
-            };
+        match value {
+            SynthParameterValue::ScalarF32(val) => {
+                match par {
+                    SynthParameterLabel::HighpassCutoffFrequency => self.cutoff = *val,
+                    SynthParameterLabel::HighpassQFactor => self.q = *val,
+                    _ => (),
+                };
 
-            // reset delay
-            self.del1 = 0.0;
-            self.del2 = 0.0;
+                self.update_internals(self.cutoff, self.q);
+            }
 
-            self.k = ((std::f32::consts::PI * self.cutoff) / self.samplerate).tanh();
-            let k_pow_two = self.k.powf(2.0);
-            self.a1 = (2.0 * self.q * (k_pow_two - 1.0)) / ((k_pow_two * self.q) + self.k + self.q);
-            self.a2 =
-                ((k_pow_two * self.q) - self.k + self.q) / ((k_pow_two * self.q) + self.k + self.q);
-            self.b0 = self.q / ((k_pow_two * self.q) + self.k + self.q);
-            self.b1 = -1.0 * ((2.0 * self.q) / ((k_pow_two * self.q) + self.k + self.q));
-            self.b2 = self.b0;
+            SynthParameterValue::Lfo(init, freq, range, op) => {
+                match par {
+                    SynthParameterLabel::HighpassCutoffFrequency => {
+                        self.cutoff = *init;
+                        self.cutoff_mod = Some(Modulator::lfo(*op, *freq, *range, self.samplerate));
+                    }
+                    SynthParameterLabel::HighpassQFactor => {
+                        self.q = *init;
+                        self.q_mod = Some(Modulator::lfo(*op, *freq, *range, self.samplerate));
+                    }
+
+                    _ => (),
+                };
+
+                self.update_internals(self.cutoff, self.q);
+            }
+            _ => {}
         }
     }
 
@@ -72,15 +97,46 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for BiquadHpf<BUFSIZE> {
     } // it's never finished ..
 
     // start sample isn't really needed either ...
-    fn process_block(&mut self, block: [f32; BUFSIZE], _: usize, _: &[Vec<f32>]) -> [f32; BUFSIZE] {
+    fn process_block(
+        &mut self,
+        block: [f32; BUFSIZE],
+        start_sample: usize,
+        in_buffers: &[Vec<f32>],
+    ) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
-        for i in 0..BUFSIZE {
-            let intermediate =
-                block[i] + ((-1.0 * self.a1) * self.del1) + ((-1.0 * self.a2) * self.del2);
-            out_buf[i] = (self.b0 * intermediate) + (self.b1 * self.del1) + (self.b2 * self.del2);
-            self.del2 = self.del1;
-            self.del1 = intermediate;
+        if self.cutoff_mod.is_some() || self.q_mod.is_some() {
+            let cutoff_buf = if let Some(m) = self.cutoff_mod.as_mut() {
+                m.process(self.cutoff, start_sample, in_buffers)
+            } else {
+                [self.cutoff; BUFSIZE]
+            };
+
+            let q_buf = if let Some(m) = self.q_mod.as_mut() {
+                m.process(self.q, start_sample, in_buffers)
+            } else {
+                [self.q; BUFSIZE]
+            };
+
+            for i in start_sample..BUFSIZE {
+                self.update_internals(cutoff_buf[i], q_buf[i]);
+
+                let intermediate =
+                    block[i] + ((-1.0 * self.a1) * self.del1) + ((-1.0 * self.a2) * self.del2);
+                out_buf[i] =
+                    (self.b0 * intermediate) + (self.b1 * self.del1) + (self.b2 * self.del2);
+                self.del2 = self.del1;
+                self.del1 = intermediate;
+            }
+        } else {
+            for i in 0..BUFSIZE {
+                let intermediate =
+                    block[i] + ((-1.0 * self.a1) * self.del1) + ((-1.0 * self.a2) * self.del2);
+                out_buf[i] =
+                    (self.b0 * intermediate) + (self.b1 * self.del1) + (self.b2 * self.del2);
+                self.del2 = self.del1;
+                self.del1 = intermediate;
+            }
         }
 
         out_buf
