@@ -1,24 +1,38 @@
 // parent imports
-use crate::building_blocks::{MonoSource, SynthParameterLabel, SynthParameterValue, SynthState};
+use crate::building_blocks::{
+    Modulator, MonoSource, SynthParameterLabel, SynthParameterValue, SynthState,
+};
 
 /**
  * a very simple sample player ...
  */
-#[derive(Clone)]
 pub struct Sampler<const BUFSIZE: usize> {
+    // user parameters
+    playback_rate: f32,
+    lvl: f32,
+
+    // internal parameters
     index: usize,
     frac_index: f32,
     bufnum: usize,
     buflen: usize,
-    playback_rate: f32,
     frac_index_increment: f32,
     state: SynthState,
-    level: f32,
     repeat: bool,
+    samplerate: f32,
+
+    // modulator slots
+    rate_mod: Option<Modulator<BUFSIZE>>,
+    lvl_mod: Option<Modulator<BUFSIZE>>,
 }
 
 impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
-    pub fn with_bufnum_len(bufnum: usize, buflen: usize, repeat: bool) -> Sampler<BUFSIZE> {
+    pub fn with_bufnum_len(
+        bufnum: usize,
+        buflen: usize,
+        repeat: bool,
+        sr: f32,
+    ) -> Sampler<BUFSIZE> {
         Sampler {
             index: 1, // start with one to account for interpolation
             frac_index: 1.0,
@@ -27,12 +41,15 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
             playback_rate: 1.0,
             frac_index_increment: 1.0,
             state: SynthState::Fresh,
-            level: 1.0,
+            lvl: 1.0,
             repeat,
+            samplerate: sr,
+            rate_mod: None,
+            lvl_mod: None,
         }
     }
 
-    fn get_next_block_no_interp(
+    fn get_next_block_plain(
         &mut self,
         start_sample: usize,
         sample_buffers: &[Vec<f32>],
@@ -40,7 +57,7 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
         for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
-            *current_sample = sample_buffers[self.bufnum][self.index] * self.level;
+            *current_sample = sample_buffers[self.bufnum][self.index] * self.lvl;
 
             if self.index < self.buflen {
                 self.index += 1;
@@ -55,7 +72,7 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
         out_buf
     }
 
-    fn get_next_block_interp(
+    fn get_next_block_interpolated(
         &mut self,
         start_sample: usize,
         sample_buffers: &[Vec<f32>],
@@ -79,7 +96,65 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
             let c2 = y_m1 - 2.5 * y_0 + 2.0 * y_1 - 0.5 * y_2;
             let c3 = 0.5 * (y_2 - y_m1) + 1.5 * (y_0 - y_1);
 
-            *current_sample = (((c3 * frac + c2) * frac + c1) * frac + c0) * self.level;
+            *current_sample = (((c3 * frac + c2) * frac + c1) * frac + c0) * self.lvl;
+
+            if ((self.frac_index + self.frac_index_increment) as usize) < self.buflen {
+                self.frac_index += self.frac_index_increment;
+            } else if self.repeat {
+                self.frac_index = 1.0;
+                self.index = 1;
+            } else {
+                self.finish();
+            }
+        }
+
+        out_buf
+    }
+
+    fn get_next_block_modulated(
+        &mut self,
+        start_sample: usize,
+        sample_buffers: &[Vec<f32>],
+    ) -> [f32; BUFSIZE] {
+        let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
+
+        let rate_buf = if let Some(m) = self.rate_mod.as_mut() {
+            m.process(self.playback_rate, start_sample, sample_buffers)
+        } else {
+            [self.playback_rate; BUFSIZE]
+        };
+
+        let lvl_buf = if let Some(m) = self.lvl_mod.as_mut() {
+            m.process(self.lvl, start_sample, sample_buffers)
+        } else {
+            [self.lvl; BUFSIZE]
+        };
+
+        for (sample_idx, current_sample) in out_buf
+            .iter_mut()
+            .enumerate()
+            .take(BUFSIZE)
+            .skip(start_sample)
+        {
+            self.frac_index_increment = 1.0 * rate_buf[sample_idx];
+
+            // get sample:
+            let idx = self.frac_index.floor();
+            let frac = self.frac_index - idx;
+            let idx_u = idx as usize;
+
+            // 4-point, 3rd-order Hermite
+            let y_m1 = sample_buffers[self.bufnum][idx_u - 1];
+            let y_0 = sample_buffers[self.bufnum][idx_u];
+            let y_1 = sample_buffers[self.bufnum][idx_u + 1];
+            let y_2 = sample_buffers[self.bufnum][idx_u + 2];
+
+            let c0 = y_0;
+            let c1 = 0.5 * (y_1 - y_m1);
+            let c2 = y_m1 - 2.5 * y_0 + 2.0 * y_1 - 0.5 * y_2;
+            let c3 = 0.5 * (y_2 - y_m1) + 1.5 * (y_0 - y_1);
+
+            *current_sample = (((c3 * frac + c2) * frac + c1) * frac + c0) * lvl_buf[sample_idx];
 
             if ((self.frac_index + self.frac_index_increment) as usize) < self.buflen {
                 self.frac_index += self.frac_index_increment;
@@ -115,17 +190,27 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
                     self.frac_index = self.index as f32;
                 }
             }
-            SynthParameterLabel::PlaybackRate => {
-                if let SynthParameterValue::ScalarF32(value) = val {
+            SynthParameterLabel::PlaybackRate => match val {
+                SynthParameterValue::Lfo(init, freq, range, op) => {
+                    self.playback_rate = *init;
+                    self.rate_mod = Some(Modulator::lfo(*op, *freq, *range, self.samplerate));
+                }
+                SynthParameterValue::ScalarF32(value) => {
                     self.playback_rate = *value;
                     self.frac_index_increment = 1.0 * *value;
                 }
-            }
-            SynthParameterLabel::Level => {
-                if let SynthParameterValue::ScalarF32(value) = val {
-                    self.level = *value;
+                _ => {}
+            },
+            SynthParameterLabel::Level => match val {
+                SynthParameterValue::ScalarF32(value) => {
+                    self.lvl = *value;
                 }
-            }
+                SynthParameterValue::Lfo(init, freq, range, op) => {
+                    self.lvl = *init;
+                    self.lvl_mod = Some(Modulator::lfo(*op, *freq, *range, self.samplerate));
+                }
+                _ => {}
+            },
             _ => (),
         };
     }
@@ -143,10 +228,12 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
         start_sample: usize,
         sample_buffers: &[Vec<f32>],
     ) -> [f32; BUFSIZE] {
-        if self.playback_rate == 1.0 {
-            self.get_next_block_no_interp(start_sample, sample_buffers)
+        if self.rate_mod.is_some() || self.rate_mod.is_some() {
+            self.get_next_block_modulated(start_sample, sample_buffers)
+        } else if self.playback_rate == 1.0 {
+            self.get_next_block_plain(start_sample, sample_buffers)
         } else {
-            self.get_next_block_interp(start_sample, sample_buffers)
+            self.get_next_block_interpolated(start_sample, sample_buffers)
         }
     }
 }
