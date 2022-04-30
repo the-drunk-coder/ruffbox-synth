@@ -1,6 +1,6 @@
 // parent imports
 use crate::building_blocks::{
-    Modulator, MonoSource, SynthParameterLabel, SynthParameterValue, SynthState,
+    interpolation::*, Modulator, MonoSource, SynthParameterLabel, SynthParameterValue, SynthState,
 };
 
 /**
@@ -86,17 +86,14 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
             let idx_u = idx as usize;
 
             // 4-point, 3rd-order Hermite
-            let y_m1 = sample_buffers[self.bufnum][idx_u - 1];
-            let y_0 = sample_buffers[self.bufnum][idx_u];
-            let y_1 = sample_buffers[self.bufnum][idx_u + 1];
-            let y_2 = sample_buffers[self.bufnum][idx_u + 2];
-
-            let c0 = y_0;
-            let c1 = 0.5 * (y_1 - y_m1);
-            let c2 = y_m1 - 2.5 * y_0 + 2.0 * y_1 - 0.5 * y_2;
-            let c3 = 0.5 * (y_2 - y_m1) + 1.5 * (y_0 - y_1);
-
-            *current_sample = (((c3 * frac + c2) * frac + c1) * frac + c0) * self.lvl;
+            *current_sample = interpolate(
+                frac,
+                sample_buffers[self.bufnum][idx_u - 1],
+                sample_buffers[self.bufnum][idx_u],
+                sample_buffers[self.bufnum][idx_u + 1],
+                sample_buffers[self.bufnum][idx_u + 2],
+                self.lvl,
+            );
 
             if ((self.frac_index + self.frac_index_increment) as usize) < self.buflen {
                 self.frac_index += self.frac_index_increment;
@@ -144,17 +141,14 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
             let idx_u = idx as usize;
 
             // 4-point, 3rd-order Hermite
-            let y_m1 = sample_buffers[self.bufnum][idx_u - 1];
-            let y_0 = sample_buffers[self.bufnum][idx_u];
-            let y_1 = sample_buffers[self.bufnum][idx_u + 1];
-            let y_2 = sample_buffers[self.bufnum][idx_u + 2];
-
-            let c0 = y_0;
-            let c1 = 0.5 * (y_1 - y_m1);
-            let c2 = y_m1 - 2.5 * y_0 + 2.0 * y_1 - 0.5 * y_2;
-            let c3 = 0.5 * (y_2 - y_m1) + 1.5 * (y_0 - y_1);
-
-            *current_sample = (((c3 * frac + c2) * frac + c1) * frac + c0) * lvl_buf[sample_idx];
+            *current_sample = interpolate(
+                frac,
+                sample_buffers[self.bufnum][idx_u - 1],
+                sample_buffers[self.bufnum][idx_u],
+                sample_buffers[self.bufnum][idx_u + 1],
+                sample_buffers[self.bufnum][idx_u + 2],
+                lvl_buf[sample_idx],
+            );
 
             if ((self.frac_index + self.frac_index_increment) as usize) < self.buflen {
                 self.frac_index += self.frac_index_increment;

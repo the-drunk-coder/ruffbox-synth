@@ -5,6 +5,7 @@ pub mod delay;
 pub mod envelopes;
 pub mod filters;
 pub mod freeverb;
+pub mod interpolation;
 pub mod modulator;
 pub mod oscillators;
 pub mod routing;
@@ -29,6 +30,7 @@ pub enum SynthParameterLabel {
     DelayFeedback,           // 3
     DelayMix,                // 4
     DelayTime,               // 5
+    DelayRate,               // 5
     Duration,                // 6
     PitchFrequency,          // 7
     PitchNote,               // 8

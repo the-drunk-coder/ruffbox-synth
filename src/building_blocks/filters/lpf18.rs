@@ -80,7 +80,7 @@ impl<const BUFSIZE: usize> Lpf18<BUFSIZE> {
 
         (self.aout * self.value).tanh()
     }
-    
+
     #[inline(always)]
     fn update_internals(&mut self, cutoff: f32, res: f32, dist: f32) {
         self.kfcn = 2.0 * cutoff * (1.0 / self.samplerate);
