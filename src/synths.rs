@@ -9,6 +9,7 @@ pub use crate::synths::n_channel::lf_tri_synth::LFTriSynth;
 pub use crate::synths::n_channel::n_channel_sampler::NChannelSampler;
 pub use crate::synths::n_channel::risset_bell::RissetBell;
 pub use crate::synths::n_channel::sine_synth::SineSynth;
+pub use crate::synths::n_channel::wavematrix_synth::WavematrixSynth;
 pub use crate::synths::n_channel::wavetable_synth::WavetableSynth;
 
 // ambisonic synths

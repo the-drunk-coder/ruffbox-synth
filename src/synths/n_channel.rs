@@ -7,6 +7,7 @@ pub mod lf_tri_synth;
 pub mod n_channel_sampler;
 pub mod risset_bell;
 pub mod sine_synth;
+pub mod wavematrix_synth;
 pub mod wavetable_synth;
 
 pub use crate::synths::n_channel::lf_cub_synth::LFCubSynth;
@@ -16,4 +17,5 @@ pub use crate::synths::n_channel::lf_tri_synth::LFTriSynth;
 pub use crate::synths::n_channel::n_channel_sampler::NChannelSampler;
 pub use crate::synths::n_channel::risset_bell::RissetBell;
 pub use crate::synths::n_channel::sine_synth::SineSynth;
+pub use crate::synths::n_channel::wavematrix_synth::WavematrixSynth;
 pub use crate::synths::n_channel::wavetable_synth::WavetableSynth;

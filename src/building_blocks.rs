@@ -30,34 +30,36 @@ pub enum SynthParameterLabel {
     DelayFeedback,           // 3
     DelayMix,                // 4
     DelayTime,               // 5
-    DelayRate,               // 5
-    Duration,                // 6
-    PitchFrequency,          // 7
-    PitchNote,               // 8
-    HighpassCutoffFrequency, // 9
-    HighpassQFactor,         // 10
-    Level,                   // 11
-    LowpassCutoffFrequency,  // 12
-    LowpassQFactor,          // 13
-    LowpassFilterDistortion, // 14
-    PeakFrequency,           // 15
-    PeakGain,                // 16
-    PeakQFactor,             // 17
-    Pulsewidth,              // 18
-    PlaybackRate,            // 19
-    PlaybackStart,           // 20
-    PlaybackLoop,            // 21
-    Release,                 // 22
-    ReverbDampening,         // 23
-    ReverbMix,               // 24
-    ReverbRoomsize,          // 25
-    SampleBufferNumber,      // 26
-    Samplerate,              // 27
-    ChannelPosition,         // 28
-    AmbisonicAzimuth,        // 29
-    AmbisonicElevation,      // 30
-    Sustain,                 // 31
-    Wavetable,               // 32
+    DelayRate,               // 6
+    Duration,                // 7
+    PitchFrequency,          // 8
+    PitchNote,               // 9
+    HighpassCutoffFrequency, // 10
+    HighpassQFactor,         // 11
+    Level,                   // 12
+    LowpassCutoffFrequency,  // 13
+    LowpassQFactor,          // 14
+    LowpassFilterDistortion, // 15
+    PeakFrequency,           // 16
+    PeakGain,                // 17
+    PeakQFactor,             // 18
+    Pulsewidth,              // 19
+    PlaybackRate,            // 20
+    PlaybackStart,           // 21
+    PlaybackLoop,            // 22
+    Release,                 // 23
+    ReverbDampening,         // 24
+    ReverbMix,               // 25
+    ReverbRoomsize,          // 26
+    SampleBufferNumber,      // 27
+    Samplerate,              // 28
+    ChannelPosition,         // 29
+    AmbisonicAzimuth,        // 30
+    AmbisonicElevation,      // 31
+    Sustain,                 // 32
+    Wavetable,               // 33
+    Wavematrix,              // 34
+    WavematrixIndex,         // 35
 }
 
 #[derive(Clone, Copy)]
@@ -75,6 +77,7 @@ pub enum SynthParameterValue {
     ScalarU32(u32),
     ScalarUsize(usize),
     VecF32(Vec<f32>),
+    MatrixF32((usize, usize), Vec<Vec<f32>>), // dimension, content
     Lfo(f32, f32, f32, ValOp), // sine lfo - init val, freq, range, operation (mul, add, sub, div, replace)
 }
 
@@ -91,6 +94,7 @@ pub enum SynthType {
     LFTriangleSynth,
     RissetBell,
     Wavetable,
+    Wavematrix,
 }
 
 /// oscillators, the sampler, etc are sources

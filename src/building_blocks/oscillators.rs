@@ -5,6 +5,7 @@ pub mod lf_saw;
 pub mod lf_square;
 pub mod lf_tri;
 pub mod sine_osc;
+pub mod wavematrix;
 pub mod wavetable;
 
 pub use crate::building_blocks::oscillators::lf_cub::LFCub;
@@ -12,6 +13,7 @@ pub use crate::building_blocks::oscillators::lf_saw::LFSaw;
 pub use crate::building_blocks::oscillators::lf_square::LFSquare;
 pub use crate::building_blocks::oscillators::lf_tri::LFTri;
 pub use crate::building_blocks::oscillators::sine_osc::SineOsc;
+pub use crate::building_blocks::oscillators::wavematrix::Wavematrix;
 pub use crate::building_blocks::oscillators::wavetable::Wavetable;
 
 // TEST TEST TEST

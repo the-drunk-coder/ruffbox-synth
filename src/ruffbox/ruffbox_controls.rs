@@ -148,6 +148,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
                 SynthType::Wavetable => {
                     ScheduledEvent::new(timestamp, Box::new(WavetableSynth::new(self.samplerate)))
                 }
+                SynthType::Wavematrix => {
+                    ScheduledEvent::new(timestamp, Box::new(WavematrixSynth::new(self.samplerate)))
+                }
                 _ => {
                     return None;
                 } // jump out
