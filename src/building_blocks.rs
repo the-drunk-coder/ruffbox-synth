@@ -59,7 +59,7 @@ pub enum SynthParameterLabel {
     Sustain,                 // 32
     Wavetable,               // 33
     Wavematrix,              // 34
-    WavematrixIndex,         // 35
+    WavematrixTableIndex,    // 35
 }
 
 #[derive(Clone, Copy)]

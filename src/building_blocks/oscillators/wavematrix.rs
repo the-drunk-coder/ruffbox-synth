@@ -18,7 +18,6 @@ pub struct Wavematrix<const BUFSIZE: usize> {
     phase_inc_smp: f32,
     phase_inc_tab: f32,
     sample_ptr: f32, // for the inner tables
-    table_ptr: f32,  // for the outer tables
     state: SynthState,
     sample_period: f32,
     samplerate: f32,
@@ -41,7 +40,6 @@ impl<const BUFSIZE: usize> Wavematrix<BUFSIZE> {
             phase_inc_smp: 1.0,
             phase_inc_tab: 0.0,
             sample_ptr: 0.0,
-            table_ptr: 0.0,
             state: SynthState::Fresh,
             sample_period: 1.0 / sr,
             samplerate: sr,
@@ -87,6 +85,16 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavematrix<BUFSIZE> {
                     self.phase_inc_smp = self.tablesize as f32 * self.freq * self.sample_period;
                 }
             }
+            SynthParameterLabel::WavematrixTableIndex => match val {
+                SynthParameterValue::ScalarF32(value) => {
+                    self.table_idx = *value;
+                }
+                SynthParameterValue::Lfo(init, freq, range, op) => {
+                    self.table_idx = *init;
+                    self.table_idx_mod = Some(Modulator::lfo(*op, *freq, *range, self.samplerate))
+                }
+                _ => {}
+            },
             SynthParameterLabel::Level => match val {
                 SynthParameterValue::ScalarF32(value) => {
                     self.lvl = *value;
@@ -148,8 +156,8 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavematrix<BUFSIZE> {
                 let smp_frac = self.sample_ptr - (smp_idx as f32);
 
                 // table index
-                let tab_idx = self.table_ptr as usize;
-                let tab_frac = self.table_ptr - (tab_idx as f32);
+                let tab_idx = table_idx_buf[sample_idx] as usize;
+                let tab_frac = table_idx_buf[sample_idx] - (tab_idx as f32);
 
                 // use simple linear interpolation for now ...
                 *current_sample = if smp_frac == 0.0 && tab_frac == 0.0 {
@@ -181,11 +189,6 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavematrix<BUFSIZE> {
                 if self.sample_ptr as usize >= self.tablesize {
                     self.sample_ptr -= self.tablesize as f32;
                 }
-
-                self.table_ptr += self.phase_inc_tab;
-                if self.table_ptr as usize >= self.matrixsize {
-                    self.table_ptr -= self.matrixsize as f32;
-                }
             }
         } else {
             for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
@@ -195,8 +198,8 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavematrix<BUFSIZE> {
                 let smp_frac = self.sample_ptr - (smp_idx as f32);
 
                 // table index
-                let tab_idx = self.table_ptr as usize;
-                let tab_frac = self.table_ptr - (tab_idx as f32);
+                let tab_idx = self.table_idx as usize;
+                let tab_frac = self.table_idx - (tab_idx as f32);
 
                 // use simple linear interpolation for now ...
                 *current_sample = if smp_frac == 0.0 && tab_frac == 0.0 {
@@ -227,11 +230,6 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavematrix<BUFSIZE> {
                 self.sample_ptr += self.phase_inc_smp;
                 if self.sample_ptr as usize >= self.tablesize {
                     self.sample_ptr -= self.tablesize as f32;
-                }
-
-                self.table_ptr += self.phase_inc_tab;
-                if self.table_ptr as usize >= self.matrixsize {
-                    self.table_ptr -= self.matrixsize as f32;
                 }
             }
         }
