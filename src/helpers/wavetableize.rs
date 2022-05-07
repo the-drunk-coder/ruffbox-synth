@@ -25,6 +25,44 @@ pub fn wavetableize_raw(
     wavematrix
 }
 
+fn find_zerocrossing(buffer: &[f32], reverse: bool) -> (usize, usize, usize) {
+    // find zerocrossing from new to pos
+    let mut start_idx = 0;
+    let mut end_idx = buffer.len();
+
+    if reverse {
+        for i in 0..buffer.len() - 1 {
+            if buffer[i] > 0.0 && buffer[i + 1] <= 0.0 || buffer[i] == 0.0 && buffer[i + 1] < 0.0 {
+                start_idx = i;
+                break;
+            }
+        }
+
+        for i in (1..buffer.len() - 1).rev() {
+            if buffer[i] < 0.0 && buffer[i - 1] >= 0.0 || buffer[i] == 0.0 && buffer[i - 1] > 0.0 {
+                end_idx = i;
+                break;
+            }
+        }
+    } else {
+        for i in 0..buffer.len() - 1 {
+            if buffer[i] < 0.0 && buffer[i + 1] >= 0.0 || buffer[i] == 0.0 && buffer[i + 1] > 0.0 {
+                start_idx = i;
+                break;
+            }
+        }
+
+        for i in (1..buffer.len() - 1).rev() {
+            if buffer[i] > 0.0 && buffer[i - 1] <= 0.0 || buffer[i] == 0.0 && buffer[i - 1] < 0.0 {
+                end_idx = i;
+                break;
+            }
+        }
+    }
+
+    (start_idx, end_idx + 1, end_idx + 1 - start_idx)
+}
+
 pub fn wavetableize_zerocrossing(
     buffer: &[f32],
     mut matrix_size: (usize, usize),
@@ -44,35 +82,25 @@ pub fn wavetableize_zerocrossing(
         let mut raw_buffer =
             buffer[(start + i * matrix_size.1)..(start + ((i + 1) * matrix_size.1))].to_vec();
 
-        println!("before {:?}", raw_buffer);
+        let zc_reg = find_zerocrossing(&raw_buffer, false);
+        let zc_inv = find_zerocrossing(&raw_buffer, true);
 
-        // find zerocrossing from new to pos
-        let mut start_idx = 0;
-        let mut end_idx = raw_buffer.len();
+        let (inverse, start_idx, end_idx) = if zc_inv.2 > zc_reg.2 {
+            (true, zc_inv.0, zc_reg.1)
+        } else {
+            (true, zc_reg.0, zc_reg.1)
+        };
 
-        for i in 0..raw_buffer.len() - 1 {
-            if raw_buffer[i] < 0.0 && raw_buffer[i + 1] >= 0.0
-                || raw_buffer[i] == 0.0 && raw_buffer[i + 1] > 0.0
-            {
-                raw_buffer[i] = 0.0;
-                start_idx = i;
-                break;
-            }
-        }
+        //println!("start {} end {} {}", start_idx, end_idx, inverse);
 
-        for i in (1..raw_buffer.len() - 1).rev() {
-            if raw_buffer[i] > 0.0 && raw_buffer[i - 1] <= 0.0
-                || raw_buffer[i] == 0.0 && raw_buffer[i - 1] < 0.0
-            {
-                raw_buffer[i] = 0.0;
-                end_idx = i;
-                break;
-            }
-        }
-
-        println!("start {} end {}", start_idx, end_idx);
-
+        raw_buffer[start_idx] = 0.0;
+        raw_buffer[end_idx - 1] = 0.0;
         raw_buffer = raw_buffer[start_idx..end_idx].to_vec();
+
+        //inverse phase
+        if inverse {
+            raw_buffer = raw_buffer.iter_mut().map(|x| *x * -1.0).collect();
+        }
 
         // interpolation samples
         raw_buffer.push(0.0);
@@ -80,7 +108,7 @@ pub fn wavetableize_zerocrossing(
         raw_buffer.insert(0, 0.0);
         raw_buffer = stretch_to_size(&raw_buffer, matrix_size.1);
 
-        println!("after {:?}", raw_buffer);
+        //println!("after {:?}", raw_buffer);
         wavematrix.push(raw_buffer);
     }
 
@@ -90,7 +118,7 @@ pub fn wavetableize_zerocrossing(
 pub fn stretch_to_size(buf: &[f32], target_size: usize) -> Vec<f32> {
     let ratio = (buf.len() - 3) as f32 / target_size as f32;
 
-    println!("ratio {}", ratio);
+    //println!("ratio {}", ratio);
 
     let mut out_buf = vec![0.0; target_size];
     let mut frac_index: f32 = 1.0;
