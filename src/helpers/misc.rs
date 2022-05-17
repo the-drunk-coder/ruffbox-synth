@@ -26,12 +26,58 @@ pub fn stretch_to_size(buf: &[f32], target_size: usize) -> Vec<f32> {
             1.0,
         );
 
-        if ((frac_index + frac_index_increment) as usize) < target_size {
+        if ((frac_index + frac_index_increment) as usize) < (buf.len() - 3) {
             frac_index += frac_index_increment;
         }
     }
 
     out_buf
+}
+
+/// find next upward zerocrossing, starting at idx
+pub fn find_closest_upward_zerocrossing(buffer: &[f32], idx: usize) -> usize {
+    let mut idx_u = idx;
+    for i in idx - 1..buffer.len() - 1 {
+        if buffer[i] <= 0.0 && buffer[i + 1] > 0.0 {
+            idx_u = i;
+            break;
+        }
+    }
+    let mut idx_d = idx;
+    for i in (0..idx + 1).rev() {
+        if buffer[i - 1] <= 0.0 && buffer[i] > 0.0 {
+            idx_d = i;
+            break;
+        }
+    }
+    if idx - idx_d < idx_u - idx {
+        idx_d
+    } else {
+        idx_u
+    }
+}
+
+/// find next downward zerocrossing, starting at idx
+pub fn find_closest_downward_zerocrossing(buffer: &[f32], idx: usize) -> usize {
+    let mut idx_u = idx;
+    for i in idx - 1..buffer.len() - 1 {
+        if buffer[i] >= 0.0 && buffer[i + 1] < 0.0 {
+            idx_u = i;
+            break;
+        }
+    }
+    let mut idx_d = idx;
+    for i in (1..idx + 1).rev() {
+        if buffer[i - 1] >= 0.0 && buffer[i] < 0.0 {
+            idx_d = i;
+            break;
+        }
+    }
+    if idx - idx_d < idx_u - idx {
+        idx_d
+    } else {
+        idx_u
+    }
 }
 
 /// find the next zero crossing on beginning and end of the buffer
