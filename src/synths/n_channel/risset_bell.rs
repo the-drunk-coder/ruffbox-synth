@@ -29,7 +29,7 @@ pub struct RissetBell<const BUFSIZE: usize, const NCHAN: usize> {
 impl<const BUFSIZE: usize, const NCHAN: usize> RissetBell<BUFSIZE, NCHAN> {
     pub fn new(sr: f32) -> RissetBell<BUFSIZE, NCHAN> {
         let mut bell = RissetBell {
-            oscillators: [(); 11].map(|_| SineOsc::new(440.0, 1.0, sr)),
+            oscillators: [(); 11].map(|_| SineOsc::new(440.0, 0.4, sr)),
             envelopes: [ExpPercEnvelope::new(1.0, 0.005, 0.0, 0.05, sr); 11],
             main_envelope: LinearASREnvelope::new(1.0, 0.05, 0.5, 0.05, sr),
             amps: [1.0, 0.67, 1.0, 1.8, 2.67, 1.67, 1.46, 1.33, 1.33, 1.0, 1.33],
