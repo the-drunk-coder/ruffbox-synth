@@ -74,7 +74,7 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for ExpPercEnvelope<BUFSIZE> {
                     self.rel = *val;
                     update_internals = true;
                 }
-                SynthParameterLabel::Level => {
+                SynthParameterLabel::EnvelopeLevel => {
                     self.max_lvl = *val;
                 }
                 SynthParameterLabel::Samplerate => {

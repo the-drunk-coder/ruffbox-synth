@@ -95,7 +95,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavematrix<BUFSIZE> {
                 }
                 _ => {}
             },
-            SynthParameterLabel::Level => match val {
+            SynthParameterLabel::OscillatorLevel => match val {
                 SynthParameterValue::ScalarF32(value) => {
                     self.lvl = *value;
                 }

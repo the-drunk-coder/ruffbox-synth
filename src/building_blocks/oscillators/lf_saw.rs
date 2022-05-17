@@ -52,7 +52,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSaw<BUFSIZE> {
                 }
                 _ => {}
             },
-            SynthParameterLabel::Level => match value {
+            SynthParameterLabel::OscillatorLevel => match value {
                 SynthParameterValue::ScalarF32(l) => {
                     self.lvl = *l;
                     self.lvl_inc = (2.0 * self.lvl) / (self.samplerate / self.freq).round();

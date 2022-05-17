@@ -57,7 +57,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RissetBell<BUFSIZE, NCHAN> {
         for i in 0..11 {
             // set envelope params
             bell.envelopes[i].set_parameter(
-                SynthParameterLabel::Level,
+                SynthParameterLabel::EnvelopeLevel,
                 &SynthParameterValue::ScalarF32(bell.amps[i] * bell.main_level),
             );
             bell.envelopes[i].set_parameter(
@@ -120,7 +120,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
                 };
                 update_internals = true;
             }
-            SynthParameterLabel::Level => {
+            SynthParameterLabel::EnvelopeLevel => {
                 if let SynthParameterValue::ScalarF32(l) = val {
                     self.main_level = *l
                 };
@@ -134,7 +134,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
             for i in 0..11 {
                 // set envelope params
                 self.envelopes[i].set_parameter(
-                    SynthParameterLabel::Level,
+                    SynthParameterLabel::EnvelopeLevel,
                     &SynthParameterValue::ScalarF32(self.amps[i] * self.main_level),
                 );
                 self.envelopes[i].set_parameter(

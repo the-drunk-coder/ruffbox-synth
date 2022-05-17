@@ -59,7 +59,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
                     _ => { /* nothing to do, don't know how to handle this ... */ }
                 }
             }
-            SynthParameterLabel::Level => {
+            SynthParameterLabel::OscillatorLevel => {
                 match value {
                     SynthParameterValue::ScalarF32(l) => {
                         self.lvl = l.clamp(-1.2, 1.2);

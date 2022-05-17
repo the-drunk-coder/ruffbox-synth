@@ -73,7 +73,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFTri<BUFSIZE> {
                 }
                 _ => {}
             },
-            SynthParameterLabel::Level => match value {
+            SynthParameterLabel::OscillatorLevel => match value {
                 SynthParameterValue::ScalarF32(l) => {
                     self.lvl = *l;
                     self.update_internals(self.freq, self.lvl);
