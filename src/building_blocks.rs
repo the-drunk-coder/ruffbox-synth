@@ -82,22 +82,6 @@ pub enum SynthParameterValue {
     Lfo(f32, f32, f32, ValOp), // sine lfo - init val, freq, range, operation (mul, add, sub, div, replace)
 }
 
-#[repr(C)]
-pub enum SynthType {
-    Sampler,
-    LiveSampler,
-    FrozenSampler,
-    SineOsc,
-    SineSynth,
-    LFCubSynth,
-    LFSawSynth,
-    LFSquareSynth,
-    LFTriangleSynth,
-    RissetBell,
-    Wavetable,
-    Wavematrix,
-}
-
 /// oscillators, the sampler, etc are sources
 pub trait MonoSource<const BUFSIZE: usize> {
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue);

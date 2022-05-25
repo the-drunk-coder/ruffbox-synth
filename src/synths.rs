@@ -18,3 +18,19 @@ pub use crate::synths::ambisonic::lf_saw_synth::LFSawSynth as AmbisonicLFSawSynt
 pub use crate::synths::ambisonic::lf_square_synth::LFSquareSynth as AmbisonicLFSquareSynth;
 pub use crate::synths::ambisonic::lf_tri_synth::LFTriSynth as AmbisonicLFTriSynth;
 pub use crate::synths::ambisonic::sine_synth::SineSynth as AmbisonicSineSynth;
+
+#[repr(C)]
+pub enum SynthType {
+    Sampler,
+    LiveSampler,
+    FrozenSampler,
+    SineOsc,
+    SineSynth,
+    LFCubSynth,
+    LFSawSynth,
+    LFSquareSynth,
+    LFTriangleSynth,
+    RissetBell,
+    Wavetable,
+    Wavematrix,
+}

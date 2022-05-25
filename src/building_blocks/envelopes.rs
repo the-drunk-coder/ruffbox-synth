@@ -9,6 +9,7 @@ pub use crate::building_blocks::envelopes::linear_asr_envelope::LinearASREnvelop
 mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
+    use crate::building_blocks::{MonoEffect, SynthParameterLabel, SynthParameterValue};
 
     /// test the general workings of the ASREnvelope
     #[test]
@@ -16,10 +17,10 @@ mod tests {
         let test_block: [f32; 128] = [1.0; 128];
 
         // half a block attack, one block sustain, half a block release ... 2 blocks total .
-        let mut env = ASREnvelope::<128>::new(0.5, 0.0014512, 0.0029024, 0.0014512, 44100.0);
+        let mut env = LinearASREnvelope::<128>::new(0.5, 0.0014512, 0.0029024, 0.0014512, 44100.0);
 
-        let out_1: [f32; 128] = env.process_block(test_block, 0);
-        let out_2: [f32; 128] = env.process_block(test_block, 0);
+        let out_1: [f32; 128] = env.process_block(test_block, 0, &Vec::new());
+        let out_2: [f32; 128] = env.process_block(test_block, 0, &Vec::new());
 
         // comparison
         let mut comp_block_1: [f32; 128] = [0.0; 128];
@@ -64,16 +65,28 @@ mod tests {
         let test_block: [f32; 128] = [1.0; 128];
 
         // half a block attack, one block sustain, half a block release ... 2 blocks total .
-        let mut env = ASREnvelope::<128>::new(0.0, 0.0, 0.0, 0.0, 44100.0);
+        let mut env = LinearASREnvelope::<128>::new(0.0, 0.0, 0.0, 0.0, 44100.0);
 
         // use paramter setter to set parameters ...
-        env.set_parameter(SynthParameterLabel::Attack, 0.0014512);
-        env.set_parameter(SynthParameterLabel::Sustain, 0.0029024);
-        env.set_parameter(SynthParameterLabel::Release, 0.0014512);
-        env.set_parameter(SynthParameterLabel::Level, 0.5);
+        env.set_parameter(
+            SynthParameterLabel::Attack,
+            &SynthParameterValue::ScalarF32(0.0014512),
+        );
+        env.set_parameter(
+            SynthParameterLabel::Sustain,
+            &SynthParameterValue::ScalarF32(0.0029024),
+        );
+        env.set_parameter(
+            SynthParameterLabel::Release,
+            &SynthParameterValue::ScalarF32(0.0014512),
+        );
+        env.set_parameter(
+            SynthParameterLabel::EnvelopeLevel,
+            &SynthParameterValue::ScalarF32(0.5),
+        );
 
-        let out_1: [f32; 128] = env.process_block(test_block, 0);
-        let out_2: [f32; 128] = env.process_block(test_block, 0);
+        let out_1: [f32; 128] = env.process_block(test_block, 0, &Vec::new());
+        let out_2: [f32; 128] = env.process_block(test_block, 0, &Vec::new());
 
         // comparison
         let mut comp_block_1: [f32; 128] = [0.0; 128];
@@ -117,25 +130,49 @@ mod tests {
         let test_block: [f32; 128] = [1.0; 128];
 
         // let this one start at the beginning of a block
-        let mut env_at_start = ASREnvelope::<128>::new(0.0, 0.0, 0.0, 0.0, 44100.0);
+        let mut env_at_start = LinearASREnvelope::<128>::new(0.0, 0.0, 0.0, 0.0, 44100.0);
         // let this one start somewhere in the block
-        let mut env_with_offset = ASREnvelope::<128>::new(0.0, 0.0, 0.0, 0.0, 44100.0);
+        let mut env_with_offset = LinearASREnvelope::<128>::new(0.0, 0.0, 0.0, 0.0, 44100.0);
 
         // use paramter setter to set parameters ...
         println!("Set parameters for env at start:");
-        env_at_start.set_parameter(SynthParameterLabel::Level, 1.0);
-        env_at_start.set_parameter(SynthParameterLabel::Attack, 0.001);
-        env_at_start.set_parameter(SynthParameterLabel::Sustain, 0.019);
-        env_at_start.set_parameter(SynthParameterLabel::Release, 0.07);
+        env_at_start.set_parameter(
+            SynthParameterLabel::EnvelopeLevel,
+            &SynthParameterValue::ScalarF32(1.0),
+        );
+        env_at_start.set_parameter(
+            SynthParameterLabel::Attack,
+            &SynthParameterValue::ScalarF32(0.001),
+        );
+        env_at_start.set_parameter(
+            SynthParameterLabel::Sustain,
+            &SynthParameterValue::ScalarF32(0.019),
+        );
+        env_at_start.set_parameter(
+            SynthParameterLabel::Release,
+            &SynthParameterValue::ScalarF32(0.07),
+        );
 
         println!("\nSet parameters for env with offset:\n");
-        env_with_offset.set_parameter(SynthParameterLabel::Level, 1.0);
-        env_with_offset.set_parameter(SynthParameterLabel::Attack, 0.001);
-        env_with_offset.set_parameter(SynthParameterLabel::Sustain, 0.019);
-        env_with_offset.set_parameter(SynthParameterLabel::Release, 0.07);
+        env_with_offset.set_parameter(
+            SynthParameterLabel::EnvelopeLevel,
+            &SynthParameterValue::ScalarF32(1.0),
+        );
+        env_with_offset.set_parameter(
+            SynthParameterLabel::Attack,
+            &SynthParameterValue::ScalarF32(0.001),
+        );
+        env_with_offset.set_parameter(
+            SynthParameterLabel::Sustain,
+            &SynthParameterValue::ScalarF32(0.019),
+        );
+        env_with_offset.set_parameter(
+            SynthParameterLabel::Release,
+            &SynthParameterValue::ScalarF32(0.07),
+        );
 
-        let mut out_start = env_at_start.process_block(test_block, 0);
-        let mut out_offset = env_with_offset.process_block(test_block, 60);
+        let mut out_start = env_at_start.process_block(test_block, 0, &Vec::new());
+        let mut out_offset = env_with_offset.process_block(test_block, 60, &Vec::new());
 
         // calculate 34 blocks
         for _ in 0..34 {
@@ -145,7 +182,7 @@ mod tests {
             }
             //println!{" block {}.1 done \n", i};
 
-            out_offset = env_with_offset.process_block(test_block, 0);
+            out_offset = env_with_offset.process_block(test_block, 0, &Vec::new());
 
             for i in 68..128 {
                 //print!("{} {} - ", out_start[i], out_offset[i - 68]);
@@ -153,7 +190,7 @@ mod tests {
             }
 
             //println!{" block {}.2 done \n", i};
-            out_start = env_at_start.process_block(test_block, 0);
+            out_start = env_at_start.process_block(test_block, 0, &Vec::new());
         }
     }
 
@@ -163,7 +200,7 @@ mod tests {
         let test_block: [f32; 128] = [1.0; 128];
         let mut out = Vec::new();
         for _ in 0..132 {
-            let env_out = exp_env.process_block(test_block, 0);
+            let env_out = exp_env.process_block(test_block, 0, &Vec::new());
             out.extend_from_slice(&env_out);
         }
 

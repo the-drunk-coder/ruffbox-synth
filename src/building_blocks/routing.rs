@@ -93,14 +93,17 @@ mod tests {
 
     #[test]
     fn panchan_test_basic_pan() {
-        let mut pchan = PanChan::<128, 2>::new();
+        let mut pchan = PanChan::<128, 2>::new(44100.0);
 
         let mut block = [0.0; 128];
         block[0] = 1.0;
 
-        pchan.set_parameter(SynthParameterLabel::ChannelPosition, 0.5);
+        pchan.set_parameter(
+            SynthParameterLabel::ChannelPosition,
+            &SynthParameterValue::ScalarF32(0.5),
+        );
 
-        let block_out = pchan.process_block(block);
+        let block_out = pchan.process_block(block, 0, &Vec::new());
 
         assert_approx_eq::assert_approx_eq!(block_out[0][0], 0.707, 0.001);
         assert_approx_eq::assert_approx_eq!(block_out[1][0], 0.707, 0.001);
@@ -108,14 +111,17 @@ mod tests {
 
     #[test]
     fn panchan_test_left_pan() {
-        let mut pchan = PanChan::<128, 2>::new();
+        let mut pchan = PanChan::<128, 2>::new(44100.0);
 
-        pchan.set_parameter(SynthParameterLabel::ChannelPosition, 0.0);
+        pchan.set_parameter(
+            SynthParameterLabel::ChannelPosition,
+            &SynthParameterValue::ScalarF32(0.0),
+        );
 
         let mut block = [0.0; 128];
         block[0] = 1.0;
 
-        let block_out = pchan.process_block(block);
+        let block_out = pchan.process_block(block, 0, &Vec::new());
 
         assert_approx_eq::assert_approx_eq!(block_out[0][0], 1.0, 0.0001);
         assert_approx_eq::assert_approx_eq!(block_out[1][0], 0.0, 0.0001);
@@ -123,14 +129,17 @@ mod tests {
 
     #[test]
     fn panchan_test_right_pan() {
-        let mut pchan = PanChan::<128, 2>::new();
+        let mut pchan = PanChan::<128, 2>::new(44100.0);
 
-        pchan.set_parameter(SynthParameterLabel::ChannelPosition, 1.0);
+        pchan.set_parameter(
+            SynthParameterLabel::ChannelPosition,
+            &SynthParameterValue::ScalarF32(1.0),
+        );
 
         let mut block = [0.0; 128];
         block[0] = 1.0;
 
-        let block_out = pchan.process_block(block);
+        let block_out = pchan.process_block(block, 0, &Vec::new());
 
         assert_approx_eq::assert_approx_eq!(block_out[0][0], 0.0, 0.0001);
         assert_approx_eq::assert_approx_eq!(block_out[1][0], 1.0, 0.0001);
@@ -138,13 +147,16 @@ mod tests {
 
     #[test]
     fn panchan_test_multi() {
-        let mut pchan = PanChan::<128, 8>::new();
+        let mut pchan = PanChan::<128, 8>::new(44100.0);
 
         let mut block = [0.0; 128];
         block[0] = 1.0;
 
-        pchan.set_parameter(SynthParameterLabel::ChannelPosition, 6.0);
-        let mut block_out = pchan.process_block(block);
+        pchan.set_parameter(
+            SynthParameterLabel::ChannelPosition,
+            &SynthParameterValue::ScalarF32(6.0),
+        );
+        let mut block_out = pchan.process_block(block, 0, &Vec::new());
 
         assert_approx_eq::assert_approx_eq!(block_out[0][0], 0.0, 0.0001);
         assert_approx_eq::assert_approx_eq!(block_out[1][0], 0.0, 0.0001);
@@ -155,8 +167,11 @@ mod tests {
         assert_approx_eq::assert_approx_eq!(block_out[6][0], 1.0, 0.0001);
         assert_approx_eq::assert_approx_eq!(block_out[7][0], 0.0, 0.0001);
 
-        pchan.set_parameter(SynthParameterLabel::ChannelPosition, 2.0);
-        block_out = pchan.process_block(block);
+        pchan.set_parameter(
+            SynthParameterLabel::ChannelPosition,
+            &SynthParameterValue::ScalarF32(2.0),
+        );
+        block_out = pchan.process_block(block, 0, &Vec::new());
 
         assert_approx_eq::assert_approx_eq!(block_out[0][0], 0.0, 0.0001);
         assert_approx_eq::assert_approx_eq!(block_out[1][0], 0.0, 0.0001);
@@ -167,8 +182,11 @@ mod tests {
         assert_approx_eq::assert_approx_eq!(block_out[6][0], 0.0, 0.0001);
         assert_approx_eq::assert_approx_eq!(block_out[7][0], 0.0, 0.0001);
 
-        pchan.set_parameter(SynthParameterLabel::ChannelPosition, 0.0);
-        block_out = pchan.process_block(block);
+        pchan.set_parameter(
+            SynthParameterLabel::ChannelPosition,
+            &SynthParameterValue::ScalarF32(0.0),
+        );
+        block_out = pchan.process_block(block, 0, &Vec::new());
 
         assert_approx_eq::assert_approx_eq!(block_out[0][0], 1.0, 0.0001);
         assert_approx_eq::assert_approx_eq!(block_out[1][0], 0.0, 0.0001);
@@ -179,8 +197,11 @@ mod tests {
         assert_approx_eq::assert_approx_eq!(block_out[6][0], 0.0, 0.0001);
         assert_approx_eq::assert_approx_eq!(block_out[7][0], 0.0, 0.0001);
 
-        pchan.set_parameter(SynthParameterLabel::ChannelPosition, 8.0);
-        block_out = pchan.process_block(block);
+        pchan.set_parameter(
+            SynthParameterLabel::ChannelPosition,
+            &SynthParameterValue::ScalarF32(8.0),
+        );
+        block_out = pchan.process_block(block, 0, &Vec::new());
 
         assert_approx_eq::assert_approx_eq!(block_out[0][0], 1.0, 0.0001);
         assert_approx_eq::assert_approx_eq!(block_out[1][0], 0.0, 0.0001);
