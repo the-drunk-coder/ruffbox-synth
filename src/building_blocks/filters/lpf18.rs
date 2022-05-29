@@ -110,18 +110,39 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for Lpf18<BUFSIZE> {
                 match par {
                     SynthParameterLabel::LowpassCutoffFrequency => {
                         self.cutoff = *init;
-                        self.cutoff_mod =
-                            Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate));
+                        self.cutoff_mod = Some(Modulator::lfo(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            true,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     SynthParameterLabel::LowpassQFactor => {
                         self.res = *init;
-                        self.res_mod =
-                            Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate));
+                        self.res_mod = Some(Modulator::lfo(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            true,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     SynthParameterLabel::LowpassFilterDistortion => {
                         self.dist = *init;
-                        self.dist_mod =
-                            Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate));
+                        self.dist_mod = Some(Modulator::lfo(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            true,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     _ => (),
                 };
@@ -131,18 +152,39 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for Lpf18<BUFSIZE> {
                 match par {
                     SynthParameterLabel::LowpassCutoffFrequency => {
                         self.cutoff = *init;
-                        self.cutoff_mod =
-                            Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate));
+                        self.cutoff_mod = Some(Modulator::lfsaw(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            true,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     SynthParameterLabel::LowpassQFactor => {
                         self.res = *init;
-                        self.res_mod =
-                            Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate));
+                        self.res_mod = Some(Modulator::lfsaw(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            true,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     SynthParameterLabel::LowpassFilterDistortion => {
                         self.dist = *init;
-                        self.dist_mod =
-                            Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate));
+                        self.dist_mod = Some(Modulator::lfsaw(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            true,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     _ => (),
                 };
@@ -152,18 +194,39 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for Lpf18<BUFSIZE> {
                 match par {
                     SynthParameterLabel::LowpassCutoffFrequency => {
                         self.cutoff = *init;
-                        self.cutoff_mod =
-                            Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate));
+                        self.cutoff_mod = Some(Modulator::lftri(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            true,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     SynthParameterLabel::LowpassQFactor => {
                         self.res = *init;
-                        self.res_mod =
-                            Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate));
+                        self.res_mod = Some(Modulator::lftri(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            true,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     SynthParameterLabel::LowpassFilterDistortion => {
                         self.dist = *init;
-                        self.dist_mod =
-                            Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate));
+                        self.dist_mod = Some(Modulator::lftri(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            true,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     _ => (),
                 };
@@ -179,6 +242,8 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for Lpf18<BUFSIZE> {
                             *pw,
                             *amp,
                             *add,
+                            true,
+                            false,
                             self.samplerate,
                         ));
                     }
@@ -190,6 +255,8 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for Lpf18<BUFSIZE> {
                             *pw,
                             *amp,
                             *add,
+                            true,
+                            false,
                             self.samplerate,
                         ));
                     }
@@ -201,6 +268,8 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for Lpf18<BUFSIZE> {
                             *pw,
                             *amp,
                             *add,
+                            true,
+                            false,
                             self.samplerate,
                         ));
                     }

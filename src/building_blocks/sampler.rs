@@ -187,15 +187,39 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
             SynthParameterLabel::PlaybackRate => match val {
                 SynthParameterValue::Lfo(init, freq, amp, add, op) => {
                     self.playback_rate = *init;
-                    self.rate_mod = Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate));
+                    self.rate_mod = Some(Modulator::lfo(
+                        *op,
+                        *freq,
+                        *amp,
+                        *add,
+                        false,
+                        false,
+                        self.samplerate,
+                    ));
                 }
                 SynthParameterValue::LFSaw(init, freq, amp, add, op) => {
                     self.playback_rate = *init;
-                    self.rate_mod = Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate));
+                    self.rate_mod = Some(Modulator::lfsaw(
+                        *op,
+                        *freq,
+                        *amp,
+                        *add,
+                        false,
+                        false,
+                        self.samplerate,
+                    ));
                 }
                 SynthParameterValue::LFTri(init, freq, amp, add, op) => {
                     self.playback_rate = *init;
-                    self.rate_mod = Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate));
+                    self.rate_mod = Some(Modulator::lftri(
+                        *op,
+                        *freq,
+                        *amp,
+                        *add,
+                        false,
+                        false,
+                        self.samplerate,
+                    ));
                 }
                 SynthParameterValue::LFSquare(init, freq, pw, amp, add, op) => {
                     self.playback_rate = *init;
@@ -205,6 +229,8 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
                         *pw,
                         *amp,
                         *add,
+                        false,
+                        false,
                         self.samplerate,
                     ));
                 }
@@ -220,15 +246,39 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
                 }
                 SynthParameterValue::Lfo(init, freq, amp, add, op) => {
                     self.lvl = *init;
-                    self.lvl_mod = Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate));
+                    self.lvl_mod = Some(Modulator::lfo(
+                        *op,
+                        *freq,
+                        *amp,
+                        *add,
+                        false,
+                        false,
+                        self.samplerate,
+                    ));
                 }
                 SynthParameterValue::LFSaw(init, freq, amp, add, op) => {
                     self.lvl = *init;
-                    self.lvl_mod = Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate));
+                    self.lvl_mod = Some(Modulator::lfsaw(
+                        *op,
+                        *freq,
+                        *amp,
+                        *add,
+                        false,
+                        false,
+                        self.samplerate,
+                    ));
                 }
                 SynthParameterValue::LFTri(init, freq, amp, add, op) => {
                     self.lvl = *init;
-                    self.lvl_mod = Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate));
+                    self.lvl_mod = Some(Modulator::lftri(
+                        *op,
+                        *freq,
+                        *amp,
+                        *add,
+                        false,
+                        false,
+                        self.samplerate,
+                    ));
                 }
                 SynthParameterValue::LFSquare(init, freq, pw, amp, add, op) => {
                     self.lvl = *init;
@@ -238,6 +288,8 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
                         *pw,
                         *amp,
                         *add,
+                        false,
+                        false,
                         self.samplerate,
                     ));
                 }

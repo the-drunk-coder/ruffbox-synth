@@ -42,24 +42,50 @@ impl<const BUFSIZE: usize, const NCHAN: usize> PanChan<BUFSIZE, NCHAN> {
                 }
                 SynthParameterValue::Lfo(init, freq, amp, add, op) => {
                     self.pos = *init; // keep for later
-                    self.pos_mod = Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate))
+                    self.pos_mod = Some(Modulator::lfo(
+                        *op,
+                        *freq,
+                        *amp,
+                        *add,
+                        false,
+                        false,
+                        self.samplerate,
+                    ))
                 }
                 SynthParameterValue::LFTri(init, freq, amp, add, op) => {
                     self.pos = *init; // keep for later
-                    self.pos_mod = Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate))
+                    self.pos_mod = Some(Modulator::lftri(
+                        *op,
+                        *freq,
+                        *amp,
+                        *add,
+                        false,
+                        false,
+                        self.samplerate,
+                    ))
                 }
                 SynthParameterValue::LFSaw(init, freq, amp, add, op) => {
                     self.pos = *init; // keep for later
-                    self.pos_mod = Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate))
+                    self.pos_mod = Some(Modulator::lfsaw(
+                        *op,
+                        *freq,
+                        *amp,
+                        *add,
+                        false,
+                        false,
+                        self.samplerate,
+                    ))
                 }
                 SynthParameterValue::LFSquare(init, freq, pw, amp, add, op) => {
                     self.pos = *init; // keep for later
                     self.pos_mod = Some(Modulator::lfsquare(
                         *op,
-                        *pw,
                         *freq,
+                        *pw,
                         *amp,
                         *add,
+                        false,
+                        false,
                         self.samplerate,
                     ))
                 }

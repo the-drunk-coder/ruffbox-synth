@@ -60,15 +60,39 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavematrix<BUFSIZE> {
                 }
                 SynthParameterValue::Lfo(init, freq, amp, add, op) => {
                     self.freq = *init;
-                    self.freq_mod = Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate))
+                    self.freq_mod = Some(Modulator::lfo(
+                        *op,
+                        *freq,
+                        *amp,
+                        *add,
+                        false,
+                        false,
+                        self.samplerate,
+                    ))
                 }
                 SynthParameterValue::LFSaw(init, freq, amp, add, op) => {
                     self.freq = *init;
-                    self.freq_mod = Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate))
+                    self.freq_mod = Some(Modulator::lfsaw(
+                        *op,
+                        *freq,
+                        *amp,
+                        *add,
+                        false,
+                        false,
+                        self.samplerate,
+                    ))
                 }
                 SynthParameterValue::LFTri(init, freq, amp, add, op) => {
                     self.freq = *init;
-                    self.freq_mod = Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate))
+                    self.freq_mod = Some(Modulator::lftri(
+                        *op,
+                        *freq,
+                        *amp,
+                        *add,
+                        false,
+                        false,
+                        self.samplerate,
+                    ))
                 }
                 SynthParameterValue::LFSquare(init, freq, pw, amp, add, op) => {
                     self.freq = *init;
@@ -78,6 +102,8 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavematrix<BUFSIZE> {
                         *pw,
                         *amp,
                         *add,
+                        false,
+                        false,
                         self.samplerate,
                     ))
                 }
@@ -110,18 +136,39 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavematrix<BUFSIZE> {
                 }
                 SynthParameterValue::Lfo(init, freq, amp, add, op) => {
                     self.table_idx = *init;
-                    self.table_idx_mod =
-                        Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate))
+                    self.table_idx_mod = Some(Modulator::lfo(
+                        *op,
+                        *freq,
+                        *amp,
+                        *add,
+                        false,
+                        false,
+                        self.samplerate,
+                    ))
                 }
                 SynthParameterValue::LFSaw(init, freq, amp, add, op) => {
                     self.table_idx = *init;
-                    self.table_idx_mod =
-                        Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate))
+                    self.table_idx_mod = Some(Modulator::lfsaw(
+                        *op,
+                        *freq,
+                        *amp,
+                        *add,
+                        false,
+                        false,
+                        self.samplerate,
+                    ))
                 }
                 SynthParameterValue::LFTri(init, freq, amp, add, op) => {
                     self.table_idx = *init;
-                    self.table_idx_mod =
-                        Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate))
+                    self.table_idx_mod = Some(Modulator::lftri(
+                        *op,
+                        *freq,
+                        *amp,
+                        *add,
+                        false,
+                        false,
+                        self.samplerate,
+                    ))
                 }
                 SynthParameterValue::LFSquare(init, freq, pw, amp, add, op) => {
                     self.table_idx = *init;
@@ -131,6 +178,8 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavematrix<BUFSIZE> {
                         *pw,
                         *amp,
                         *add,
+                        false,
+                        false,
                         self.samplerate,
                     ))
                 }
@@ -142,15 +191,39 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavematrix<BUFSIZE> {
                 }
                 SynthParameterValue::Lfo(init, freq, amp, add, op) => {
                     self.lvl = *init;
-                    self.lvl_mod = Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate))
+                    self.lvl_mod = Some(Modulator::lfo(
+                        *op,
+                        *freq,
+                        *amp,
+                        *add,
+                        false,
+                        false,
+                        self.samplerate,
+                    ))
                 }
                 SynthParameterValue::LFTri(init, freq, amp, add, op) => {
                     self.lvl = *init;
-                    self.lvl_mod = Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate))
+                    self.lvl_mod = Some(Modulator::lftri(
+                        *op,
+                        *freq,
+                        *amp,
+                        *add,
+                        false,
+                        false,
+                        self.samplerate,
+                    ))
                 }
                 SynthParameterValue::LFSaw(init, freq, amp, add, op) => {
                     self.lvl = *init;
-                    self.lvl_mod = Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate))
+                    self.lvl_mod = Some(Modulator::lfsaw(
+                        *op,
+                        *freq,
+                        *amp,
+                        *add,
+                        false,
+                        false,
+                        self.samplerate,
+                    ))
                 }
                 SynthParameterValue::LFSquare(init, freq, pw, amp, add, op) => {
                     self.lvl = *init;
@@ -160,6 +233,8 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavematrix<BUFSIZE> {
                         *pw,
                         *amp,
                         *add,
+                        false,
+                        false,
                         self.samplerate,
                     ))
                 }

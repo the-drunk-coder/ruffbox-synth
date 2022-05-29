@@ -89,17 +89,39 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for PeakEq<BUFSIZE> {
                 match par {
                     SynthParameterLabel::PeakFrequency => {
                         self.center = *init;
-                        self.center_mod =
-                            Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate));
+                        self.center_mod = Some(Modulator::lfo(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            true,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     SynthParameterLabel::PeakGain => {
                         self.gain = *init;
-                        self.gain_mod =
-                            Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate));
+                        self.gain_mod = Some(Modulator::lfo(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            false,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     SynthParameterLabel::PeakQFactor => {
                         self.bw = *init;
-                        self.bw_mod = Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate));
+                        self.bw_mod = Some(Modulator::lfo(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            true,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     _ => (),
                 };
@@ -115,6 +137,8 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for PeakEq<BUFSIZE> {
                             *pw,
                             *amp,
                             *add,
+                            true,
+                            false,
                             self.samplerate,
                         ));
                     }
@@ -126,6 +150,8 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for PeakEq<BUFSIZE> {
                             *pw,
                             *amp,
                             *add,
+                            false,
+                            false,
                             self.samplerate,
                         ));
                     }
@@ -137,6 +163,8 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for PeakEq<BUFSIZE> {
                             *pw,
                             *amp,
                             *add,
+                            true,
+                            false,
                             self.samplerate,
                         ));
                     }
@@ -148,18 +176,39 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for PeakEq<BUFSIZE> {
                 match par {
                     SynthParameterLabel::PeakFrequency => {
                         self.center = *init;
-                        self.center_mod =
-                            Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate));
+                        self.center_mod = Some(Modulator::lfsaw(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            true,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     SynthParameterLabel::PeakGain => {
                         self.gain = *init;
-                        self.gain_mod =
-                            Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate));
+                        self.gain_mod = Some(Modulator::lfsaw(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            false,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     SynthParameterLabel::PeakQFactor => {
                         self.bw = *init;
-                        self.bw_mod =
-                            Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate));
+                        self.bw_mod = Some(Modulator::lfsaw(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            true,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     _ => (),
                 };
@@ -169,18 +218,39 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for PeakEq<BUFSIZE> {
                 match par {
                     SynthParameterLabel::PeakFrequency => {
                         self.center = *init;
-                        self.center_mod =
-                            Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate));
+                        self.center_mod = Some(Modulator::lftri(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            true,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     SynthParameterLabel::PeakGain => {
                         self.gain = *init;
-                        self.gain_mod =
-                            Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate));
+                        self.gain_mod = Some(Modulator::lftri(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            false,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     SynthParameterLabel::PeakQFactor => {
                         self.bw = *init;
-                        self.bw_mod =
-                            Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate));
+                        self.bw_mod = Some(Modulator::lftri(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            true,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     _ => (),
                 };

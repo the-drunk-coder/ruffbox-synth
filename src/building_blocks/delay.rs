@@ -67,17 +67,39 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for MonoDelay<BUFSIZE> {
                     }
                     SynthParameterLabel::DelayFeedback => {
                         self.feedback = *init;
-                        self.fb_mod = Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate));
+                        self.fb_mod = Some(Modulator::lfo(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            false,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     SynthParameterLabel::DelayRate => {
                         self.rate = *init;
-                        self.rate_mod =
-                            Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate));
+                        self.rate_mod = Some(Modulator::lfo(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            false,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     SynthParameterLabel::DelayTime => {
                         self.time = *init;
-                        self.time_mod =
-                            Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate));
+                        self.time_mod = Some(Modulator::lfo(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            false,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     _ => (),
                 };
@@ -98,6 +120,8 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for MonoDelay<BUFSIZE> {
                             *pw,
                             *amp,
                             *add,
+                            false,
+                            false,
                             self.samplerate,
                         ));
                     }
@@ -109,6 +133,8 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for MonoDelay<BUFSIZE> {
                             *pw,
                             *amp,
                             *add,
+                            false,
+                            false,
                             self.samplerate,
                         ));
                     }
@@ -120,6 +146,8 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for MonoDelay<BUFSIZE> {
                             *pw,
                             *amp,
                             *add,
+                            false,
+                            false,
                             self.samplerate,
                         ));
                     }
@@ -136,18 +164,39 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for MonoDelay<BUFSIZE> {
                     }
                     SynthParameterLabel::DelayFeedback => {
                         self.feedback = *init;
-                        self.fb_mod =
-                            Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate));
+                        self.fb_mod = Some(Modulator::lfsaw(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            false,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     SynthParameterLabel::DelayRate => {
                         self.rate = *init;
-                        self.rate_mod =
-                            Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate));
+                        self.rate_mod = Some(Modulator::lfsaw(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            false,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     SynthParameterLabel::DelayTime => {
                         self.time = *init;
-                        self.time_mod =
-                            Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate));
+                        self.time_mod = Some(Modulator::lfsaw(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            false,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     _ => (),
                 };
@@ -162,18 +211,39 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for MonoDelay<BUFSIZE> {
                     }
                     SynthParameterLabel::DelayFeedback => {
                         self.feedback = *init;
-                        self.fb_mod =
-                            Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate));
+                        self.fb_mod = Some(Modulator::lftri(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            false,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     SynthParameterLabel::DelayRate => {
                         self.rate = *init;
-                        self.rate_mod =
-                            Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate));
+                        self.rate_mod = Some(Modulator::lftri(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            false,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     SynthParameterLabel::DelayTime => {
                         self.time = *init;
-                        self.time_mod =
-                            Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate));
+                        self.time_mod = Some(Modulator::lftri(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            false,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     _ => (),
                 };

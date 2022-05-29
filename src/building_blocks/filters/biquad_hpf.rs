@@ -74,12 +74,27 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for BiquadHpf<BUFSIZE> {
                 match par {
                     SynthParameterLabel::HighpassCutoffFrequency => {
                         self.cutoff = *init;
-                        self.cutoff_mod =
-                            Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate));
+                        self.cutoff_mod = Some(Modulator::lfo(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            true,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     SynthParameterLabel::HighpassQFactor => {
                         self.q = *init;
-                        self.q_mod = Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate));
+                        self.q_mod = Some(Modulator::lfo(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            true,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     _ => (),
                 };
@@ -89,13 +104,27 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for BiquadHpf<BUFSIZE> {
                 match par {
                     SynthParameterLabel::HighpassCutoffFrequency => {
                         self.cutoff = *init;
-                        self.cutoff_mod =
-                            Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate));
+                        self.cutoff_mod = Some(Modulator::lfsaw(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            true,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     SynthParameterLabel::HighpassQFactor => {
                         self.q = *init;
-                        self.q_mod =
-                            Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate));
+                        self.q_mod = Some(Modulator::lfsaw(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            true,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     _ => (),
                 };
@@ -105,13 +134,27 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for BiquadHpf<BUFSIZE> {
                 match par {
                     SynthParameterLabel::HighpassCutoffFrequency => {
                         self.cutoff = *init;
-                        self.cutoff_mod =
-                            Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate));
+                        self.cutoff_mod = Some(Modulator::lftri(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            true,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     SynthParameterLabel::HighpassQFactor => {
                         self.q = *init;
-                        self.q_mod =
-                            Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate));
+                        self.q_mod = Some(Modulator::lftri(
+                            *op,
+                            *freq,
+                            *amp,
+                            *add,
+                            true,
+                            false,
+                            self.samplerate,
+                        ));
                     }
                     _ => (),
                 };
@@ -127,6 +170,8 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for BiquadHpf<BUFSIZE> {
                             *pw,
                             *amp,
                             *add,
+                            true,
+                            false,
                             self.samplerate,
                         ));
                     }
@@ -138,6 +183,8 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for BiquadHpf<BUFSIZE> {
                             *pw,
                             *amp,
                             *add,
+                            true,
+                            false,
                             self.samplerate,
                         ));
                     }
