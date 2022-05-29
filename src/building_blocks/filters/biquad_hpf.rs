@@ -70,21 +70,79 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for BiquadHpf<BUFSIZE> {
 
                 self.update_internals(self.cutoff, self.q);
             }
-
-            SynthParameterValue::Lfo(init, freq, range, op) => {
+            SynthParameterValue::Lfo(init, freq, amp, add, op) => {
                 match par {
                     SynthParameterLabel::HighpassCutoffFrequency => {
                         self.cutoff = *init;
-                        self.cutoff_mod = Some(Modulator::lfo(*op, *freq, *range, self.samplerate));
+                        self.cutoff_mod =
+                            Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate));
                     }
                     SynthParameterLabel::HighpassQFactor => {
                         self.q = *init;
-                        self.q_mod = Some(Modulator::lfo(*op, *freq, *range, self.samplerate));
+                        self.q_mod = Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate));
                     }
-
                     _ => (),
                 };
-
+                self.update_internals(self.cutoff, self.q);
+            }
+            SynthParameterValue::LFSaw(init, freq, amp, add, op) => {
+                match par {
+                    SynthParameterLabel::HighpassCutoffFrequency => {
+                        self.cutoff = *init;
+                        self.cutoff_mod =
+                            Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate));
+                    }
+                    SynthParameterLabel::HighpassQFactor => {
+                        self.q = *init;
+                        self.q_mod =
+                            Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate));
+                    }
+                    _ => (),
+                };
+                self.update_internals(self.cutoff, self.q);
+            }
+            SynthParameterValue::LFTri(init, freq, amp, add, op) => {
+                match par {
+                    SynthParameterLabel::HighpassCutoffFrequency => {
+                        self.cutoff = *init;
+                        self.cutoff_mod =
+                            Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate));
+                    }
+                    SynthParameterLabel::HighpassQFactor => {
+                        self.q = *init;
+                        self.q_mod =
+                            Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate));
+                    }
+                    _ => (),
+                };
+                self.update_internals(self.cutoff, self.q);
+            }
+            SynthParameterValue::LFSquare(init, freq, pw, amp, add, op) => {
+                match par {
+                    SynthParameterLabel::HighpassCutoffFrequency => {
+                        self.cutoff = *init;
+                        self.cutoff_mod = Some(Modulator::lfsquare(
+                            *op,
+                            *freq,
+                            *pw,
+                            *amp,
+                            *add,
+                            self.samplerate,
+                        ));
+                    }
+                    SynthParameterLabel::HighpassQFactor => {
+                        self.q = *init;
+                        self.q_mod = Some(Modulator::lfsquare(
+                            *op,
+                            *freq,
+                            *pw,
+                            *amp,
+                            *add,
+                            self.samplerate,
+                        ));
+                    }
+                    _ => (),
+                };
                 self.update_internals(self.cutoff, self.q);
             }
             _ => {}

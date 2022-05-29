@@ -50,9 +50,28 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavetable<BUFSIZE> {
                     self.freq = *value;
                     self.phase_inc = self.tablesize as f32 * self.freq * self.sample_period;
                 }
-                SynthParameterValue::Lfo(init, freq, range, op) => {
+                SynthParameterValue::Lfo(init, freq, amp, add, op) => {
                     self.freq = *init;
-                    self.freq_mod = Some(Modulator::lfo(*op, *freq, *range, self.samplerate))
+                    self.freq_mod = Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate))
+                }
+                SynthParameterValue::LFSaw(init, freq, amp, add, op) => {
+                    self.freq = *init;
+                    self.freq_mod = Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate))
+                }
+                SynthParameterValue::LFTri(init, freq, amp, add, op) => {
+                    self.freq = *init;
+                    self.freq_mod = Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate))
+                }
+                SynthParameterValue::LFSquare(init, freq, pw, amp, add, op) => {
+                    self.freq = *init;
+                    self.freq_mod = Some(Modulator::lfsquare(
+                        *op,
+                        *freq,
+                        *pw,
+                        *amp,
+                        *add,
+                        self.samplerate,
+                    ))
                 }
                 _ => {}
             },
@@ -67,9 +86,28 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavetable<BUFSIZE> {
                 SynthParameterValue::ScalarF32(value) => {
                     self.lvl = *value;
                 }
-                SynthParameterValue::Lfo(init, freq, range, op) => {
+                SynthParameterValue::Lfo(init, freq, amp, add, op) => {
                     self.lvl = *init;
-                    self.lvl_mod = Some(Modulator::lfo(*op, *freq, *range, self.samplerate))
+                    self.lvl_mod = Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate))
+                }
+                SynthParameterValue::LFSaw(init, freq, amp, add, op) => {
+                    self.lvl = *init;
+                    self.lvl_mod = Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate))
+                }
+                SynthParameterValue::LFTri(init, freq, amp, add, op) => {
+                    self.lvl = *init;
+                    self.lvl_mod = Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate))
+                }
+                SynthParameterValue::LFSquare(init, freq, pw, amp, add, op) => {
+                    self.lvl = *init;
+                    self.lvl_mod = Some(Modulator::lfsquare(
+                        *op,
+                        *freq,
+                        *pw,
+                        *amp,
+                        *add,
+                        self.samplerate,
+                    ))
                 }
                 _ => {}
             },

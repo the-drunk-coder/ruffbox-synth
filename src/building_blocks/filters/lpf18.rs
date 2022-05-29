@@ -106,23 +106,106 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for Lpf18<BUFSIZE> {
 
                 self.update_internals(self.cutoff, self.res, self.dist);
             }
-            SynthParameterValue::Lfo(init, freq, range, op) => {
+            SynthParameterValue::Lfo(init, freq, amp, add, op) => {
                 match par {
                     SynthParameterLabel::LowpassCutoffFrequency => {
                         self.cutoff = *init;
-                        self.cutoff_mod = Some(Modulator::lfo(*op, *freq, *range, self.samplerate));
+                        self.cutoff_mod =
+                            Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate));
                     }
                     SynthParameterLabel::LowpassQFactor => {
                         self.res = *init;
-                        self.res_mod = Some(Modulator::lfo(*op, *freq, *range, self.samplerate));
+                        self.res_mod =
+                            Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate));
                     }
                     SynthParameterLabel::LowpassFilterDistortion => {
                         self.dist = *init;
-                        self.dist_mod = Some(Modulator::lfo(*op, *freq, *range, self.samplerate));
+                        self.dist_mod =
+                            Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate));
                     }
                     _ => (),
                 };
-
+                self.update_internals(self.cutoff, self.res, self.dist);
+            }
+            SynthParameterValue::LFSaw(init, freq, amp, add, op) => {
+                match par {
+                    SynthParameterLabel::LowpassCutoffFrequency => {
+                        self.cutoff = *init;
+                        self.cutoff_mod =
+                            Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate));
+                    }
+                    SynthParameterLabel::LowpassQFactor => {
+                        self.res = *init;
+                        self.res_mod =
+                            Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate));
+                    }
+                    SynthParameterLabel::LowpassFilterDistortion => {
+                        self.dist = *init;
+                        self.dist_mod =
+                            Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate));
+                    }
+                    _ => (),
+                };
+                self.update_internals(self.cutoff, self.res, self.dist);
+            }
+            SynthParameterValue::LFTri(init, freq, amp, add, op) => {
+                match par {
+                    SynthParameterLabel::LowpassCutoffFrequency => {
+                        self.cutoff = *init;
+                        self.cutoff_mod =
+                            Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate));
+                    }
+                    SynthParameterLabel::LowpassQFactor => {
+                        self.res = *init;
+                        self.res_mod =
+                            Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate));
+                    }
+                    SynthParameterLabel::LowpassFilterDistortion => {
+                        self.dist = *init;
+                        self.dist_mod =
+                            Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate));
+                    }
+                    _ => (),
+                };
+                self.update_internals(self.cutoff, self.res, self.dist);
+            }
+            SynthParameterValue::LFSquare(init, freq, pw, amp, add, op) => {
+                match par {
+                    SynthParameterLabel::LowpassCutoffFrequency => {
+                        self.cutoff = *init;
+                        self.cutoff_mod = Some(Modulator::lfsquare(
+                            *op,
+                            *freq,
+                            *pw,
+                            *amp,
+                            *add,
+                            self.samplerate,
+                        ));
+                    }
+                    SynthParameterLabel::LowpassQFactor => {
+                        self.res = *init;
+                        self.res_mod = Some(Modulator::lfsquare(
+                            *op,
+                            *freq,
+                            *pw,
+                            *amp,
+                            *add,
+                            self.samplerate,
+                        ));
+                    }
+                    SynthParameterLabel::LowpassFilterDistortion => {
+                        self.dist = *init;
+                        self.dist_mod = Some(Modulator::lfsquare(
+                            *op,
+                            *freq,
+                            *pw,
+                            *amp,
+                            *add,
+                            self.samplerate,
+                        ));
+                    }
+                    _ => (),
+                };
                 self.update_internals(self.cutoff, self.res, self.dist);
             }
             _ => {}

@@ -40,9 +40,28 @@ impl<const BUFSIZE: usize, const NCHAN: usize> PanChan<BUFSIZE, NCHAN> {
                     self.levels[lower as usize % (NCHAN as usize)] = [angle_rad.cos(); BUFSIZE];
                     self.levels[upper as usize % (NCHAN as usize)] = [angle_rad.sin(); BUFSIZE];
                 }
-                SynthParameterValue::Lfo(init, freq, range, op) => {
+                SynthParameterValue::Lfo(init, freq, amp, add, op) => {
                     self.pos = *init; // keep for later
-                    self.pos_mod = Some(Modulator::lfo(*op, *freq, *range, self.samplerate))
+                    self.pos_mod = Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate))
+                }
+                SynthParameterValue::LFTri(init, freq, amp, add, op) => {
+                    self.pos = *init; // keep for later
+                    self.pos_mod = Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate))
+                }
+                SynthParameterValue::LFSaw(init, freq, amp, add, op) => {
+                    self.pos = *init; // keep for later
+                    self.pos_mod = Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate))
+                }
+                SynthParameterValue::LFSquare(init, freq, pw, amp, add, op) => {
+                    self.pos = *init; // keep for later
+                    self.pos_mod = Some(Modulator::lfsquare(
+                        *op,
+                        *pw,
+                        *freq,
+                        *amp,
+                        *add,
+                        self.samplerate,
+                    ))
                 }
                 _ => {}
             }

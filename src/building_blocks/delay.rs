@@ -57,25 +57,123 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for MonoDelay<BUFSIZE> {
                     _ => (),
                 };
             }
-            SynthParameterValue::Lfo(init, freq, range, op) => {
+            SynthParameterValue::Lfo(init, freq, amp, add, op) => {
                 match par {
                     SynthParameterLabel::DelayDampeningFrequency => {
                         self.dampening_filter.set_parameter(
                             SynthParameterLabel::LowpassCutoffFrequency,
-                            &SynthParameterValue::Lfo(*init, *freq, *range, *op),
+                            &SynthParameterValue::Lfo(*init, *freq, *add, *amp, *op),
                         )
                     }
                     SynthParameterLabel::DelayFeedback => {
                         self.feedback = *init;
-                        self.fb_mod = Some(Modulator::lfo(*op, *freq, *range, self.samplerate));
+                        self.fb_mod = Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate));
                     }
                     SynthParameterLabel::DelayRate => {
                         self.rate = *init;
-                        self.rate_mod = Some(Modulator::lfo(*op, *freq, *range, self.samplerate));
+                        self.rate_mod =
+                            Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate));
                     }
                     SynthParameterLabel::DelayTime => {
                         self.time = *init;
-                        self.time_mod = Some(Modulator::lfo(*op, *freq, *range, self.samplerate));
+                        self.time_mod =
+                            Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate));
+                    }
+                    _ => (),
+                };
+            }
+            SynthParameterValue::LFSquare(init, freq, pw, amp, add, op) => {
+                match par {
+                    SynthParameterLabel::DelayDampeningFrequency => {
+                        self.dampening_filter.set_parameter(
+                            SynthParameterLabel::LowpassCutoffFrequency,
+                            &SynthParameterValue::LFSquare(*init, *freq, *pw, *amp, *add, *op),
+                        )
+                    }
+                    SynthParameterLabel::DelayFeedback => {
+                        self.feedback = *init;
+                        self.fb_mod = Some(Modulator::lfsquare(
+                            *op,
+                            *freq,
+                            *pw,
+                            *amp,
+                            *add,
+                            self.samplerate,
+                        ));
+                    }
+                    SynthParameterLabel::DelayRate => {
+                        self.rate = *init;
+                        self.rate_mod = Some(Modulator::lfsquare(
+                            *op,
+                            *freq,
+                            *pw,
+                            *amp,
+                            *add,
+                            self.samplerate,
+                        ));
+                    }
+                    SynthParameterLabel::DelayTime => {
+                        self.time = *init;
+                        self.time_mod = Some(Modulator::lfsquare(
+                            *op,
+                            *freq,
+                            *pw,
+                            *amp,
+                            *add,
+                            self.samplerate,
+                        ));
+                    }
+                    _ => (),
+                };
+            }
+            SynthParameterValue::LFSaw(init, freq, amp, add, op) => {
+                match par {
+                    SynthParameterLabel::DelayDampeningFrequency => {
+                        self.dampening_filter.set_parameter(
+                            SynthParameterLabel::LowpassCutoffFrequency,
+                            &SynthParameterValue::LFSaw(*init, *freq, *amp, *add, *op),
+                        )
+                    }
+                    SynthParameterLabel::DelayFeedback => {
+                        self.feedback = *init;
+                        self.fb_mod =
+                            Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate));
+                    }
+                    SynthParameterLabel::DelayRate => {
+                        self.rate = *init;
+                        self.rate_mod =
+                            Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate));
+                    }
+                    SynthParameterLabel::DelayTime => {
+                        self.time = *init;
+                        self.time_mod =
+                            Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate));
+                    }
+                    _ => (),
+                };
+            }
+            SynthParameterValue::LFTri(init, freq, amp, add, op) => {
+                match par {
+                    SynthParameterLabel::DelayDampeningFrequency => {
+                        self.dampening_filter.set_parameter(
+                            SynthParameterLabel::LowpassCutoffFrequency,
+                            &SynthParameterValue::LFTri(*init, *freq, *amp, *add, *op),
+                        )
+                    }
+                    SynthParameterLabel::DelayFeedback => {
+                        self.feedback = *init;
+                        self.fb_mod =
+                            Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate));
+                    }
+                    SynthParameterLabel::DelayRate => {
+                        self.rate = *init;
+                        self.rate_mod =
+                            Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate));
+                    }
+                    SynthParameterLabel::DelayTime => {
+                        self.time = *init;
+                        self.time_mod =
+                            Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate));
                     }
                     _ => (),
                 };

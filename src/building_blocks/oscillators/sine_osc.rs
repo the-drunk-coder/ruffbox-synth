@@ -52,9 +52,31 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
                         self.freq = *f;
                         self.mcf_buf = [2.0 * (PI * f * 1.0 / self.samplerate).sin(); BUFSIZE];
                     }
-                    SynthParameterValue::Lfo(init, freq, range, op) => {
+                    SynthParameterValue::Lfo(init, freq, amp, add, op) => {
                         self.freq = *init;
-                        self.freq_mod = Some(Modulator::lfo(*op, *freq, *range, self.samplerate))
+                        self.freq_mod =
+                            Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate))
+                    }
+                    SynthParameterValue::LFSaw(init, freq, amp, add, op) => {
+                        self.freq = *init;
+                        self.freq_mod =
+                            Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate))
+                    }
+                    SynthParameterValue::LFTri(init, freq, amp, add, op) => {
+                        self.freq = *init;
+                        self.freq_mod =
+                            Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate))
+                    }
+                    SynthParameterValue::LFSquare(init, freq, pw, amp, add, op) => {
+                        self.freq = *init;
+                        self.freq_mod = Some(Modulator::lfsquare(
+                            *op,
+                            *freq,
+                            *pw,
+                            *amp,
+                            *add,
+                            self.samplerate,
+                        ))
                     }
                     _ => { /* nothing to do, don't know how to handle this ... */ }
                 }
@@ -62,16 +84,31 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
             SynthParameterLabel::OscillatorLevel => {
                 match value {
                     SynthParameterValue::ScalarF32(l) => {
-                        self.lvl = l.clamp(-1.2, 1.2);
+                        self.lvl = *l;
                         self.lvl_buf = [self.lvl; BUFSIZE];
                     }
-                    SynthParameterValue::Lfo(init, freq, range, op) => {
-                        self.lvl = init.clamp(-1.2, 1.2);
-                        // clamp to reasonable value ...
-                        self.lvl_mod = Some(Modulator::lfo(
+                    SynthParameterValue::Lfo(init, freq, amp, add, op) => {
+                        self.lvl = *init;
+                        self.lvl_mod = Some(Modulator::lfo(*op, *freq, *amp, *add, self.samplerate))
+                    }
+                    SynthParameterValue::LFSaw(init, freq, amp, add, op) => {
+                        self.lvl = *init;
+                        self.lvl_mod =
+                            Some(Modulator::lfsaw(*op, *freq, *amp, *add, self.samplerate))
+                    }
+                    SynthParameterValue::LFTri(init, freq, amp, add, op) => {
+                        self.lvl = *init;
+                        self.lvl_mod =
+                            Some(Modulator::lftri(*op, *freq, *amp, *add, self.samplerate))
+                    }
+                    SynthParameterValue::LFSquare(init, freq, pw, amp, add, op) => {
+                        self.lvl = *init;
+                        self.lvl_mod = Some(Modulator::lfsquare(
                             *op,
                             *freq,
-                            range.clamp(-1.2, 1.2),
+                            *pw,
+                            *amp,
+                            *add,
                             self.samplerate,
                         ))
                     }
