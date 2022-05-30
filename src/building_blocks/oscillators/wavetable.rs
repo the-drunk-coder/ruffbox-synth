@@ -108,7 +108,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavetable<BUFSIZE> {
                     self.phase_inc = self.tablesize as f32 * self.freq * self.sample_period;
                 }
             }
-            SynthParameterLabel::OscillatorLevel => match val {
+            SynthParameterLabel::OscillatorAmplitude => match val {
                 SynthParameterValue::ScalarF32(value) => {
                     self.lvl = *value;
                 }

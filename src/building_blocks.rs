@@ -37,7 +37,7 @@ pub enum SynthParameterLabel {
     HighpassCutoffFrequency, // 10
     HighpassQFactor,         // 11
     EnvelopeLevel,           // 12
-    OscillatorLevel,         // 13
+    OscillatorAmplitude,     // 13
     LowpassCutoffFrequency,  // 14
     LowpassQFactor,          // 15
     LowpassFilterDistortion, // 16
