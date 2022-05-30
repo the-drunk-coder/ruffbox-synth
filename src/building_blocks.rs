@@ -38,29 +38,31 @@ pub enum SynthParameterLabel {
     HighpassQFactor,         // 11
     EnvelopeLevel,           // 12
     OscillatorAmplitude,     // 13
-    LowpassCutoffFrequency,  // 14
-    LowpassQFactor,          // 15
-    LowpassFilterDistortion, // 16
-    PeakFrequency,           // 17
-    PeakGain,                // 18
-    PeakQFactor,             // 19
-    Pulsewidth,              // 20
-    PlaybackRate,            // 21
-    PlaybackStart,           // 22
-    PlaybackLoop,            // 23
-    Release,                 // 24
-    ReverbDampening,         // 25
-    ReverbMix,               // 26
-    ReverbRoomsize,          // 27
-    SampleBufferNumber,      // 28
-    Samplerate,              // 29
-    ChannelPosition,         // 30
-    AmbisonicAzimuth,        // 31
-    AmbisonicElevation,      // 32
-    Sustain,                 // 33
-    Wavetable,               // 34
-    Wavematrix,              // 35
-    WavematrixTableIndex,    // 36
+    OscillatorPhaseRelative, // 14
+    OscillatorPhaseAbsolute, // 15
+    LowpassCutoffFrequency,  // 16
+    LowpassQFactor,          // 17
+    LowpassFilterDistortion, // 18
+    PeakFrequency,           // 19
+    PeakGain,                // 20
+    PeakQFactor,             // 21
+    Pulsewidth,              // 22
+    PlaybackRate,            // 23
+    PlaybackStart,           // 24
+    PlaybackLoop,            // 25
+    Release,                 // 26
+    ReverbDampening,         // 27
+    ReverbMix,               // 28
+    ReverbRoomsize,          // 29
+    SampleBufferNumber,      // 30
+    Samplerate,              // 31
+    ChannelPosition,         // 32
+    AmbisonicAzimuth,        // 33
+    AmbisonicElevation,      // 34
+    Sustain,                 // 35
+    Wavetable,               // 36
+    Wavematrix,              // 37
+    WavematrixTableIndex,    // 38
 }
 
 #[derive(Clone, Copy)]

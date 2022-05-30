@@ -21,7 +21,7 @@ pub use crate::building_blocks::oscillators::wavetable::Wavetable;
 mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
-    use crate::building_blocks::MonoSource;
+    use crate::building_blocks::{MonoSource, SynthParameterLabel, SynthParameterValue};
 
     use std::f32::consts::PI;
 
@@ -45,6 +45,55 @@ mod tests {
             assert_approx_eq::assert_approx_eq!(out_1[i], comp_1[i], 0.008);
         }
     }
+
+    /*
+    #[test]
+    fn sine_osc_rel_phase_offset() {
+        let mut osc = SineOsc::<128>::new(440.0, 1.0, 44100.0);
+
+    osc.set_parameter(SynthParameterLabel::OscillatorPhaseRelative,
+              &SynthParameterValue::ScalarF32(0.5));
+
+        let out_1 = osc.get_next_block(0, &Vec::new());
+        let mut comp_1 = [0.0; 128];
+
+        for i in 0..128 {
+            comp_1[i] = (2.0 * PI * 440.0 * (i as f32 * (1.0 / 44100.0))).cos()
+        }
+
+        // the new sine osc seems to be a bit less precise ....
+        for i in 0usize..128usize {
+            let b = out_1[i];
+            let c = comp_1[i];
+
+            debug_plotter::plot!(b, c  where caption = "BlockPlotRelPhase");
+            //assert_approx_eq::assert_approx_eq!(out_1[i], comp_1[i], 0.008);
+        }
+    }
+
+    #[test]
+    fn sine_osc_abs_phase_offset() {
+        let mut osc = SineOsc::<128>::new(440.0, 200.0, 44100.0);
+
+    osc.set_parameter(SynthParameterLabel::OscillatorPhaseAbsolute,
+              &SynthParameterValue::ScalarF32(100.0));
+
+        let out_1 = osc.get_next_block(0, &Vec::new());
+        let mut comp_1 = [0.0; 128];
+
+        for i in 0..128 {
+            comp_1[i] = (2.0 * PI * 440.0 * (i as f32 * (1.0 / 44100.0))).sin() * 200.0
+        }
+
+        // the new sine osc seems to be a bit less precise ....
+        for i in 0usize..128usize {
+            let b = out_1[i];
+            let c = comp_1[i];
+
+            debug_plotter::plot!(b, c  where caption = "BlockPlotAbsPhase");
+            //assert_approx_eq::assert_approx_eq!(out_1[i], comp_1[i], 0.008);
+        }
+    }*/
 
     #[test]
     fn sine_osc_test_start_in_block() {

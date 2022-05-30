@@ -11,10 +11,10 @@ use std::f32::consts::PI;
 pub struct SineOsc<const BUFSIZE: usize> {
     // user parameters
     freq: f32,
-    lvl: f32,
+    amp: f32,
 
     // internal parameters
-    lvl_buf: [f32; BUFSIZE],
+    amp_buf: [f32; BUFSIZE],
     samplerate: f32,
     delta_t: f32,
     x1_last: f32,            // delay line
@@ -23,22 +23,22 @@ pub struct SineOsc<const BUFSIZE: usize> {
 
     // modulator slots
     freq_mod: Option<Modulator<BUFSIZE>>, // currently allows modulating frequency ..
-    lvl_mod: Option<Modulator<BUFSIZE>>,  // and level
+    amp_mod: Option<Modulator<BUFSIZE>>,  // and level
 }
 
 impl<const BUFSIZE: usize> SineOsc<BUFSIZE> {
-    pub fn new(freq: f32, lvl: f32, sr: f32) -> Self {
+    pub fn new(freq: f32, amp: f32, sr: f32) -> Self {
         SineOsc {
             freq,
-            lvl,
-            lvl_buf: [lvl; BUFSIZE],
+            amp,
+            amp_buf: [amp; BUFSIZE],
             delta_t: 1.0 / sr,
             samplerate: sr,
             x1_last: ((-2.0 * PI * freq) / sr).cos(),
             x2_last: ((-2.0 * PI * freq) / sr).sin(),
             mcf_buf: [-2.0 * (PI * (freq / sr)).sin(); BUFSIZE],
             freq_mod: None,
-            lvl_mod: None,
+            amp_mod: None,
         }
     }
 }
@@ -47,6 +47,24 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
     // some parameter limits might be nice ...
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
         match par {
+            // set phase to a value relative to one full wave period,
+            // i.e 0 = 0.0, 0.25 = 1.0, etc
+            SynthParameterLabel::OscillatorPhaseRelative => {
+                if let SynthParameterValue::ScalarF32(p) = value {
+                    self.x1_last = ((-2.0 * PI * self.freq / self.samplerate) + (p * PI)).cos();
+                    self.x2_last = ((-2.0 * PI * self.freq / self.samplerate) + (p * PI)).sin();
+                }
+            }
+            // set the phase to an absolute value.
+            // only makes sense in conjunction with the amplitude
+            SynthParameterLabel::OscillatorPhaseAbsolute => {
+                if let SynthParameterValue::ScalarF32(p) = value {
+                    self.x1_last =
+                        ((-2.0 * PI * self.freq / self.samplerate) + (p / self.amp)).cos();
+                    self.x2_last =
+                        ((-2.0 * PI * self.freq / self.samplerate) + (p / self.amp)).sin();
+                }
+            }
             SynthParameterLabel::PitchFrequency => {
                 match value {
                     SynthParameterValue::ScalarF32(f) => {
@@ -110,12 +128,12 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
             SynthParameterLabel::OscillatorAmplitude => {
                 match value {
                     SynthParameterValue::ScalarF32(l) => {
-                        self.lvl = *l;
-                        self.lvl_buf = [self.lvl; BUFSIZE];
+                        self.amp = *l;
+                        self.amp_buf = [self.amp; BUFSIZE];
                     }
                     SynthParameterValue::Lfo(init, freq, amp, add, op) => {
-                        self.lvl = *init;
-                        self.lvl_mod = Some(Modulator::lfo(
+                        self.amp = *init;
+                        self.amp_mod = Some(Modulator::lfo(
                             *op,
                             *freq,
                             *amp,
@@ -126,8 +144,8 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
                         ))
                     }
                     SynthParameterValue::LFSaw(init, freq, amp, add, op) => {
-                        self.lvl = *init;
-                        self.lvl_mod = Some(Modulator::lfsaw(
+                        self.amp = *init;
+                        self.amp_mod = Some(Modulator::lfsaw(
                             *op,
                             *freq,
                             *amp,
@@ -138,8 +156,8 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
                         ))
                     }
                     SynthParameterValue::LFTri(init, freq, amp, add, op) => {
-                        self.lvl = *init;
-                        self.lvl_mod = Some(Modulator::lftri(
+                        self.amp = *init;
+                        self.amp_mod = Some(Modulator::lftri(
                             *op,
                             *freq,
                             *amp,
@@ -150,8 +168,8 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
                         ))
                     }
                     SynthParameterValue::LFSquare(init, freq, pw, amp, add, op) => {
-                        self.lvl = *init;
-                        self.lvl_mod = Some(Modulator::lfsquare(
+                        self.amp = *init;
+                        self.amp_mod = Some(Modulator::lfsquare(
                             *op,
                             *freq,
                             *pw,
@@ -191,13 +209,13 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
                 .map(|f| 2.0 * (PI * f * self.delta_t).sin());
         }
 
-        if self.lvl_mod.is_some() {
+        if self.amp_mod.is_some() {
             // recalculate levels if we have modulated levels
-            self.lvl_buf =
-                self.lvl_mod
+            self.amp_buf =
+                self.amp_mod
                     .as_mut()
                     .unwrap()
-                    .process(self.lvl, start_sample, in_buffers);
+                    .process(self.amp, start_sample, in_buffers);
         }
         //println!("{:?}\n\n", self.mcf_buf);
         for (idx, current_sample) in out_buf
@@ -209,7 +227,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
             let x1 = self.x1_last + (self.mcf_buf[idx] * self.x2_last);
             let x2 = -self.mcf_buf[idx] * x1 + self.x2_last;
 
-            *current_sample = x2 * self.lvl_buf[idx];
+            *current_sample = x2 * self.amp_buf[idx];
             //println!("x1 {} x2 {} cur {}", x1, x2, current_sample);
             //debug_plotter::plot!(x1, x2 where caption = "IntPlot");
             self.x1_last = x1;
