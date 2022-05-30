@@ -1,6 +1,7 @@
 use crate::building_blocks::{Modulator, MonoSource, SynthParameterLabel, SynthParameterValue};
 
 use std::f32::consts::PI;
+//use std::f32::consts::FRAC_PI_2;
 
 /**
  * A recursive sine oscillator
@@ -33,9 +34,9 @@ impl<const BUFSIZE: usize> SineOsc<BUFSIZE> {
             lvl_buf: [lvl; BUFSIZE],
             delta_t: 1.0 / sr,
             samplerate: sr,
-            x1_last: 0.0,
-            x2_last: 1.0,
-            mcf_buf: [2.0 * (PI * freq * 1.0 / sr).sin(); BUFSIZE],
+            x1_last: ((-2.0 * PI * freq) / sr).cos(),
+            x2_last: ((-2.0 * PI * freq) / sr).sin(),
+            mcf_buf: [-2.0 * (PI * (freq / sr)).sin(); BUFSIZE],
             freq_mod: None,
             lvl_mod: None,
         }
@@ -50,7 +51,9 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
                 match value {
                     SynthParameterValue::ScalarF32(f) => {
                         self.freq = *f;
-                        self.mcf_buf = [2.0 * (PI * f * 1.0 / self.samplerate).sin(); BUFSIZE];
+                        self.x1_last = ((-2.0 * PI * self.freq) / self.samplerate).cos();
+                        self.x2_last = ((-2.0 * PI * self.freq) / self.samplerate).sin();
+                        self.mcf_buf = [-2.0 * (PI * (self.freq / self.samplerate)).sin(); BUFSIZE];
                     }
                     SynthParameterValue::Lfo(init, freq, amp, add, op) => {
                         self.freq = *init;
@@ -196,7 +199,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
                     .unwrap()
                     .process(self.lvl, start_sample, in_buffers);
         }
-
+        //println!("{:?}\n\n", self.mcf_buf);
         for (idx, current_sample) in out_buf
             .iter_mut()
             .enumerate()
@@ -205,7 +208,10 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
         {
             let x1 = self.x1_last + (self.mcf_buf[idx] * self.x2_last);
             let x2 = -self.mcf_buf[idx] * x1 + self.x2_last;
+
             *current_sample = x2 * self.lvl_buf[idx];
+            //println!("x1 {} x2 {} cur {}", x1, x2, current_sample);
+            //debug_plotter::plot!(x1, x2 where caption = "IntPlot");
             self.x1_last = x1;
             self.x2_last = x2;
         }

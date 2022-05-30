@@ -33,19 +33,16 @@ mod tests {
         let mut comp_1 = [0.0; 128];
 
         for i in 0..128 {
-            comp_1[i] = (2.0 * PI * 440.0 * (i as f32 * (1.0 / 44100.0))).cos()
+            comp_1[i] = (2.0 * PI * 440.0 * (i as f32 * (1.0 / 44100.0))).sin()
         }
 
-        // the new sine osc seems to be a bit less precise and has a tiny
-        // phase offset ... let's see where that goes ...
-        //println!("{:?} {:?}", out_1, comp_1);
+        // the new sine osc seems to be a bit less precise ....
         for i in 0usize..128usize {
-            //println!("{} {} {}; ", i, out_1[i], comp_1[i]);
-            let b = out_1[i];
-            let c = comp_1[i];
+            //let b = out_1[i];
+            //let c = comp_1[i];
 
-            debug_plotter::plot!(i, b, c where caption = "BlockPlot");
-            //assert_approx_eq::assert_approx_eq!(out_1[i], comp_1[i], 0.04);
+            //debug_plotter::plot!(b, c where caption = "BlockPlot");
+            assert_approx_eq::assert_approx_eq!(out_1[i], comp_1[i], 0.008);
         }
     }
 
@@ -62,12 +59,12 @@ mod tests {
         let mut comp_1 = [0.0; 128];
 
         for i in sample_offset..128 {
-            comp_1[i] = (2.0 * PI * 440.0 * ((i - sample_offset) as f32 * (1.0 / 44100.0))).cos()
+            comp_1[i] = (2.0 * PI * 440.0 * ((i - sample_offset) as f32 * (1.0 / 44100.0))).sin()
         }
 
-        for i in 0..127 {
+        for i in 0..128 {
             //println!("{} {} {}; ", i, out_1[i], comp_1[i]);
-            assert_approx_eq::assert_approx_eq!(out_1[i], comp_1[i + 1], 0.04);
+            assert_approx_eq::assert_approx_eq!(out_1[i], comp_1[i], 0.008);
         }
     }
 
@@ -116,32 +113,32 @@ mod tests {
         for i in 0..128 {
             // this isn't very precise ???
             //println!("{} {} {}; ", i, out_1[i], comp_1[i]);
-            assert_approx_eq::assert_approx_eq!(out_1[i], comp_1[i], 0.00001);
+            assert_approx_eq::assert_approx_eq!(out_1[i], comp_1[i], 0.008);
         }
         for i in 0..128 {
             // this isn't very precise ???
             //println!("{} {} {}; ", i, out_2[i], comp_2[i]);
-            assert_approx_eq::assert_approx_eq!(out_2[i], comp_2[i], 0.00001);
+            assert_approx_eq::assert_approx_eq!(out_2[i], comp_2[i], 0.008);
         }
         for i in 0..128 {
             // this isn't very precise ???
             //println!("{} {} {}; ", i, out_3[i], comp_3[i]);
-            assert_approx_eq::assert_approx_eq!(out_3[i], comp_3[i], 0.00001);
+            assert_approx_eq::assert_approx_eq!(out_3[i], comp_3[i], 0.008);
         }
         for i in 0..128 {
             // this isn't very precise ???
             //println!("{} {} {}; ", i, out_1[i], comp_1[i]);
-            assert_approx_eq::assert_approx_eq!(out_4[i], comp_4[i], 0.00001);
+            assert_approx_eq::assert_approx_eq!(out_4[i], comp_4[i], 0.008);
         }
         for i in 0..128 {
             // this isn't very precise ???
             //println!("{} {} {}; ", i, out_2[i], comp_2[i]);
-            assert_approx_eq::assert_approx_eq!(out_5[i], comp_5[i], 0.00001);
+            assert_approx_eq::assert_approx_eq!(out_5[i], comp_5[i], 0.008);
         }
         for i in 0..128 {
             // this isn't very precise ???
             //println!("{} {} {}; ", i, out_3[i], comp_3[i]);
-            assert_approx_eq::assert_approx_eq!(out_6[i], comp_6[i], 0.0001);
+            assert_approx_eq::assert_approx_eq!(out_6[i], comp_6[i], 0.008);
         }
     }
 }

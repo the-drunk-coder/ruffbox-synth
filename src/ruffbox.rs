@@ -237,13 +237,16 @@ mod tests {
         let mut comp_1 = [0.0; 128];
 
         for i in 0..128 {
-            comp_1[i] = (2.0 * PI * 440.0 * (i as f32 * (1.0 / 44100.0))).cos()
+            comp_1[i] = (2.0 * PI * 440.0 * (i as f32 * (1.0 / 44100.0))).sin() * 0.5;
         }
 
         // the recursive sine oscillator is slightly less precise ...
-        for i in 0..127 {
+        for i in 0..128 {
             //println!("{} {} {}; ", i, out_1[0][i], comp_1[i]);
-            assert_approx_eq::assert_approx_eq!(out_1[0][i], comp_1[i + 1], 0.07);
+            //let a = out_1[0][i];
+            //let b = comp_1[i];
+            //debug_plotter::plot!(a, b where caption = "SynthBlockPlot");
+            assert_approx_eq::assert_approx_eq!(out_1[0][i], comp_1[i], 0.008);
         }
     }
 

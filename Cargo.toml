@@ -20,5 +20,5 @@ dashmap = "5.2"
 
 [dev-dependencies]
 assert_approx_eq = "1.1.0"
-debug_plotter = "0.2.1"
+debug_plotter = {git = "https://github.com/fabianboesiger/debug-plotter"}
 

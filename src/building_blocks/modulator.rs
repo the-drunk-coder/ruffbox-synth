@@ -113,7 +113,10 @@ impl<const BUFSIZE: usize> Modulator<BUFSIZE> {
                     .source
                     .get_next_block(start_sample, in_buffers)
                     .map(|x| f32::max(original_value / x + self.add, 0.0001)),
-                _ => self.source.get_next_block(start_sample, in_buffers),
+                ValOp::Replace => self
+                    .source
+                    .get_next_block(start_sample, in_buffers)
+                    .map(|x| f32::max(x + self.add, 0.0001)),
             }
         } else if self.rectify {
             match self.op {
@@ -133,7 +136,10 @@ impl<const BUFSIZE: usize> Modulator<BUFSIZE> {
                     .source
                     .get_next_block(start_sample, in_buffers)
                     .map(|x| (original_value / x + self.add).abs()),
-                _ => self.source.get_next_block(start_sample, in_buffers),
+                ValOp::Replace => self
+                    .source
+                    .get_next_block(start_sample, in_buffers)
+                    .map(|x| (x + self.add).abs()),
             }
         } else {
             match self.op {
@@ -153,7 +159,10 @@ impl<const BUFSIZE: usize> Modulator<BUFSIZE> {
                     .source
                     .get_next_block(start_sample, in_buffers)
                     .map(|x| original_value / x + self.add),
-                _ => self.source.get_next_block(start_sample, in_buffers),
+                ValOp::Replace => self
+                    .source
+                    .get_next_block(start_sample, in_buffers)
+                    .map(|x| x + self.add),
             }
         }
     }
