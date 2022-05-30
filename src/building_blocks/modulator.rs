@@ -15,14 +15,17 @@ impl<const BUFSIZE: usize> Modulator<BUFSIZE> {
     pub fn lfo(
         op: ValOp,
         freq: f32,
+        //eff_phase: f32,
         amp: f32,
         add: f32,
         positive: bool,
         rectify: bool,
         sr: f32,
     ) -> Modulator<BUFSIZE> {
+        let src_osc = SineOsc::new(freq, amp, sr);
+        //src_osc.set_parameter(SynthParameterLabel::OscillatorPhaseEffective, &SynthParameterValue::ScalarF32(eff_phase));
         Modulator {
-            source: Box::new(SineOsc::new(freq, amp, sr)),
+            source: Box::new(src_osc),
             op,
             add,
             positive,

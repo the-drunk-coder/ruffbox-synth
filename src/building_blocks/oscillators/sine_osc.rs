@@ -57,7 +57,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
             }
             // set the phase to an absolute value.
             // only makes sense in conjunction with the amplitude
-            SynthParameterLabel::OscillatorPhaseAbsolute => {
+            SynthParameterLabel::OscillatorPhaseEffective => {
                 if let SynthParameterValue::ScalarF32(p) = value {
                     self.x1_last =
                         ((-2.0 * PI * self.freq / self.samplerate) + (p / self.amp)).cos();

@@ -24,45 +24,45 @@ pub enum SynthState {
 #[repr(C)]
 #[derive(Hash, Eq, PartialEq, Clone, Copy, Debug)]
 pub enum SynthParameterLabel {
-    Attack,                  // 0
-    Decay,                   // 1
-    DelayDampeningFrequency, // 2
-    DelayFeedback,           // 3
-    DelayMix,                // 4
-    DelayTime,               // 5
-    DelayRate,               // 6
-    Duration,                // 7
-    PitchFrequency,          // 8
-    PitchNote,               // 9
-    HighpassCutoffFrequency, // 10
-    HighpassQFactor,         // 11
-    EnvelopeLevel,           // 12
-    OscillatorAmplitude,     // 13
-    OscillatorPhaseRelative, // 14
-    OscillatorPhaseAbsolute, // 15
-    LowpassCutoffFrequency,  // 16
-    LowpassQFactor,          // 17
-    LowpassFilterDistortion, // 18
-    PeakFrequency,           // 19
-    PeakGain,                // 20
-    PeakQFactor,             // 21
-    Pulsewidth,              // 22
-    PlaybackRate,            // 23
-    PlaybackStart,           // 24
-    PlaybackLoop,            // 25
-    Release,                 // 26
-    ReverbDampening,         // 27
-    ReverbMix,               // 28
-    ReverbRoomsize,          // 29
-    SampleBufferNumber,      // 30
-    Samplerate,              // 31
-    ChannelPosition,         // 32
-    AmbisonicAzimuth,        // 33
-    AmbisonicElevation,      // 34
-    Sustain,                 // 35
-    Wavetable,               // 36
-    Wavematrix,              // 37
-    WavematrixTableIndex,    // 38
+    Attack,                   // 0
+    Decay,                    // 1
+    DelayDampeningFrequency,  // 2
+    DelayFeedback,            // 3
+    DelayMix,                 // 4
+    DelayTime,                // 5
+    DelayRate,                // 6
+    Duration,                 // 7
+    PitchFrequency,           // 8
+    PitchNote,                // 9
+    HighpassCutoffFrequency,  // 10
+    HighpassQFactor,          // 11
+    EnvelopeLevel,            // 12
+    OscillatorAmplitude,      // 13 (oscillator amplitude)
+    OscillatorPhaseRelative,  // 14 (radians)
+    OscillatorPhaseEffective, // 15 (the target value or effective offset dependent on the amplitude)
+    LowpassCutoffFrequency,   // 16
+    LowpassQFactor,           // 17
+    LowpassFilterDistortion,  // 18
+    PeakFrequency,            // 19
+    PeakGain,                 // 20
+    PeakQFactor,              // 21
+    Pulsewidth,               // 22
+    PlaybackRate,             // 23
+    PlaybackStart,            // 24
+    PlaybackLoop,             // 25
+    Release,                  // 26
+    ReverbDampening,          // 27
+    ReverbMix,                // 28
+    ReverbRoomsize,           // 29
+    SampleBufferNumber,       // 30
+    Samplerate,               // 31
+    ChannelPosition,          // 32
+    AmbisonicAzimuth,         // 33
+    AmbisonicElevation,       // 34
+    Sustain,                  // 35
+    Wavetable,                // 36
+    Wavematrix,               // 37
+    WavematrixTableIndex,     // 38
 }
 
 #[derive(Clone, Copy)]

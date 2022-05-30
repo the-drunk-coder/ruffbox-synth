@@ -75,7 +75,7 @@ mod tests {
     fn sine_osc_abs_phase_offset() {
         let mut osc = SineOsc::<128>::new(440.0, 200.0, 44100.0);
 
-    osc.set_parameter(SynthParameterLabel::OscillatorPhaseAbsolute,
+    osc.set_parameter(SynthParameterLabel::OscillatorPhaseEffective,
               &SynthParameterValue::ScalarF32(100.0));
 
         let out_1 = osc.get_next_block(0, &Vec::new());
