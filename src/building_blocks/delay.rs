@@ -57,12 +57,12 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for MonoDelay<BUFSIZE> {
                     _ => (),
                 };
             }
-            SynthParameterValue::Lfo(init, freq, amp, add, op) => {
+            SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
                 match par {
                     SynthParameterLabel::DelayDampeningFrequency => {
                         self.dampening_filter.set_parameter(
                             SynthParameterLabel::LowpassCutoffFrequency,
-                            &SynthParameterValue::Lfo(*init, *freq, *add, *amp, *op),
+                            &SynthParameterValue::Lfo(*init, *freq, *eff_phase, *add, *amp, *op),
                         )
                     }
                     SynthParameterLabel::DelayFeedback => {

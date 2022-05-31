@@ -106,7 +106,7 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for Lpf18<BUFSIZE> {
 
                 self.update_internals(self.cutoff, self.res, self.dist);
             }
-            SynthParameterValue::Lfo(init, freq, amp, add, op) => {
+            SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
                 match par {
                     SynthParameterLabel::LowpassCutoffFrequency => {
                         self.cutoff = *init;

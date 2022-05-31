@@ -46,7 +46,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSaw<BUFSIZE> {
                     self.period_samples = (self.samplerate / f).round() as usize;
                     self.lvl_inc = (2.0 * self.lvl) / (self.samplerate / f).round();
                 }
-                SynthParameterValue::Lfo(init, freq, amp, add, op) => {
+                SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
                     self.freq = *init;
                     self.freq_mod = Some(Modulator::lfo(
                         *op,
@@ -102,7 +102,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSaw<BUFSIZE> {
                     self.lvl = *l;
                     self.lvl_inc = (2.0 * self.lvl) / (self.samplerate / self.freq).round();
                 }
-                SynthParameterValue::Lfo(init, freq, amp, add, op) => {
+                SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
                     self.lvl = *init;
                     self.lvl_mod = Some(Modulator::lfo(
                         *op,

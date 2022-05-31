@@ -50,7 +50,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavetable<BUFSIZE> {
                     self.freq = *value;
                     self.phase_inc = self.tablesize as f32 * self.freq * self.sample_period;
                 }
-                SynthParameterValue::Lfo(init, freq, amp, add, op) => {
+                SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
                     self.freq = *init;
                     self.freq_mod = Some(Modulator::lfo(
                         *op,
@@ -112,7 +112,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavetable<BUFSIZE> {
                 SynthParameterValue::ScalarF32(value) => {
                     self.lvl = *value;
                 }
-                SynthParameterValue::Lfo(init, freq, amp, add, op) => {
+                SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
                     self.lvl = *init;
                     self.lvl_mod = Some(Modulator::lfo(
                         *op,

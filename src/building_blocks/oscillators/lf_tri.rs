@@ -67,7 +67,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFTri<BUFSIZE> {
                     self.freq = *f;
                     self.update_internals(self.freq, self.lvl);
                 }
-                SynthParameterValue::Lfo(init, freq, amp, add, op) => {
+                SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
                     self.freq = *init;
                     self.freq_mod = Some(Modulator::lfo(
                         *op,
@@ -123,7 +123,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFTri<BUFSIZE> {
                     self.lvl = *l;
                     self.update_internals(self.freq, self.lvl);
                 }
-                SynthParameterValue::Lfo(init, freq, amp, add, op) => {
+                SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
                     self.lvl = *init;
                     self.lvl_mod = Some(Modulator::lfo(
                         *op,

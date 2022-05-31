@@ -49,7 +49,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSquare<BUFSIZE> {
                     self.flank_point =
                         (self.period_samples as f32 * self.pulsewidth).round() as usize;
                 }
-                SynthParameterValue::Lfo(init, freq, amp, add, op) => {
+                SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
                     self.freq = *init;
                     self.freq_mod = Some(Modulator::lfo(
                         *op,
@@ -104,7 +104,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSquare<BUFSIZE> {
                 SynthParameterValue::ScalarF32(l) => {
                     self.lvl = *l;
                 }
-                SynthParameterValue::Lfo(init, freq, amp, add, op) => {
+                SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
                     self.lvl = *init;
                     self.lvl_mod = Some(Modulator::lfo(
                         *op,
@@ -160,7 +160,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSquare<BUFSIZE> {
                     self.pulsewidth = *pw;
                     self.flank_point = (self.period_samples as f32 * pw).round() as usize;
                 }
-                SynthParameterValue::Lfo(init, freq, amp, add, op) => {
+                SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
                     self.pulsewidth = *init;
                     self.pw_mod = Some(Modulator::lfo(
                         *op,

@@ -73,7 +73,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
                         self.x2_last = ((-2.0 * PI * self.freq) / self.samplerate).sin();
                         self.mcf_buf = [-2.0 * (PI * (self.freq / self.samplerate)).sin(); BUFSIZE];
                     }
-                    SynthParameterValue::Lfo(init, freq, amp, add, op) => {
+                    SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
                         self.freq = *init;
                         self.freq_mod = Some(Modulator::lfo(
                             *op,
@@ -131,7 +131,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
                         self.amp = *l;
                         self.amp_buf = [self.amp; BUFSIZE];
                     }
-                    SynthParameterValue::Lfo(init, freq, amp, add, op) => {
+                    SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
                         self.amp = *init;
                         self.amp_mod = Some(Modulator::lfo(
                             *op,

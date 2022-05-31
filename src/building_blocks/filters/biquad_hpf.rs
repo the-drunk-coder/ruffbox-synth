@@ -70,7 +70,7 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for BiquadHpf<BUFSIZE> {
 
                 self.update_internals(self.cutoff, self.q);
             }
-            SynthParameterValue::Lfo(init, freq, amp, add, op) => {
+            SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
                 match par {
                     SynthParameterLabel::HighpassCutoffFrequency => {
                         self.cutoff = *init;

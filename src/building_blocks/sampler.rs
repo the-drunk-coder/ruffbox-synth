@@ -185,7 +185,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
                 }
             }
             SynthParameterLabel::PlaybackRate => match val {
-                SynthParameterValue::Lfo(init, freq, amp, add, op) => {
+                SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
                     self.playback_rate = *init;
                     self.rate_mod = Some(Modulator::lfo(
                         *op,
@@ -244,7 +244,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
                 SynthParameterValue::ScalarF32(value) => {
                     self.lvl = *value;
                 }
-                SynthParameterValue::Lfo(init, freq, amp, add, op) => {
+                SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
                     self.lvl = *init;
                     self.lvl_mod = Some(Modulator::lfo(
                         *op,
