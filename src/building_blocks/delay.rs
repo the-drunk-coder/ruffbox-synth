@@ -70,6 +70,7 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for MonoDelay<BUFSIZE> {
                         self.fb_mod = Some(Modulator::lfo(
                             *op,
                             *freq,
+                            *eff_phase,
                             *amp,
                             *add,
                             false,
@@ -82,6 +83,7 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for MonoDelay<BUFSIZE> {
                         self.rate_mod = Some(Modulator::lfo(
                             *op,
                             *freq,
+                            *eff_phase,
                             *amp,
                             *add,
                             false,
@@ -94,6 +96,7 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for MonoDelay<BUFSIZE> {
                         self.time_mod = Some(Modulator::lfo(
                             *op,
                             *freq,
+                            *eff_phase,
                             *amp,
                             *add,
                             false,

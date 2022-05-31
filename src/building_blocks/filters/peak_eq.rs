@@ -92,6 +92,7 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for PeakEq<BUFSIZE> {
                         self.center_mod = Some(Modulator::lfo(
                             *op,
                             *freq,
+                            *eff_phase,
                             *amp,
                             *add,
                             true,
@@ -104,6 +105,7 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for PeakEq<BUFSIZE> {
                         self.gain_mod = Some(Modulator::lfo(
                             *op,
                             *freq,
+                            *eff_phase,
                             *amp,
                             *add,
                             false,
@@ -116,6 +118,7 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for PeakEq<BUFSIZE> {
                         self.bw_mod = Some(Modulator::lfo(
                             *op,
                             *freq,
+                            *eff_phase,
                             *amp,
                             *add,
                             true,

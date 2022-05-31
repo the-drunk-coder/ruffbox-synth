@@ -190,6 +190,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
                     self.rate_mod = Some(Modulator::lfo(
                         *op,
                         *freq,
+                        *eff_phase,
                         *amp,
                         *add,
                         false,
@@ -249,6 +250,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
                     self.lvl_mod = Some(Modulator::lfo(
                         *op,
                         *freq,
+                        *eff_phase,
                         *amp,
                         *add,
                         false,

@@ -78,6 +78,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
                         self.freq_mod = Some(Modulator::lfo(
                             *op,
                             *freq,
+                            *eff_phase,
                             *amp,
                             *add,
                             false,
@@ -136,6 +137,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
                         self.amp_mod = Some(Modulator::lfo(
                             *op,
                             *freq,
+                            *eff_phase,
                             *amp,
                             *add,
                             false,

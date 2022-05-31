@@ -77,6 +77,7 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for BiquadHpf<BUFSIZE> {
                         self.cutoff_mod = Some(Modulator::lfo(
                             *op,
                             *freq,
+                            *eff_phase,
                             *amp,
                             *add,
                             true,
@@ -89,6 +90,7 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for BiquadHpf<BUFSIZE> {
                         self.q_mod = Some(Modulator::lfo(
                             *op,
                             *freq,
+                            *eff_phase,
                             *amp,
                             *add,
                             true,

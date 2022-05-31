@@ -63,6 +63,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavematrix<BUFSIZE> {
                     self.freq_mod = Some(Modulator::lfo(
                         *op,
                         *freq,
+                        *eff_phase,
                         *amp,
                         *add,
                         false,
@@ -139,6 +140,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavematrix<BUFSIZE> {
                     self.table_idx_mod = Some(Modulator::lfo(
                         *op,
                         *freq,
+                        *eff_phase,
                         *amp,
                         *add,
                         false,
@@ -194,6 +196,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavematrix<BUFSIZE> {
                     self.lvl_mod = Some(Modulator::lfo(
                         *op,
                         *freq,
+                        *eff_phase,
                         *amp,
                         *add,
                         false,

@@ -54,6 +54,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSquare<BUFSIZE> {
                     self.freq_mod = Some(Modulator::lfo(
                         *op,
                         *freq,
+                        *eff_phase,
                         *amp,
                         *add,
                         false,
@@ -109,6 +110,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSquare<BUFSIZE> {
                     self.lvl_mod = Some(Modulator::lfo(
                         *op,
                         *freq,
+                        *eff_phase,
                         *amp,
                         *add,
                         false,
@@ -165,6 +167,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSquare<BUFSIZE> {
                     self.pw_mod = Some(Modulator::lfo(
                         *op,
                         *freq,
+                        *eff_phase,
                         *amp,
                         *add,
                         false,

@@ -45,6 +45,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> PanChan<BUFSIZE, NCHAN> {
                     self.pos_mod = Some(Modulator::lfo(
                         *op,
                         *freq,
+                        *eff_phase,
                         *amp,
                         *add,
                         false,

@@ -1,5 +1,5 @@
 use crate::building_blocks::oscillators::*;
-use crate::building_blocks::{MonoSource, ValOp};
+use crate::building_blocks::{MonoSource, SynthParameterLabel, SynthParameterValue, ValOp};
 
 /// modulate things ...
 pub struct Modulator<const BUFSIZE: usize> {
@@ -12,18 +12,22 @@ pub struct Modulator<const BUFSIZE: usize> {
 
 impl<const BUFSIZE: usize> Modulator<BUFSIZE> {
     /// init lfo (sine) modulator
+    #[allow(clippy::too_many_arguments)]
     pub fn lfo(
         op: ValOp,
         freq: f32,
-        //eff_phase: f32,
+        eff_phase: f32,
         amp: f32,
         add: f32,
         positive: bool,
         rectify: bool,
         sr: f32,
     ) -> Modulator<BUFSIZE> {
-        let src_osc = SineOsc::new(freq, amp, sr);
-        //src_osc.set_parameter(SynthParameterLabel::OscillatorPhaseEffective, &SynthParameterValue::ScalarF32(eff_phase));
+        let mut src_osc = SineOsc::new(freq, amp, sr);
+        src_osc.set_parameter(
+            SynthParameterLabel::OscillatorPhaseEffective,
+            &SynthParameterValue::ScalarF32(eff_phase),
+        );
         Modulator {
             source: Box::new(src_osc),
             op,

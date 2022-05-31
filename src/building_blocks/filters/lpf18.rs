@@ -113,6 +113,7 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for Lpf18<BUFSIZE> {
                         self.cutoff_mod = Some(Modulator::lfo(
                             *op,
                             *freq,
+                            *eff_phase,
                             *amp,
                             *add,
                             true,
@@ -125,6 +126,7 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for Lpf18<BUFSIZE> {
                         self.res_mod = Some(Modulator::lfo(
                             *op,
                             *freq,
+                            *eff_phase,
                             *amp,
                             *add,
                             true,
@@ -137,6 +139,7 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for Lpf18<BUFSIZE> {
                         self.dist_mod = Some(Modulator::lfo(
                             *op,
                             *freq,
+                            *eff_phase,
                             *amp,
                             *add,
                             true,
