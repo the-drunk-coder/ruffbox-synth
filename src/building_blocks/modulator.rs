@@ -26,7 +26,7 @@ impl<const BUFSIZE: usize> Modulator<BUFSIZE> {
         let mut src_osc = SineOsc::new(freq, amp, sr);
         src_osc.set_parameter(
             SynthParameterLabel::OscillatorPhaseEffective,
-            &SynthParameterValue::ScalarF32(eff_phase),
+            &SynthParameterValue::ScalarF32(eff_phase - add),
         );
         Modulator {
             source: Box::new(src_osc),
