@@ -9,7 +9,7 @@ use crossbeam::channel::Sender;
 use std::cmp::Ordering;
 use std::sync::Arc;
 
-use crate::building_blocks::{Synth, SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{Modulator, Synth, SynthParameterLabel, SynthParameterValue};
 
 pub use crate::ruffbox::{ruffbox_controls::*, ruffbox_playhead::*};
 
@@ -58,6 +58,15 @@ impl<const BUFSIZE: usize, const NCHAN: usize> ScheduledEvent<BUFSIZE, NCHAN> {
 
     pub fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
         self.source.set_parameter(par, value);
+    }
+
+    pub fn set_modulator(
+        &mut self,
+        par: SynthParameterLabel,
+        init: f32,
+        modulator: Modulator<BUFSIZE>,
+    ) {
+        self.source.set_modulator(par, init, modulator);
     }
 }
 

@@ -6,30 +6,51 @@ use rubato::{FftFixedIn, Resampler};
 use crossbeam::atomic::AtomicCell;
 use dashmap::DashMap;
 
-use crate::building_blocks::{SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{Modulator, SynthParameterLabel, SynthParameterValue};
 use crate::ruffbox::{ControlMessage, ScheduledEvent};
 use crate::synths::*;
 
 /// thin wrapper around a scheduled event instasnce
 pub struct PreparedInstance<const BUFSIZE: usize, const NCHAN: usize> {
     ev: ScheduledEvent<BUFSIZE, NCHAN>,
+    sr: f32,
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> PreparedInstance<BUFSIZE, NCHAN> {
-    /*
-    Modulator::lfo(
-     *op,
-                            *freq,
-     *eff_phase,
-     *amp,
-     *add,
-    false,
-                            false,
-                            self.samplerate,
-                        ));
-     */
     pub fn set_instance_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {
-        self.ev.set_parameter(par, val);
+        match val {
+            SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
+                self.ev.set_modulator(
+                    par,
+                    *init,
+                    Modulator::lfo(*op, *freq, *eff_phase, *amp, *add, false, false, self.sr),
+                );
+            }
+            SynthParameterValue::LFSaw(init, freq, eff_phase, amp, add, op) => {
+                self.ev.set_modulator(
+                    par,
+                    *init,
+                    Modulator::lfsaw(*op, *freq, *eff_phase, *amp, *add, false, false, self.sr),
+                );
+            }
+            SynthParameterValue::LFTri(init, freq, eff_phase, amp, add, op) => {
+                self.ev.set_modulator(
+                    par,
+                    *init,
+                    Modulator::lftri(*op, *freq, *eff_phase, *amp, *add, false, false, self.sr),
+                );
+            }
+            SynthParameterValue::LFSquare(init, freq, pw, amp, add, op) => {
+                self.ev.set_modulator(
+                    par,
+                    *init,
+                    Modulator::lfsquare(*op, *freq, *pw, *amp, *add, false, false, self.sr),
+                );
+            }
+            _ => {
+                self.ev.set_parameter(par, val);
+            }
+        }
     }
 }
 
@@ -97,6 +118,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
         sample_buf: usize,
     ) -> Option<PreparedInstance<BUFSIZE, NCHAN>> {
         Some(PreparedInstance {
+            sr: self.samplerate,
             ev: match src_type {
                 SynthType::SineOsc => {
                     ScheduledEvent::new(timestamp, Box::new(SineSynth::new(self.samplerate)))
