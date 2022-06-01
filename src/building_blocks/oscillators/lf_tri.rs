@@ -12,6 +12,7 @@ pub struct LFTri<const BUFSIZE: usize> {
     samplerate: f32,
     amp_inc_dec: f32,
     cur_amp: f32,
+    rise: bool,
 
     // modulator slots
     freq_mod: Option<Modulator<BUFSIZE>>, // allows modulating frequency ..
@@ -25,6 +26,7 @@ impl<const BUFSIZE: usize> LFTri<BUFSIZE> {
             amp,
             samplerate,
             amp_inc_dec: -2.0 / (samplerate / freq),
+            rise: true,
             cur_amp: 0.0,
             freq_mod: None,
             amp_mod: None,
@@ -39,10 +41,11 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFTri<BUFSIZE> {
             SynthParameterLabel::PitchFrequency => match value {
                 SynthParameterValue::ScalarF32(f) => {
                     self.freq = *f;
-                    self.amp_inc_dec = -2.0 / (self.samplerate / self.freq);                    
+                    self.amp_inc_dec = -2.0 / (self.samplerate / self.freq);
                 }
                 SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
                     self.freq = *init;
+                    self.amp_inc_dec = -2.0 / (self.samplerate / self.freq);
                     self.freq_mod = Some(Modulator::lfo(
                         *op,
                         *freq,
@@ -56,6 +59,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFTri<BUFSIZE> {
                 }
                 SynthParameterValue::LFSaw(init, freq, amp, add, op) => {
                     self.freq = *init;
+                    self.amp_inc_dec = -2.0 / (self.samplerate / self.freq);
                     self.freq_mod = Some(Modulator::lfsaw(
                         *op,
                         *freq,
@@ -68,6 +72,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFTri<BUFSIZE> {
                 }
                 SynthParameterValue::LFTri(init, freq, amp, add, op) => {
                     self.freq = *init;
+                    self.amp_inc_dec = -2.0 / (self.samplerate / self.freq);
                     self.freq_mod = Some(Modulator::lftri(
                         *op,
                         *freq,
@@ -80,6 +85,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFTri<BUFSIZE> {
                 }
                 SynthParameterValue::LFSquare(init, freq, pw, amp, add, op) => {
                     self.freq = *init;
+                    self.amp_inc_dec = -2.0 / (self.samplerate / self.freq);
                     self.freq_mod = Some(Modulator::lfsquare(
                         *op,
                         *freq,
@@ -95,7 +101,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFTri<BUFSIZE> {
             },
             SynthParameterLabel::OscillatorAmplitude => match value {
                 SynthParameterValue::ScalarF32(l) => {
-                    self.amp = *l;                    
+                    self.amp = *l;
                 }
                 SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
                     self.amp = *init;
@@ -181,16 +187,26 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFTri<BUFSIZE> {
                 .take(BUFSIZE)
                 .skip(start_sample)
             {
-                if self.cur_amp > 1.0 {
+                self.rise = if self.cur_amp > 1.0 {
                     self.cur_amp = 1.0;
-                    self.amp_inc_dec *= -1.0;
+                    //self.amp_inc_dec *= -1.0;
+                    false
                 } else if self.cur_amp < 0.0 {
                     self.cur_amp = 0.0;
-                    self.amp_inc_dec *= -1.0;
-                }
+                    //self.amp_inc_dec *= -1.0;
+                    true
+                } else {
+                    self.rise
+                };
 
                 *current_sample = (self.cur_amp * 2.0 - 1.0) * amp_buf[idx];
-                self.amp_inc_dec = -2.0 / (self.samplerate / freq_buf[idx]);
+
+                self.amp_inc_dec = if self.rise {
+                    2.0 / (self.samplerate / freq_buf[idx])
+                } else {
+                    -2.0 / (self.samplerate / freq_buf[idx])
+                };
+
                 self.cur_amp += self.amp_inc_dec;
             }
         } else {
