@@ -36,6 +36,11 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSaw<BUFSIZE> {
     // some parameter limits might be nice ...
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
         match par {
+            SynthParameterLabel::OscillatorPhaseEffective => {
+                if let SynthParameterValue::ScalarF32(p) = value {
+                    self.cur_amp = *p;
+                }
+            }
             SynthParameterLabel::PitchFrequency => match value {
                 SynthParameterValue::ScalarF32(f) => {
                     self.freq = *f;

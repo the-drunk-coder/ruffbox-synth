@@ -38,6 +38,11 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFTri<BUFSIZE> {
     // some parameter limits might be nice ...
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
         match par {
+            SynthParameterLabel::OscillatorPhaseEffective => {
+                if let SynthParameterValue::ScalarF32(p) = value {
+                    self.cur_amp = ((p / self.amp) + 1.0) / 2.0;
+                }
+            }
             SynthParameterLabel::PitchFrequency => match value {
                 SynthParameterValue::ScalarF32(f) => {
                     self.freq = *f;
@@ -189,11 +194,9 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFTri<BUFSIZE> {
             {
                 self.rise = if self.cur_amp > 1.0 {
                     self.cur_amp = 1.0;
-                    //self.amp_inc_dec *= -1.0;
                     false
                 } else if self.cur_amp < 0.0 {
                     self.cur_amp = 0.0;
-                    //self.amp_inc_dec *= -1.0;
                     true
                 } else {
                     self.rise
