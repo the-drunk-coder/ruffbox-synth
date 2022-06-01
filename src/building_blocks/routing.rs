@@ -99,7 +99,7 @@ mod tests {
 
     #[test]
     fn panchan_test_basic_pan() {
-        let mut pchan = PanChan::<128, 2>::new(44100.0);
+        let mut pchan = PanChan::<128, 2>::new();
 
         let mut block = [0.0; 128];
         block[0] = 1.0;
@@ -117,7 +117,7 @@ mod tests {
 
     #[test]
     fn panchan_test_left_pan() {
-        let mut pchan = PanChan::<128, 2>::new(44100.0);
+        let mut pchan = PanChan::<128, 2>::new();
 
         pchan.set_parameter(
             SynthParameterLabel::ChannelPosition,
@@ -135,7 +135,7 @@ mod tests {
 
     #[test]
     fn panchan_test_right_pan() {
-        let mut pchan = PanChan::<128, 2>::new(44100.0);
+        let mut pchan = PanChan::<128, 2>::new();
 
         pchan.set_parameter(
             SynthParameterLabel::ChannelPosition,
@@ -153,7 +153,7 @@ mod tests {
 
     #[test]
     fn panchan_test_multi() {
-        let mut pchan = PanChan::<128, 8>::new(44100.0);
+        let mut pchan = PanChan::<128, 8>::new();
 
         let mut block = [0.0; 128];
         block[0] = 1.0;
