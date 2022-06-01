@@ -6,10 +6,11 @@ use crate::building_blocks::{
 /**
  * a very simple sample player ...
  */
+#[derive(Clone)]
 pub struct Sampler<const BUFSIZE: usize> {
     // user parameters
     playback_rate: f32,
-    lvl: f32,
+    amp: f32,
 
     // internal parameters
     index: usize,
@@ -23,7 +24,7 @@ pub struct Sampler<const BUFSIZE: usize> {
 
     // modulator slots
     rate_mod: Option<Modulator<BUFSIZE>>,
-    lvl_mod: Option<Modulator<BUFSIZE>>,
+    amp_mod: Option<Modulator<BUFSIZE>>,
 }
 
 impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
@@ -41,11 +42,11 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
             playback_rate: 1.0,
             frac_index_increment: 1.0,
             state: SynthState::Fresh,
-            lvl: 1.0,
+            amp: 1.0,
             repeat,
             samplerate: sr,
             rate_mod: None,
-            lvl_mod: None,
+            amp_mod: None,
         }
     }
 
@@ -57,7 +58,7 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
         for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
-            *current_sample = sample_buffers[self.bufnum][self.index] * self.lvl;
+            *current_sample = sample_buffers[self.bufnum][self.index] * self.amp;
 
             if self.index < self.buflen {
                 self.index += 1;
@@ -92,7 +93,7 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
                 sample_buffers[self.bufnum][idx_u],
                 sample_buffers[self.bufnum][idx_u + 1],
                 sample_buffers[self.bufnum][idx_u + 2],
-                self.lvl,
+                self.amp,
             );
 
             if ((self.frac_index + self.frac_index_increment) as usize) < self.buflen {
@@ -121,10 +122,10 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
             [self.playback_rate; BUFSIZE]
         };
 
-        let lvl_buf = if let Some(m) = self.lvl_mod.as_mut() {
-            m.process(self.lvl, start_sample, sample_buffers)
+        let amp_buf = if let Some(m) = self.amp_mod.as_mut() {
+            m.process(self.amp, start_sample, sample_buffers)
         } else {
-            [self.lvl; BUFSIZE]
+            [self.amp; BUFSIZE]
         };
 
         for (sample_idx, current_sample) in out_buf
@@ -147,7 +148,7 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
                 sample_buffers[self.bufnum][idx_u],
                 sample_buffers[self.bufnum][idx_u + 1],
                 sample_buffers[self.bufnum][idx_u + 2],
-                lvl_buf[sample_idx],
+                amp_buf[sample_idx],
             );
 
             if ((self.frac_index + self.frac_index_increment) as usize) < self.buflen {
@@ -165,6 +166,24 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
+    fn set_modulator(
+        &mut self,
+        par: SynthParameterLabel,
+        init: f32,
+        modulator: Modulator<BUFSIZE>,
+    ) {
+        match par {
+            SynthParameterLabel::PlaybackRate => {
+                self.playback_rate = init;
+                self.rate_mod = Some(modulator);
+            }
+            SynthParameterLabel::OscillatorAmplitude => {
+                self.amp = init;
+                self.amp_mod = Some(modulator);
+            }
+            _ => {}
+        }
+    }
     fn set_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {
         match par {
             SynthParameterLabel::PlaybackStart => {
@@ -185,56 +204,6 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
                 }
             }
             SynthParameterLabel::PlaybackRate => match val {
-                SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
-                    self.playback_rate = *init;
-                    self.rate_mod = Some(Modulator::lfo(
-                        *op,
-                        *freq,
-                        *eff_phase,
-                        *amp,
-                        *add,
-                        false,
-                        false,
-                        self.samplerate,
-                    ));
-                }
-                SynthParameterValue::LFSaw(init, freq, amp, add, op) => {
-                    self.playback_rate = *init;
-                    self.rate_mod = Some(Modulator::lfsaw(
-                        *op,
-                        *freq,
-                        *amp,
-                        *add,
-                        false,
-                        false,
-                        self.samplerate,
-                    ));
-                }
-                SynthParameterValue::LFTri(init, freq, amp, add, op) => {
-                    self.playback_rate = *init;
-                    self.rate_mod = Some(Modulator::lftri(
-                        *op,
-                        *freq,
-                        *amp,
-                        *add,
-                        false,
-                        false,
-                        self.samplerate,
-                    ));
-                }
-                SynthParameterValue::LFSquare(init, freq, pw, amp, add, op) => {
-                    self.playback_rate = *init;
-                    self.rate_mod = Some(Modulator::lfsquare(
-                        *op,
-                        *freq,
-                        *pw,
-                        *amp,
-                        *add,
-                        false,
-                        false,
-                        self.samplerate,
-                    ));
-                }
                 SynthParameterValue::ScalarF32(value) => {
                     self.playback_rate = *value;
                     self.frac_index_increment = 1.0 * *value;
@@ -243,57 +212,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
             },
             SynthParameterLabel::OscillatorAmplitude => match val {
                 SynthParameterValue::ScalarF32(value) => {
-                    self.lvl = *value;
-                }
-                SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
-                    self.lvl = *init;
-                    self.lvl_mod = Some(Modulator::lfo(
-                        *op,
-                        *freq,
-                        *eff_phase,
-                        *amp,
-                        *add,
-                        false,
-                        false,
-                        self.samplerate,
-                    ));
-                }
-                SynthParameterValue::LFSaw(init, freq, amp, add, op) => {
-                    self.lvl = *init;
-                    self.lvl_mod = Some(Modulator::lfsaw(
-                        *op,
-                        *freq,
-                        *amp,
-                        *add,
-                        false,
-                        false,
-                        self.samplerate,
-                    ));
-                }
-                SynthParameterValue::LFTri(init, freq, amp, add, op) => {
-                    self.lvl = *init;
-                    self.lvl_mod = Some(Modulator::lftri(
-                        *op,
-                        *freq,
-                        *amp,
-                        *add,
-                        false,
-                        false,
-                        self.samplerate,
-                    ));
-                }
-                SynthParameterValue::LFSquare(init, freq, pw, amp, add, op) => {
-                    self.lvl = *init;
-                    self.lvl_mod = Some(Modulator::lfsquare(
-                        *op,
-                        *freq,
-                        *pw,
-                        *amp,
-                        *add,
-                        false,
-                        false,
-                        self.samplerate,
-                    ));
+                    self.amp = *value;
                 }
                 _ => {}
             },

@@ -3,7 +3,7 @@ use crate::building_blocks::filters::*;
 use crate::building_blocks::oscillators::*;
 use crate::building_blocks::routing::PanChan;
 use crate::building_blocks::{
-    MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
+    Modulator, MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
 };
 
 /// a cubic sine approximation synth with envelope etc.
@@ -32,6 +32,18 @@ impl<const BUFSIZE: usize, const NCHAN: usize> LFCubSynth<BUFSIZE, NCHAN> {
 impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
     for LFCubSynth<BUFSIZE, NCHAN>
 {
+    fn set_modulator(
+        &mut self,
+        par: SynthParameterLabel,
+        init: f32,
+        modulator: Modulator<BUFSIZE>,
+    ) {
+        self.oscillator.set_modulator(par, init, modulator.clone());
+        self.filter.set_modulator(par, init, modulator.clone());
+        self.envelope.set_modulator(par, init, modulator.clone());
+        self.balance.set_modulator(par, init, modulator.clone());
+    }
+
     fn set_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {
         self.oscillator.set_parameter(par, val);
         self.envelope.set_parameter(par, val);

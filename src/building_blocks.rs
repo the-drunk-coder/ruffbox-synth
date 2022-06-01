@@ -88,11 +88,31 @@ pub enum SynthParameterValue {
 }
 
 /// oscillators, the sampler, etc are sources
-pub trait MonoSource<const BUFSIZE: usize> {
+pub trait MonoSource<const BUFSIZE: usize>: MonoSourceClone<BUFSIZE> {
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue);
+    fn set_modulator(&mut self, par: SynthParameterLabel, init: f32, modulator: Modulator<BUFSIZE>);
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
     fn get_next_block(&mut self, start_sample: usize, in_buffers: &[Vec<f32>]) -> [f32; BUFSIZE];
+}
+
+pub trait MonoSourceClone<const BUFSIZE: usize> {
+    fn clone_box(&self) -> Box<dyn MonoSource<BUFSIZE> + Send + Sync>;
+}
+
+impl<const BUFSIZE: usize, T> MonoSourceClone<BUFSIZE> for T
+where
+    T: 'static + MonoSource<BUFSIZE> + Clone + Send + Sync,
+{
+    fn clone_box(&self) -> Box<dyn MonoSource<BUFSIZE> + Send + Sync> {
+        Box::new(self.clone())
+    }
+}
+
+impl<const BUFSIZE: usize> Clone for Box<dyn MonoSource<BUFSIZE> + Send + Sync> {
+    fn clone(&self) -> Box<dyn MonoSource<BUFSIZE> + Send + Sync> {
+        self.clone_box()
+    }
 }
 
 /// filters etc are effects
@@ -100,6 +120,7 @@ pub trait MonoEffect<const BUFSIZE: usize> {
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue);
+    fn set_modulator(&mut self, par: SynthParameterLabel, init: f32, modulator: Modulator<BUFSIZE>);
     fn process_block(
         &mut self,
         block: [f32; BUFSIZE],
@@ -117,6 +138,7 @@ pub trait MultichannelReverb<const BUFSIZE: usize, const NCHAN: usize> {
 /// This is where the building blocks come together
 pub trait Synth<const BUFSIZE: usize, const NCHAN: usize> {
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue);
+    fn set_modulator(&mut self, par: SynthParameterLabel, init: f32, modulator: Modulator<BUFSIZE>);
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
     fn get_next_block(

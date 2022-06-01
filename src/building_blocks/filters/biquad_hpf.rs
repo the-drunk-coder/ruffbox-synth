@@ -58,6 +58,25 @@ impl<const BUFSIZE: usize> BiquadHpf<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for BiquadHpf<BUFSIZE> {
+    fn set_modulator(
+        &mut self,
+        par: SynthParameterLabel,
+        init: f32,
+        modulator: Modulator<BUFSIZE>,
+    ) {
+        match par {
+            SynthParameterLabel::HighpassCutoffFrequency => {
+                self.cutoff = init;
+                self.cutoff_mod = Some(modulator);
+            }
+            SynthParameterLabel::HighpassQFactor => {
+                self.q = init;
+                self.q_mod = Some(modulator);
+            }
+            _ => {}
+        }
+        self.update_internals(self.cutoff, self.q);
+    }
     // some parameter limits might be nice ...
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
         match value {

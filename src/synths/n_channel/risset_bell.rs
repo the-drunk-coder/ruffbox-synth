@@ -3,7 +3,7 @@ use crate::building_blocks::filters::*;
 use crate::building_blocks::oscillators::*;
 use crate::building_blocks::routing::PanChan;
 use crate::building_blocks::{
-    MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
+    Modulator, MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
 };
 
 /// 11-partial risset bell, modeled after Frederik Oloffson's SuperCollider port
@@ -79,6 +79,18 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RissetBell<BUFSIZE, NCHAN> {
 impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
     for RissetBell<BUFSIZE, NCHAN>
 {
+    fn set_modulator(
+        &mut self,
+        par: SynthParameterLabel,
+        init: f32,
+        modulator: Modulator<BUFSIZE>,
+    ) {
+        self.lpf.set_modulator(par, init, modulator.clone());
+        self.main_envelope
+            .set_modulator(par, init, modulator.clone());
+        self.balance.set_modulator(par, init, modulator.clone());
+    }
+
     fn set_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {
         self.lpf.set_parameter(par, val);
         self.main_envelope.set_parameter(par, val);

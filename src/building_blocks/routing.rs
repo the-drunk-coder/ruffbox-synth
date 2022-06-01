@@ -22,6 +22,18 @@ impl<const BUFSIZE: usize, const NCHAN: usize> PanChan<BUFSIZE, NCHAN> {
         }
     }
 
+    pub fn set_modulator(
+        &mut self,
+        par: SynthParameterLabel,
+        init: f32,
+        modulator: Modulator<BUFSIZE>,
+    ) {
+        if par == SynthParameterLabel::ChannelPosition {
+            self.pos = init; // keep for later
+            self.pos_mod = Some(modulator);
+        }
+    }
+
     /// Set the parameter for this panner.
     pub fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
         // if it was more parameters, match would be better,
@@ -39,56 +51,6 @@ impl<const BUFSIZE: usize, const NCHAN: usize> PanChan<BUFSIZE, NCHAN> {
 
                     self.levels[lower as usize % (NCHAN as usize)] = [angle_rad.cos(); BUFSIZE];
                     self.levels[upper as usize % (NCHAN as usize)] = [angle_rad.sin(); BUFSIZE];
-                }
-                SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
-                    self.pos = *init; // keep for later
-                    self.pos_mod = Some(Modulator::lfo(
-                        *op,
-                        *freq,
-                        *eff_phase,
-                        *amp,
-                        *add,
-                        false,
-                        false,
-                        self.samplerate,
-                    ))
-                }
-                SynthParameterValue::LFTri(init, freq, amp, add, op) => {
-                    self.pos = *init; // keep for later
-                    self.pos_mod = Some(Modulator::lftri(
-                        *op,
-                        *freq,
-                        *amp,
-                        *add,
-                        false,
-                        false,
-                        self.samplerate,
-                    ))
-                }
-                SynthParameterValue::LFSaw(init, freq, amp, add, op) => {
-                    self.pos = *init; // keep for later
-                    self.pos_mod = Some(Modulator::lfsaw(
-                        *op,
-                        *freq,
-                        *amp,
-                        *add,
-                        false,
-                        false,
-                        self.samplerate,
-                    ))
-                }
-                SynthParameterValue::LFSquare(init, freq, pw, amp, add, op) => {
-                    self.pos = *init; // keep for later
-                    self.pos_mod = Some(Modulator::lfsquare(
-                        *op,
-                        *freq,
-                        *pw,
-                        *amp,
-                        *add,
-                        false,
-                        false,
-                        self.samplerate,
-                    ))
                 }
                 _ => {}
             }

@@ -2,7 +2,7 @@ use crate::building_blocks::ambisonics::encoder_o1::EncoderO1;
 use crate::building_blocks::envelopes::*;
 use crate::building_blocks::oscillators::*;
 use crate::building_blocks::{
-    MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
+    Modulator, MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
 };
 
 /// a sinusoidal synth with envelope etc.
@@ -28,6 +28,16 @@ impl<const BUFSIZE: usize> SineSynth<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for SineSynth<BUFSIZE> {
+    fn set_modulator(
+        &mut self,
+        par: SynthParameterLabel,
+        init: f32,
+        modulator: Modulator<BUFSIZE>,
+    ) {
+        self.oscillator.set_modulator(par, init, modulator.clone());
+        self.envelope.set_modulator(par, init, modulator.clone());
+    }
+
     fn set_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {
         self.oscillator.set_parameter(par, val);
         self.envelope.set_parameter(par, val);

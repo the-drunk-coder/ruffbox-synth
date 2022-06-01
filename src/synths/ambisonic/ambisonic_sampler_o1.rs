@@ -3,7 +3,7 @@ use crate::building_blocks::envelopes::*;
 use crate::building_blocks::filters::*;
 use crate::building_blocks::sampler::Sampler;
 use crate::building_blocks::{
-    MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
+    Modulator, MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
 };
 
 /// a sampler with envelope etc.
@@ -36,6 +36,18 @@ impl<const BUFSIZE: usize> AmbisonicSamplerO1<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for AmbisonicSamplerO1<BUFSIZE> {
+    fn set_modulator(
+        &mut self,
+        par: SynthParameterLabel,
+        init: f32,
+        modulator: Modulator<BUFSIZE>,
+    ) {
+        self.sampler.set_modulator(par, init, modulator.clone());
+        self.hpf.set_modulator(par, init, modulator.clone());
+        self.peak_eq.set_modulator(par, init, modulator.clone());
+        self.lpf.set_modulator(par, init, modulator.clone());
+        self.envelope.set_modulator(par, init, modulator.clone());
+    }
     fn set_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {
         self.sampler.set_parameter(par, val);
         self.hpf.set_parameter(par, val);

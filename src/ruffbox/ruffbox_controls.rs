@@ -16,6 +16,18 @@ pub struct PreparedInstance<const BUFSIZE: usize, const NCHAN: usize> {
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> PreparedInstance<BUFSIZE, NCHAN> {
+    /*
+    Modulator::lfo(
+     *op,
+                            *freq,
+     *eff_phase,
+     *amp,
+     *add,
+    false,
+                            false,
+                            self.samplerate,
+                        ));
+     */
     pub fn set_instance_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {
         self.ev.set_parameter(par, val);
     }

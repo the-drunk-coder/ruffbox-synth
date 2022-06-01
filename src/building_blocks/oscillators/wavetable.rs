@@ -5,9 +5,10 @@ use crate::building_blocks::{
 /**
  * A simple, raw wavetable oscillator
  */
+#[derive(Clone)]
 pub struct Wavetable<const BUFSIZE: usize> {
     // user parameters
-    lvl: f32,
+    amp: f32,
     freq: f32,
     wavetable: [f32; 2048], // max len
 
@@ -21,14 +22,14 @@ pub struct Wavetable<const BUFSIZE: usize> {
 
     // modulator slots
     freq_mod: Option<Modulator<BUFSIZE>>,
-    lvl_mod: Option<Modulator<BUFSIZE>>,
+    amp_mod: Option<Modulator<BUFSIZE>>,
 }
 
 impl<const BUFSIZE: usize> Wavetable<BUFSIZE> {
     pub fn new(sr: f32) -> Wavetable<BUFSIZE> {
         Wavetable {
             freq: 46.875,
-            lvl: 1.0,
+            amp: 1.0,
             wavetable: [0.5; 2048],
             tablesize: 2048,
             phase_inc: 1.0,
@@ -37,68 +38,38 @@ impl<const BUFSIZE: usize> Wavetable<BUFSIZE> {
             sample_period: 1.0 / sr,
             samplerate: sr,
             freq_mod: None,
-            lvl_mod: None,
+            amp_mod: None,
         }
     }
 }
 
 impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavetable<BUFSIZE> {
+    fn set_modulator(
+        &mut self,
+        par: SynthParameterLabel,
+        init: f32,
+        modulator: Modulator<BUFSIZE>,
+    ) {
+        match par {
+            SynthParameterLabel::PitchFrequency => {
+                self.freq = init;
+                self.phase_inc = self.tablesize as f32 * self.freq * self.sample_period;
+                self.freq_mod = Some(modulator);
+            }
+            SynthParameterLabel::OscillatorAmplitude => {
+                self.amp = init;
+                self.amp_mod = Some(modulator);
+            }
+            _ => {}
+        }
+    }
+
     fn set_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {
         match par {
             SynthParameterLabel::PitchFrequency => match val {
                 SynthParameterValue::ScalarF32(value) => {
                     self.freq = *value;
                     self.phase_inc = self.tablesize as f32 * self.freq * self.sample_period;
-                }
-                SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
-                    self.freq = *init;
-                    self.freq_mod = Some(Modulator::lfo(
-                        *op,
-                        *freq,
-                        *eff_phase,
-                        *amp,
-                        *add,
-                        false,
-                        false,
-                        self.samplerate,
-                    ))
-                }
-                SynthParameterValue::LFSaw(init, freq, amp, add, op) => {
-                    self.freq = *init;
-                    self.freq_mod = Some(Modulator::lfsaw(
-                        *op,
-                        *freq,
-                        *amp,
-                        *add,
-                        false,
-                        false,
-                        self.samplerate,
-                    ))
-                }
-                SynthParameterValue::LFTri(init, freq, amp, add, op) => {
-                    self.freq = *init;
-                    self.freq_mod = Some(Modulator::lftri(
-                        *op,
-                        *freq,
-                        *amp,
-                        *add,
-                        false,
-                        false,
-                        self.samplerate,
-                    ))
-                }
-                SynthParameterValue::LFSquare(init, freq, pw, amp, add, op) => {
-                    self.freq = *init;
-                    self.freq_mod = Some(Modulator::lfsquare(
-                        *op,
-                        *freq,
-                        *pw,
-                        *amp,
-                        *add,
-                        false,
-                        false,
-                        self.samplerate,
-                    ))
                 }
                 _ => {}
             },
@@ -111,57 +82,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavetable<BUFSIZE> {
             }
             SynthParameterLabel::OscillatorAmplitude => match val {
                 SynthParameterValue::ScalarF32(value) => {
-                    self.lvl = *value;
-                }
-                SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
-                    self.lvl = *init;
-                    self.lvl_mod = Some(Modulator::lfo(
-                        *op,
-                        *freq,
-                        *eff_phase,
-                        *amp,
-                        *add,
-                        false,
-                        false,
-                        self.samplerate,
-                    ))
-                }
-                SynthParameterValue::LFSaw(init, freq, amp, add, op) => {
-                    self.lvl = *init;
-                    self.lvl_mod = Some(Modulator::lfsaw(
-                        *op,
-                        *freq,
-                        *amp,
-                        *add,
-                        false,
-                        false,
-                        self.samplerate,
-                    ))
-                }
-                SynthParameterValue::LFTri(init, freq, amp, add, op) => {
-                    self.lvl = *init;
-                    self.lvl_mod = Some(Modulator::lftri(
-                        *op,
-                        *freq,
-                        *amp,
-                        *add,
-                        false,
-                        false,
-                        self.samplerate,
-                    ))
-                }
-                SynthParameterValue::LFSquare(init, freq, pw, amp, add, op) => {
-                    self.lvl = *init;
-                    self.lvl_mod = Some(Modulator::lfsquare(
-                        *op,
-                        *freq,
-                        *pw,
-                        *amp,
-                        *add,
-                        false,
-                        false,
-                        self.samplerate,
-                    ))
+                    self.amp = *value;
                 }
                 _ => {}
             },
@@ -180,11 +101,11 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavetable<BUFSIZE> {
     fn get_next_block(&mut self, start_sample: usize, in_buffers: &[Vec<f32>]) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
-        if self.freq_mod.is_some() || self.lvl_mod.is_some() {
-            let lvl_buf = if let Some(m) = self.lvl_mod.as_mut() {
-                m.process(self.lvl, start_sample, in_buffers)
+        if self.freq_mod.is_some() || self.amp_mod.is_some() {
+            let amp_buf = if let Some(m) = self.amp_mod.as_mut() {
+                m.process(self.amp, start_sample, in_buffers)
             } else {
-                [self.lvl; BUFSIZE]
+                [self.amp; BUFSIZE]
             };
 
             let freq_buf = if let Some(m) = self.freq_mod.as_mut() {
@@ -211,7 +132,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavetable<BUFSIZE> {
                 } else {
                     let next_idx = if idx < self.tablesize - 1 { idx + 1 } else { 0 };
                     self.wavetable[idx] + (frac * (self.wavetable[next_idx] - self.wavetable[idx]))
-                } * lvl_buf[sample_idx]; // apply oscillator level ...
+                } * amp_buf[sample_idx]; // apply oscillator level ...
 
                 self.table_ptr += self.phase_inc;
                 if self.table_ptr as usize >= self.tablesize {
@@ -230,7 +151,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavetable<BUFSIZE> {
                 } else {
                     let next_idx = if idx < self.tablesize - 1 { idx + 1 } else { 0 };
                     self.wavetable[idx] + (frac * (self.wavetable[next_idx] - self.wavetable[idx]))
-                } * self.lvl; // apply oscillator level ...
+                } * self.amp; // apply oscillator level ...
 
                 self.table_ptr += self.phase_inc;
                 if self.table_ptr as usize >= self.tablesize {

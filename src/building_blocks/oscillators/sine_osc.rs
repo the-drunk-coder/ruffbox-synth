@@ -8,6 +8,7 @@ use std::f32::consts::PI;
  * Based on equation (2) in this article:
  * https://www.dsprelated.com/freebooks/pasp/Digital_Sinusoid_Generators.html
  */
+#[derive(Clone)]
 pub struct SineOsc<const BUFSIZE: usize> {
     // user parameters
     freq: f32,
@@ -44,6 +45,24 @@ impl<const BUFSIZE: usize> SineOsc<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
+    fn set_modulator(
+        &mut self,
+        par: SynthParameterLabel,
+        init: f32,
+        modulator: Modulator<BUFSIZE>,
+    ) {
+        match par {
+            SynthParameterLabel::PitchFrequency => {
+                self.freq = init;
+                self.freq_mod = Some(modulator);
+            }
+            SynthParameterLabel::OscillatorAmplitude => {
+                self.amp = init;
+                self.amp_mod = Some(modulator);
+            }
+            _ => {}
+        }
+    }
     // some parameter limits might be nice ...
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
         match par {
@@ -65,122 +84,20 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
                         ((-2.0 * PI * self.freq / self.samplerate) + (p / self.amp)).sin();
                 }
             }
-            SynthParameterLabel::PitchFrequency => {
-                match value {
-                    SynthParameterValue::ScalarF32(f) => {
-                        self.freq = *f;
-                        self.x1_last = ((-2.0 * PI * self.freq) / self.samplerate).cos();
-                        self.x2_last = ((-2.0 * PI * self.freq) / self.samplerate).sin();
-                        self.mcf_buf = [-2.0 * (PI * (self.freq / self.samplerate)).sin(); BUFSIZE];
-                    }
-                    SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
-                        self.freq = *init;
-                        self.freq_mod = Some(Modulator::lfo(
-                            *op,
-                            *freq,
-                            *eff_phase,
-                            *amp,
-                            *add,
-                            false,
-                            false,
-                            self.samplerate,
-                        ))
-                    }
-                    SynthParameterValue::LFSaw(init, freq, amp, add, op) => {
-                        self.freq = *init;
-                        self.freq_mod = Some(Modulator::lfsaw(
-                            *op,
-                            *freq,
-                            *amp,
-                            *add,
-                            false,
-                            false,
-                            self.samplerate,
-                        ))
-                    }
-                    SynthParameterValue::LFTri(init, freq, amp, add, op) => {
-                        self.freq = *init;
-                        self.freq_mod = Some(Modulator::lftri(
-                            *op,
-                            *freq,
-                            *amp,
-                            *add,
-                            false,
-                            false,
-                            self.samplerate,
-                        ))
-                    }
-                    SynthParameterValue::LFSquare(init, freq, pw, amp, add, op) => {
-                        self.freq = *init;
-                        self.freq_mod = Some(Modulator::lfsquare(
-                            *op,
-                            *freq,
-                            *pw,
-                            *amp,
-                            *add,
-                            false,
-                            false,
-                            self.samplerate,
-                        ))
-                    }
-                    _ => { /* nothing to do, don't know how to handle this ... */ }
+            SynthParameterLabel::PitchFrequency => match value {
+                SynthParameterValue::ScalarF32(f) => {
+                    self.freq = *f;
+                    self.x1_last = ((-2.0 * PI * self.freq) / self.samplerate).cos();
+                    self.x2_last = ((-2.0 * PI * self.freq) / self.samplerate).sin();
+                    self.mcf_buf = [-2.0 * (PI * (self.freq / self.samplerate)).sin(); BUFSIZE];
                 }
-            }
+                _ => {}
+            },
             SynthParameterLabel::OscillatorAmplitude => {
                 match value {
                     SynthParameterValue::ScalarF32(l) => {
                         self.amp = *l;
                         self.amp_buf = [self.amp; BUFSIZE];
-                    }
-                    SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
-                        self.amp = *init;
-                        self.amp_mod = Some(Modulator::lfo(
-                            *op,
-                            *freq,
-                            *eff_phase,
-                            *amp,
-                            *add,
-                            false,
-                            false,
-                            self.samplerate,
-                        ))
-                    }
-                    SynthParameterValue::LFSaw(init, freq, amp, add, op) => {
-                        self.amp = *init;
-                        self.amp_mod = Some(Modulator::lfsaw(
-                            *op,
-                            *freq,
-                            *amp,
-                            *add,
-                            false,
-                            false,
-                            self.samplerate,
-                        ))
-                    }
-                    SynthParameterValue::LFTri(init, freq, amp, add, op) => {
-                        self.amp = *init;
-                        self.amp_mod = Some(Modulator::lftri(
-                            *op,
-                            *freq,
-                            *amp,
-                            *add,
-                            false,
-                            false,
-                            self.samplerate,
-                        ))
-                    }
-                    SynthParameterValue::LFSquare(init, freq, pw, amp, add, op) => {
-                        self.amp = *init;
-                        self.amp_mod = Some(Modulator::lfsquare(
-                            *op,
-                            *freq,
-                            *pw,
-                            *amp,
-                            *add,
-                            false,
-                            false,
-                            self.samplerate,
-                        ))
                     }
                     _ => { /* nothing to do, don't know how to handle this ... */ }
                 }

@@ -3,7 +3,7 @@ use crate::building_blocks::filters::*;
 use crate::building_blocks::oscillators::wavematrix::Wavematrix;
 use crate::building_blocks::routing::PanChan;
 use crate::building_blocks::{
-    MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
+    Modulator, MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
 };
 
 /// a simple wavetable synth with envelope etc.
@@ -34,6 +34,19 @@ impl<const BUFSIZE: usize, const NCHAN: usize> WavematrixSynth<BUFSIZE, NCHAN> {
 impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
     for WavematrixSynth<BUFSIZE, NCHAN>
 {
+    fn set_modulator(
+        &mut self,
+        par: SynthParameterLabel,
+        init: f32,
+        modulator: Modulator<BUFSIZE>,
+    ) {
+        self.wavematrix.set_modulator(par, init, modulator.clone());
+        self.hpf.set_modulator(par, init, modulator.clone());
+        self.lpf.set_modulator(par, init, modulator.clone());
+        self.envelope.set_modulator(par, init, modulator.clone());
+        self.balance.set_modulator(par, init, modulator.clone());
+    }
+
     fn set_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {
         self.wavematrix.set_parameter(par, val);
         self.hpf.set_parameter(par, val);
