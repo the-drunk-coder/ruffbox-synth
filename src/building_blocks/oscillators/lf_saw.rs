@@ -96,7 +96,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSaw<BUFSIZE> {
             SynthParameterLabel::OscillatorAmplitude => match value {
                 SynthParameterValue::ScalarF32(l) => {
                     self.amp = *l;
-                    self.amp_inc = (2.0 * self.amp) / (self.samplerate / self.freq).round();
+                    self.amp_inc = (2.0 * self.amp) / (self.samplerate / self.freq);
                 }
                 SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
                     self.amp = *init;
