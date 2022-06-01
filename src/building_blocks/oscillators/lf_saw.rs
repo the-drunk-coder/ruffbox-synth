@@ -24,8 +24,8 @@ impl<const BUFSIZE: usize> LFSaw<BUFSIZE> {
             freq,
             amp,
             samplerate,
-            amp_inc: (2.0 * amp) / (samplerate / freq),
-            cur_amp: -1.0 * amp,
+            amp_inc: 2.0 / (samplerate / freq),
+            cur_amp: -1.0,
             freq_mod: None,
             amp_mod: None,
         }
@@ -38,13 +38,13 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSaw<BUFSIZE> {
         match par {
             SynthParameterLabel::OscillatorPhaseEffective => {
                 if let SynthParameterValue::ScalarF32(p) = value {
-                    self.cur_amp = *p;
+                    self.cur_amp = *p / self.amp;
                 }
             }
             SynthParameterLabel::PitchFrequency => match value {
                 SynthParameterValue::ScalarF32(f) => {
                     self.freq = *f;
-                    self.amp_inc = (2.0 * self.amp) / (self.samplerate / f);
+                    self.amp_inc = 2.0 / (self.samplerate / self.freq);
                 }
                 SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
                     self.freq = *init;
@@ -100,8 +100,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSaw<BUFSIZE> {
             },
             SynthParameterLabel::OscillatorAmplitude => match value {
                 SynthParameterValue::ScalarF32(l) => {
-                    self.amp = *l;
-                    self.amp_inc = (2.0 * self.amp) / (self.samplerate / self.freq);
+                    self.amp = *l;                    
                 }
                 SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
                     self.amp = *init;
@@ -187,28 +186,29 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSaw<BUFSIZE> {
                 .take(BUFSIZE)
                 .skip(start_sample)
             {
-                if self.cur_amp >= self.amp {
-                    self.cur_amp = -1.0 * self.amp;
-                    *current_sample = self.amp;
-                } else if self.cur_amp <= -self.amp {
-                    *current_sample = -self.amp;
+                if self.cur_amp > 1.0 {
+                    self.cur_amp = -1.0;
+                    *current_sample = amp_buf[idx];
+                } else if self.cur_amp < -1.0 {
+		    self.cur_amp = -1.0;
+                    *current_sample = -1.0 * amp_buf[idx];
                 } else {
-                    *current_sample = self.cur_amp;
+                    *current_sample = self.cur_amp * amp_buf[idx];
                 }
 
-                self.amp_inc = (2.0 * amp_buf[idx]) / (self.samplerate / freq_buf[idx]);
+                self.amp_inc = 2.0 / (self.samplerate / freq_buf[idx]);
                 self.cur_amp += self.amp_inc;
             }
         } else {
             for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
-                if self.cur_amp > self.amp {
-                    self.cur_amp = -1.0 * self.amp;
+                if self.cur_amp > 1.0 {
+                    self.cur_amp = -1.0;
                     *current_sample = self.amp;
-                } else if self.cur_amp < -self.amp {
-                    self.cur_amp = -self.amp;
+                } else if self.cur_amp < -1.0 {
+                    self.cur_amp = -1.0;
                     *current_sample = -self.amp;
                 } else {
-                    *current_sample = self.cur_amp;
+                    *current_sample = self.cur_amp * self.amp;
                 }
 
                 self.cur_amp += self.amp_inc;
