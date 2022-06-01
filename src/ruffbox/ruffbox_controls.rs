@@ -23,28 +23,80 @@ impl<const BUFSIZE: usize, const NCHAN: usize> PreparedInstance<BUFSIZE, NCHAN> 
                 self.ev.set_modulator(
                     par,
                     *init,
-                    Modulator::lfo(*op, *freq, *eff_phase, *amp, *add, false, false, self.sr),
+                    match par {
+                        SynthParameterLabel::LowpassCutoffFrequency => {
+                            Modulator::lfo(*op, *freq, *eff_phase, *amp, *add, true, false, self.sr)
+                        }
+                        SynthParameterLabel::HighpassCutoffFrequency => {
+                            Modulator::lfo(*op, *freq, *eff_phase, *amp, *add, true, false, self.sr)
+                        }
+                        SynthParameterLabel::PeakFrequency => {
+                            Modulator::lfo(*op, *freq, *eff_phase, *amp, *add, true, false, self.sr)
+                        }
+                        _ => Modulator::lfo(
+                            *op, *freq, *eff_phase, *amp, *add, false, false, self.sr,
+                        ),
+                    },
                 );
             }
             SynthParameterValue::LFSaw(init, freq, eff_phase, amp, add, op) => {
                 self.ev.set_modulator(
                     par,
                     *init,
-                    Modulator::lfsaw(*op, *freq, *eff_phase, *amp, *add, false, false, self.sr),
+                    match par {
+                        SynthParameterLabel::LowpassCutoffFrequency => Modulator::lfsaw(
+                            *op, *freq, *eff_phase, *amp, *add, true, false, self.sr,
+                        ),
+                        SynthParameterLabel::HighpassCutoffFrequency => Modulator::lfsaw(
+                            *op, *freq, *eff_phase, *amp, *add, true, false, self.sr,
+                        ),
+                        SynthParameterLabel::PeakFrequency => Modulator::lfsaw(
+                            *op, *freq, *eff_phase, *amp, *add, true, false, self.sr,
+                        ),
+                        _ => Modulator::lfsaw(
+                            *op, *freq, *eff_phase, *amp, *add, false, false, self.sr,
+                        ),
+                    },
                 );
             }
             SynthParameterValue::LFTri(init, freq, eff_phase, amp, add, op) => {
                 self.ev.set_modulator(
                     par,
                     *init,
-                    Modulator::lftri(*op, *freq, *eff_phase, *amp, *add, false, false, self.sr),
+                    match par {
+                        SynthParameterLabel::LowpassCutoffFrequency => Modulator::lftri(
+                            *op, *freq, *eff_phase, *amp, *add, true, false, self.sr,
+                        ),
+                        SynthParameterLabel::HighpassCutoffFrequency => Modulator::lftri(
+                            *op, *freq, *eff_phase, *amp, *add, true, false, self.sr,
+                        ),
+                        SynthParameterLabel::PeakFrequency => Modulator::lftri(
+                            *op, *freq, *eff_phase, *amp, *add, true, false, self.sr,
+                        ),
+                        _ => Modulator::lftri(
+                            *op, *freq, *eff_phase, *amp, *add, false, false, self.sr,
+                        ),
+                    },
                 );
             }
             SynthParameterValue::LFSquare(init, freq, pw, amp, add, op) => {
                 self.ev.set_modulator(
                     par,
                     *init,
-                    Modulator::lfsquare(*op, *freq, *pw, *amp, *add, false, false, self.sr),
+                    match par {
+                        SynthParameterLabel::LowpassCutoffFrequency => {
+                            Modulator::lfsquare(*op, *freq, *pw, *amp, *add, true, false, self.sr)
+                        }
+                        SynthParameterLabel::HighpassCutoffFrequency => {
+                            Modulator::lfsquare(*op, *freq, *pw, *amp, *add, true, false, self.sr)
+                        }
+                        SynthParameterLabel::PeakFrequency => {
+                            Modulator::lfsquare(*op, *freq, *pw, *amp, *add, true, false, self.sr)
+                        }
+                        _ => {
+                            Modulator::lfsquare(*op, *freq, *pw, *amp, *add, false, false, self.sr)
+                        }
+                    },
                 );
             }
             _ => {
