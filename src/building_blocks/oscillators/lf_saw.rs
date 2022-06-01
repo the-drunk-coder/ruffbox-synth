@@ -23,7 +23,7 @@ impl<const BUFSIZE: usize> LFSaw<BUFSIZE> {
         LFSaw {
             freq,
             amp,
-            samplerate,            
+            samplerate,
             amp_inc: (2.0 * amp) / (samplerate / freq),
             cur_amp: -1.0 * amp,
             freq_mod: None,
@@ -38,7 +38,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSaw<BUFSIZE> {
         match par {
             SynthParameterLabel::PitchFrequency => match value {
                 SynthParameterValue::ScalarF32(f) => {
-                    self.freq = *f;                    
+                    self.freq = *f;
                     self.amp_inc = (2.0 * self.amp) / (self.samplerate / f);
                 }
                 SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
@@ -196,10 +196,11 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSaw<BUFSIZE> {
             }
         } else {
             for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
-                if self.cur_amp >= self.amp {
+                if self.cur_amp > self.amp {
                     self.cur_amp = -1.0 * self.amp;
                     *current_sample = self.amp;
-                } else if self.cur_amp <= -self.amp {
+                } else if self.cur_amp < -self.amp {
+                    self.cur_amp = -self.amp;
                     *current_sample = -self.amp;
                 } else {
                     *current_sample = self.cur_amp;
