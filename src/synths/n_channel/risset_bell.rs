@@ -88,7 +88,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
         self.lpf.set_modulator(par, init, modulator.clone());
         self.main_envelope
             .set_modulator(par, init, modulator.clone());
-        self.balance.set_modulator(par, init, modulator.clone());
+        self.balance.set_modulator(par, init, modulator);
     }
 
     fn set_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {

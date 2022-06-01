@@ -39,7 +39,7 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for LFSawSynth<BUFSIZE> {
     ) {
         self.oscillator.set_modulator(par, init, modulator.clone());
         self.filter.set_modulator(par, init, modulator.clone());
-        self.envelope.set_modulator(par, init, modulator.clone());
+        self.envelope.set_modulator(par, init, modulator);
     }
 
     fn set_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {

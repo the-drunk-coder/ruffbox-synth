@@ -46,7 +46,7 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for AmbisonicSamplerO1<BUFSIZE> {
         self.hpf.set_modulator(par, init, modulator.clone());
         self.peak_eq.set_modulator(par, init, modulator.clone());
         self.lpf.set_modulator(par, init, modulator.clone());
-        self.envelope.set_modulator(par, init, modulator.clone());
+        self.envelope.set_modulator(par, init, modulator);
     }
     fn set_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {
         self.sampler.set_parameter(par, val);

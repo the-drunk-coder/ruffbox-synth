@@ -53,7 +53,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
         self.peak_eq.set_modulator(par, init, modulator.clone());
         self.lpf.set_modulator(par, init, modulator.clone());
         self.envelope.set_modulator(par, init, modulator.clone());
-        self.balance.set_modulator(par, init, modulator.clone());
+        self.balance.set_modulator(par, init, modulator);
     }
 
     fn set_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {

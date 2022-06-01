@@ -35,7 +35,7 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for LFTriSynth<BUFSIZE> {
         modulator: Modulator<BUFSIZE>,
     ) {
         self.oscillator.set_modulator(par, init, modulator.clone());
-        self.envelope.set_modulator(par, init, modulator.clone());
+        self.envelope.set_modulator(par, init, modulator);
     }
     fn set_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {
         self.oscillator.set_parameter(par, val);
