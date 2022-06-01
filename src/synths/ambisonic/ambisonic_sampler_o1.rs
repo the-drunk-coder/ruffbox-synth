@@ -23,7 +23,7 @@ impl<const BUFSIZE: usize> AmbisonicSamplerO1<BUFSIZE> {
         let dur = (buflen as f32 / sr) - 0.0002;
 
         AmbisonicSamplerO1 {
-            sampler: Sampler::with_bufnum_len(bufnum, buflen, true, sr),
+            sampler: Sampler::with_bufnum_len(bufnum, buflen, true),
             envelope: LinearASREnvelope::new(1.0, 0.0001, dur, 0.0001, sr),
             hpf: BiquadHpf::new(10.0, 0.01, sr),
             peak_eq: PeakEq::new(700.0, 100.0, 0.0, sr),

@@ -6,11 +6,10 @@ pub struct PanChan<const BUFSIZE: usize, const NCHAN: usize> {
     levels: [[f32; BUFSIZE]; NCHAN],
     pos_mod: Option<Modulator<BUFSIZE>>,
     pos: f32,
-    samplerate: f32,
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> PanChan<BUFSIZE, NCHAN> {
-    pub fn new(sr: f32) -> Self {
+    pub fn new() -> Self {
         let mut lvls = [[0.0; BUFSIZE]; NCHAN];
         lvls[0] = [1.0; BUFSIZE];
         // always start on first channel
@@ -18,7 +17,6 @@ impl<const BUFSIZE: usize, const NCHAN: usize> PanChan<BUFSIZE, NCHAN> {
             levels: lvls,
             pos_mod: None,
             pos: 0.0,
-            samplerate: sr,
         }
     }
 

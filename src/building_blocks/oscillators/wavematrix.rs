@@ -21,7 +21,7 @@ pub struct Wavematrix<const BUFSIZE: usize> {
     sample_ptr: f32, // for the inner tables
     state: SynthState,
     sample_period: f32,
-    samplerate: f32,
+    //samplerate: f32,
 
     // modulator slots
     freq_mod: Option<Modulator<BUFSIZE>>,
@@ -43,7 +43,7 @@ impl<const BUFSIZE: usize> Wavematrix<BUFSIZE> {
             sample_ptr: 0.0,
             state: SynthState::Fresh,
             sample_period: 1.0 / sr,
-            samplerate: sr,
+            //samplerate: sr,
             freq_mod: None,
             amp_mod: None,
             table_idx_mod: None,

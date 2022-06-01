@@ -11,7 +11,6 @@ pub struct LFCub<const BUFSIZE: usize> {
 
     // internal parameters
     internal_freq: f32,
-    samplerate: f32,
     phase: f32,
     sample_period: f32,
 
@@ -25,7 +24,6 @@ impl<const BUFSIZE: usize> LFCub<BUFSIZE> {
         LFCub {
             freq,
             amp,
-            samplerate,
             internal_freq: freq * (2.0 / samplerate),
             sample_period: 2.0 / samplerate,
             phase: 0.0,

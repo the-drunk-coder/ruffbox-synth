@@ -41,7 +41,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RissetBell<BUFSIZE, NCHAN> {
             ],
             dets: [0.0, 1.0, 0.0, 1.7, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
             lpf: Lpf18::new(19500.0, 0.01, 0.01, sr),
-            balance: PanChan::new(sr),
+            balance: PanChan::new(),
             atk: 0.05,
             sus: 0.7,
             rel: 0.05,

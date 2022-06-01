@@ -20,7 +20,6 @@ pub struct Sampler<const BUFSIZE: usize> {
     frac_index_increment: f32,
     state: SynthState,
     repeat: bool,
-    samplerate: f32,
 
     // modulator slots
     rate_mod: Option<Modulator<BUFSIZE>>,
@@ -28,12 +27,7 @@ pub struct Sampler<const BUFSIZE: usize> {
 }
 
 impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
-    pub fn with_bufnum_len(
-        bufnum: usize,
-        buflen: usize,
-        repeat: bool,
-        sr: f32,
-    ) -> Sampler<BUFSIZE> {
+    pub fn with_bufnum_len(bufnum: usize, buflen: usize, repeat: bool) -> Sampler<BUFSIZE> {
         Sampler {
             index: 1, // start with one to account for interpolation
             frac_index: 1.0,
@@ -44,7 +38,6 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
             state: SynthState::Fresh,
             amp: 1.0,
             repeat,
-            samplerate: sr,
             rate_mod: None,
             amp_mod: None,
         }

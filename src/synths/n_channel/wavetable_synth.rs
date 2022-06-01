@@ -24,7 +24,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> WavetableSynth<BUFSIZE, NCHAN> {
             envelope: LinearASREnvelope::new(1.0, 0.0001, 0.1, 0.0001, sr),
             hpf: BiquadHpf::new(20.0, 0.3, sr),
             lpf: Lpf18::new(19500.0, 0.01, 0.01, sr),
-            balance: PanChan::new(sr),
+            balance: PanChan::new(),
             reverb: 0.0,
             delay: 0.0,
         }

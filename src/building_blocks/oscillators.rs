@@ -21,7 +21,7 @@ pub use crate::building_blocks::oscillators::wavetable::Wavetable;
 mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
-    use crate::building_blocks::{MonoSource, SynthParameterLabel, SynthParameterValue};
+    use crate::building_blocks::MonoSource;
 
     use std::f32::consts::PI;
 
