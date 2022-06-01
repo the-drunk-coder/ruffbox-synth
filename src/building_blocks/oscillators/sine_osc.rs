@@ -125,7 +125,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
                 .as_mut()
                 .unwrap()
                 .process(self.freq, start_sample, in_buffers)
-                .map(|f| 2.0 * (PI * f * self.delta_t).sin());
+                .map(|f| -2.0 * (PI * f * self.delta_t).sin());
         }
 
         if self.amp_mod.is_some() {

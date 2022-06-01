@@ -187,3 +187,23 @@ impl<const BUFSIZE: usize> Modulator<BUFSIZE> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    // Note this useful idiom: importing names from outer (for mod tests) scope.
+    use super::*;
+
+    #[test]
+    fn test_modulator_range() {
+        let mut modulator =
+            Modulator::<512>::lftri(ValOp::Replace, 1.0, 3.0, 1.0, 3.0, false, false, 44100.0);
+
+        for _ in 0..100 {
+            let block = modulator.process(1.0, 0, &Vec::new());
+            for i in 0..512 {
+                let a = block[i];
+                debug_plotter::plot!(a where caption = "LFOPlot");
+            }
+        }
+    }
+}
