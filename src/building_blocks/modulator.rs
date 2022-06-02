@@ -63,6 +63,31 @@ impl<const BUFSIZE: usize> Modulator<BUFSIZE> {
         }
     }
 
+    /// init saw modulator
+    pub fn lfrsaw(
+        op: ValOp,
+        freq: f32,
+        eff_phase: f32,
+        amp: f32,
+        add: f32,
+        positive: bool,
+        rectify: bool,
+        sr: f32,
+    ) -> Modulator<BUFSIZE> {
+        let mut src_osc = LFRSaw::new(freq, amp, sr);
+        src_osc.set_parameter(
+            SynthParameterLabel::OscillatorPhaseEffective,
+            &SynthParameterValue::ScalarF32(eff_phase - add),
+        );
+        Modulator {
+            source: Box::new(src_osc),
+            op,
+            add,
+            positive,
+            rectify,
+        }
+    }
+
     /// init tri modulator
     pub fn lftri(
         op: ValOp,

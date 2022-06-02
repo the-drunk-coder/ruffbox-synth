@@ -79,6 +79,7 @@ pub enum ReverbMode {
 pub(crate) enum ControlMessage<const BUFSIZE: usize, const NCHAN: usize> {
     LoadSample(usize, usize, Vec<f32>), // num, len, samples
     SetGlobalParam(SynthParameterLabel, SynthParameterValue),
+    SetGlobalModulator(SynthParameterLabel, f32, Modulator<BUFSIZE>),
     ScheduleEvent(ScheduledEvent<BUFSIZE, NCHAN>),
     FreezeBuffer(usize, usize),
 }

@@ -83,6 +83,7 @@ pub enum SynthParameterValue {
     MatrixF32((usize, usize), Vec<Vec<f32>>), // dimension, content
     Lfo(f32, f32, f32, f32, f32, ValOp), // sine lfo - init val, freq, phase, amp, add, operation (mul, add, sub, div, replace)
     LFSaw(f32, f32, f32, f32, f32, ValOp), // saw lfo - init val, freq, phase, amp, add, operation (mul, add, sub, div, replace)
+    LFRSaw(f32, f32, f32, f32, f32, ValOp), // rev saw lfo - init val, freq, phase, amp, add, operation (mul, add, sub, div, replace)
     LFSquare(f32, f32, f32, f32, f32, ValOp), // square lfo - init val, freq, pw, amp, add, operation (mul, add, sub, div, replace)
     LFTri(f32, f32, f32, f32, f32, ValOp), // tri lfo - init val, freq, phase amp, add, operation (mul, add, sub, div, replace)
 }

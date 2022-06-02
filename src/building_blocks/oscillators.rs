@@ -1,6 +1,7 @@
 /// A collection of oscillators, some of which are modeled
 /// after scsynth, csound, etc ...
 pub mod lf_cub;
+pub mod lf_rsaw;
 pub mod lf_saw;
 pub mod lf_square;
 pub mod lf_tri;
@@ -9,6 +10,7 @@ pub mod wavematrix;
 pub mod wavetable;
 
 pub use crate::building_blocks::oscillators::lf_cub::LFCub;
+pub use crate::building_blocks::oscillators::lf_rsaw::LFRSaw;
 pub use crate::building_blocks::oscillators::lf_saw::LFSaw;
 pub use crate::building_blocks::oscillators::lf_square::LFSquare;
 pub use crate::building_blocks::oscillators::lf_tri::LFTri;

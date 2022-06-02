@@ -59,6 +59,26 @@ impl<const BUFSIZE: usize, const NCHAN: usize> PreparedInstance<BUFSIZE, NCHAN> 
                     },
                 );
             }
+            SynthParameterValue::LFRSaw(init, freq, eff_phase, amp, add, op) => {
+                self.ev.set_modulator(
+                    par,
+                    *init,
+                    match par {
+                        SynthParameterLabel::LowpassCutoffFrequency => Modulator::lfrsaw(
+                            *op, *freq, *eff_phase, *amp, *add, true, false, self.sr,
+                        ),
+                        SynthParameterLabel::HighpassCutoffFrequency => Modulator::lfrsaw(
+                            *op, *freq, *eff_phase, *amp, *add, true, false, self.sr,
+                        ),
+                        SynthParameterLabel::PeakFrequency => Modulator::lfrsaw(
+                            *op, *freq, *eff_phase, *amp, *add, true, false, self.sr,
+                        ),
+                        _ => Modulator::lfrsaw(
+                            *op, *freq, *eff_phase, *amp, *add, false, false, self.sr,
+                        ),
+                    },
+                );
+            }
             SynthParameterValue::LFTri(init, freq, eff_phase, amp, add, op) => {
                 self.ev.set_modulator(
                     par,
@@ -245,9 +265,263 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
     }
 
     pub fn set_master_parameter(&self, par: SynthParameterLabel, val: SynthParameterValue) {
-        self.control_q_send
-            .send(ControlMessage::SetGlobalParam(par, val))
-            .unwrap();
+        match val {
+            SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
+                self.control_q_send
+                    .send(ControlMessage::SetGlobalModulator(
+                        par,
+                        init,
+                        match par {
+                            SynthParameterLabel::LowpassCutoffFrequency => Modulator::lfo(
+                                op,
+                                freq,
+                                eff_phase,
+                                amp,
+                                add,
+                                true,
+                                false,
+                                self.samplerate,
+                            ),
+                            SynthParameterLabel::HighpassCutoffFrequency => Modulator::lfo(
+                                op,
+                                freq,
+                                eff_phase,
+                                amp,
+                                add,
+                                true,
+                                false,
+                                self.samplerate,
+                            ),
+                            SynthParameterLabel::PeakFrequency => Modulator::lfo(
+                                op,
+                                freq,
+                                eff_phase,
+                                amp,
+                                add,
+                                true,
+                                false,
+                                self.samplerate,
+                            ),
+                            _ => Modulator::lfo(
+                                op,
+                                freq,
+                                eff_phase,
+                                amp,
+                                add,
+                                false,
+                                false,
+                                self.samplerate,
+                            ),
+                        },
+                    ))
+                    .unwrap();
+            }
+            SynthParameterValue::LFSaw(init, freq, eff_phase, amp, add, op) => {
+                self.control_q_send
+                    .send(ControlMessage::SetGlobalModulator(
+                        par,
+                        init,
+                        match par {
+                            SynthParameterLabel::LowpassCutoffFrequency => Modulator::lfsaw(
+                                op,
+                                freq,
+                                eff_phase,
+                                amp,
+                                add,
+                                true,
+                                false,
+                                self.samplerate,
+                            ),
+                            SynthParameterLabel::HighpassCutoffFrequency => Modulator::lfsaw(
+                                op,
+                                freq,
+                                eff_phase,
+                                amp,
+                                add,
+                                true,
+                                false,
+                                self.samplerate,
+                            ),
+                            SynthParameterLabel::PeakFrequency => Modulator::lfsaw(
+                                op,
+                                freq,
+                                eff_phase,
+                                amp,
+                                add,
+                                true,
+                                false,
+                                self.samplerate,
+                            ),
+                            _ => Modulator::lfsaw(
+                                op,
+                                freq,
+                                eff_phase,
+                                amp,
+                                add,
+                                false,
+                                false,
+                                self.samplerate,
+                            ),
+                        },
+                    ))
+                    .unwrap();
+            }
+            SynthParameterValue::LFRSaw(init, freq, eff_phase, amp, add, op) => {
+                self.control_q_send
+                    .send(ControlMessage::SetGlobalModulator(
+                        par,
+                        init,
+                        match par {
+                            SynthParameterLabel::LowpassCutoffFrequency => Modulator::lfrsaw(
+                                op,
+                                freq,
+                                eff_phase,
+                                amp,
+                                add,
+                                true,
+                                false,
+                                self.samplerate,
+                            ),
+                            SynthParameterLabel::HighpassCutoffFrequency => Modulator::lfrsaw(
+                                op,
+                                freq,
+                                eff_phase,
+                                amp,
+                                add,
+                                true,
+                                false,
+                                self.samplerate,
+                            ),
+                            SynthParameterLabel::PeakFrequency => Modulator::lfrsaw(
+                                op,
+                                freq,
+                                eff_phase,
+                                amp,
+                                add,
+                                true,
+                                false,
+                                self.samplerate,
+                            ),
+                            _ => Modulator::lfrsaw(
+                                op,
+                                freq,
+                                eff_phase,
+                                amp,
+                                add,
+                                false,
+                                false,
+                                self.samplerate,
+                            ),
+                        },
+                    ))
+                    .unwrap();
+            }
+            SynthParameterValue::LFTri(init, freq, eff_phase, amp, add, op) => {
+                self.control_q_send
+                    .send(ControlMessage::SetGlobalModulator(
+                        par,
+                        init,
+                        match par {
+                            SynthParameterLabel::LowpassCutoffFrequency => Modulator::lftri(
+                                op,
+                                freq,
+                                eff_phase,
+                                amp,
+                                add,
+                                true,
+                                false,
+                                self.samplerate,
+                            ),
+                            SynthParameterLabel::HighpassCutoffFrequency => Modulator::lftri(
+                                op,
+                                freq,
+                                eff_phase,
+                                amp,
+                                add,
+                                true,
+                                false,
+                                self.samplerate,
+                            ),
+                            SynthParameterLabel::PeakFrequency => Modulator::lftri(
+                                op,
+                                freq,
+                                eff_phase,
+                                amp,
+                                add,
+                                true,
+                                false,
+                                self.samplerate,
+                            ),
+                            _ => Modulator::lftri(
+                                op,
+                                freq,
+                                eff_phase,
+                                amp,
+                                add,
+                                false,
+                                false,
+                                self.samplerate,
+                            ),
+                        },
+                    ))
+                    .unwrap();
+            }
+            SynthParameterValue::LFSquare(init, freq, pw, amp, add, op) => {
+                self.control_q_send
+                    .send(ControlMessage::SetGlobalModulator(
+                        par,
+                        init,
+                        match par {
+                            SynthParameterLabel::LowpassCutoffFrequency => Modulator::lfsquare(
+                                op,
+                                freq,
+                                pw,
+                                amp,
+                                add,
+                                true,
+                                false,
+                                self.samplerate,
+                            ),
+                            SynthParameterLabel::HighpassCutoffFrequency => Modulator::lfsquare(
+                                op,
+                                freq,
+                                pw,
+                                amp,
+                                add,
+                                true,
+                                false,
+                                self.samplerate,
+                            ),
+                            SynthParameterLabel::PeakFrequency => Modulator::lfsquare(
+                                op,
+                                freq,
+                                pw,
+                                amp,
+                                add,
+                                true,
+                                false,
+                                self.samplerate,
+                            ),
+                            _ => Modulator::lfsquare(
+                                op,
+                                freq,
+                                pw,
+                                amp,
+                                add,
+                                false,
+                                false,
+                                self.samplerate,
+                            ),
+                        },
+                    ))
+                    .unwrap();
+            }
+            _ => {
+                self.control_q_send
+                    .send(ControlMessage::SetGlobalParam(par, val))
+                    .unwrap();
+            }
+        }
     }
 
     /// triggers a synth for buffer reference or a synth

@@ -207,6 +207,20 @@ impl<const BUFSIZE: usize, const NCHAN: usize> MultichannelDelay<BUFSIZE, NCHAN>
         }
     }
 
+    pub fn set_modulator(
+        &mut self,
+        par: SynthParameterLabel,
+        init: f32,
+        modulator: Modulator<BUFSIZE>,
+    ) {
+        for c in 0..NCHAN {
+            // i might want to think of a better method because
+            // this clone will be called in the audio thread, even though
+            // this won't be super common, but still ...
+            self.delays[c].set_modulator(par, init, modulator.clone());
+        }
+    }
+
     pub fn process(
         &mut self,
         block: [[f32; BUFSIZE]; NCHAN],
