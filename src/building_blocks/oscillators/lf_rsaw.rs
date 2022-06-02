@@ -64,7 +64,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFRSaw<BUFSIZE> {
             SynthParameterLabel::PitchFrequency => match value {
                 SynthParameterValue::ScalarF32(f) => {
                     self.freq = *f;
-                    self.amp_inc = -2.0 / (self.samplerate / self.freq);
+                    self.amp_inc = 2.0 / (self.samplerate / self.freq);
                 }
                 _ => {}
             },
@@ -116,8 +116,8 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFRSaw<BUFSIZE> {
                     *current_sample = self.cur_amp * amp_buf[idx];
                 }
 
-                self.amp_inc = -2.0 / (self.samplerate / freq_buf[idx]);
-                self.cur_amp += self.amp_inc;
+                self.amp_inc = 2.0 / (self.samplerate / freq_buf[idx]);
+                self.cur_amp -= self.amp_inc;
             }
         } else {
             for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
@@ -131,7 +131,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFRSaw<BUFSIZE> {
                     *current_sample = self.cur_amp * self.amp;
                 }
 
-                self.cur_amp += self.amp_inc;
+                self.cur_amp -= self.amp_inc;
             }
         }
 
