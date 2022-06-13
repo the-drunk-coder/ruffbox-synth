@@ -119,6 +119,40 @@ impl<const BUFSIZE: usize, const NCHAN: usize> PreparedInstance<BUFSIZE, NCHAN> 
                     },
                 );
             }
+
+            SynthParameterValue::LinRamp(from, to, time, op) => {
+                self.ev.set_modulator(
+                    par,
+                    *from,
+                    Modulator::lin_ramp(*op, *from, *to, *time, self.sr),
+                );
+            }
+            SynthParameterValue::LogRamp(from, to, time, op) => {
+                self.ev.set_modulator(
+                    par,
+                    *from,
+                    Modulator::log_ramp(*op, *from, *to, *time, self.sr),
+                );
+            }
+            SynthParameterValue::ExpRamp(from, to, time, op) => {
+                self.ev.set_modulator(
+                    par,
+                    *from,
+                    Modulator::exp_ramp(*op, *from, *to, *time, self.sr),
+                );
+            }
+            SynthParameterValue::MultiPointEnvelope(segments, loop_env, op) => {
+                let init = if let Some(seg) = segments.first() {
+                    seg.from
+                } else {
+                    0.0
+                };
+                self.ev.set_modulator(
+                    par,
+                    init,
+                    Modulator::multi_point_envelope(*op, segments.to_vec(), *loop_env, self.sr),
+                );
+            }
             _ => {
                 self.ev.set_parameter(par, val);
             }

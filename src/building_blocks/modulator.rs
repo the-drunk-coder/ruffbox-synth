@@ -1,3 +1,4 @@
+use crate::building_blocks::mod_env::*;
 use crate::building_blocks::oscillators::*;
 use crate::building_blocks::{MonoSource, SynthParameterLabel, SynthParameterValue, ValOp};
 
@@ -131,6 +132,55 @@ impl<const BUFSIZE: usize> Modulator<BUFSIZE> {
             add,
             positive,
             rectify,
+        }
+    }
+
+    /// init linear ramp modulator
+    pub fn lin_ramp(op: ValOp, from: f32, to: f32, time: f32, sr: f32) -> Modulator<BUFSIZE> {
+        Modulator {
+            source: Box::new(LinearRamp::new(from, to, time, sr)),
+            op,
+            add: 0.0,
+            positive: false,
+            rectify: false,
+        }
+    }
+
+    /// init logarithmic ramp modulator
+    pub fn log_ramp(op: ValOp, from: f32, to: f32, time: f32, sr: f32) -> Modulator<BUFSIZE> {
+        Modulator {
+            source: Box::new(LogRamp::new(from, to, time, sr)),
+            op,
+            add: 0.0,
+            positive: false,
+            rectify: false,
+        }
+    }
+
+    /// init exponential ramp modulator
+    pub fn exp_ramp(op: ValOp, from: f32, to: f32, time: f32, sr: f32) -> Modulator<BUFSIZE> {
+        Modulator {
+            source: Box::new(ExpRamp::new(from, to, time, sr)),
+            op,
+            add: 0.0,
+            positive: false,
+            rectify: false,
+        }
+    }
+
+    /// init multi-point envelope modulator
+    pub fn multi_point_envelope(
+        op: ValOp,
+        segments: Vec<SegmentInfo>,
+        loop_env: bool,
+        sr: f32,
+    ) -> Modulator<BUFSIZE> {
+        Modulator {
+            source: Box::new(MultiPointEnvelope::new(segments, loop_env, sr)),
+            op,
+            add: 0.0,
+            positive: false,
+            rectify: false,
         }
     }
 

@@ -214,12 +214,14 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for ExpRamp<BUFSIZE> {
     }
 }
 
+#[derive(Clone)]
 pub enum SegmentType {
     Lin,
     Log,
     Exp,
 }
 
+#[derive(Clone)]
 pub struct SegmentInfo {
     pub from: f32,
     pub to: f32,

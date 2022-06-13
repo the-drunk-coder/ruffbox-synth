@@ -87,6 +87,10 @@ pub enum SynthParameterValue {
     LFRSaw(f32, f32, f32, f32, f32, ValOp), // rev saw lfo - init val, freq, phase, amp, add, operation (mul, add, sub, div, replace)
     LFSquare(f32, f32, f32, f32, f32, ValOp), // square lfo - init val, freq, pw, amp, add, operation (mul, add, sub, div, replace)
     LFTri(f32, f32, f32, f32, f32, ValOp), // tri lfo - init val, freq, phase amp, add, operation (mul, add, sub, div, replace)
+    LinRamp(f32, f32, f32, ValOp),         // linear ramp - from, to, time
+    LogRamp(f32, f32, f32, ValOp),         // logarithmic ramp - from, to, time
+    ExpRamp(f32, f32, f32, ValOp),         // exponential ramp - from, to, time
+    MultiPointEnvelope(Vec<mod_env::SegmentInfo>, bool, ValOp), // segments, loop ...
 }
 
 /// oscillators, the sampler, etc are sources
