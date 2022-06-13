@@ -293,6 +293,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for MultiPointEnvelope<BUFSIZE> {
     fn set_parameter(&mut self, _: SynthParameterLabel, _: &SynthParameterValue) {}
 
     fn get_next_block(&mut self, start_sample: usize, bufs: &[Vec<f32>]) -> [f32; BUFSIZE] {
+        // this should also avoid problems with "empty" multi-point envelopes ...
         if self.segment_idx >= self.segments.len() {
             if self.loop_env {
                 self.reset();
@@ -305,33 +306,61 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for MultiPointEnvelope<BUFSIZE> {
             }
         }
 
-        // loop handling ?
         // what if there's 2 segments within one block ? --> IF we need to switch blocks, do this check !
-
-        let samples_to_fill = BUFSIZE - start_sample;
+        let samples_to_fill_total = BUFSIZE - start_sample;
+        let mut samples_to_fill_rest = BUFSIZE - start_sample;
         let samples_left_in_segment = self.segment_samples[self.segment_idx] - self.sample_count;
 
-        if samples_to_fill < samples_left_in_segment {
-            self.sample_count += samples_to_fill;
+        if samples_to_fill_total < samples_left_in_segment {
+            self.sample_count += samples_to_fill_total;
             return self.segments[self.segment_idx].get_next_block(start_sample, bufs);
         } else {
             let mut out: [f32; BUFSIZE] = [0.0; BUFSIZE];
-            let left_from_current_segment =
-                self.segment_samples[self.segment_idx] - self.sample_count;
-            let out_last = self.segments[self.segment_idx].get_next_block(start_sample, bufs);
-            let out_next =
-                self.segments[self.segment_idx].get_next_block(left_from_current_segment, bufs);
 
+            let out_last = self.segments[self.segment_idx].get_next_block(start_sample, bufs);
+            let mut left_from_current_segment =
+                self.segment_samples[self.segment_idx] - self.sample_count;
+
+            // handle leftover from current segment
             for i in start_sample..left_from_current_segment {
                 out[i] = out_last[i]
             }
 
-            for i in left_from_current_segment..samples_to_fill {
-                out[i] = out_next[i]
-            }
+            samples_to_fill_rest -= left_from_current_segment;
 
-            self.segment_idx += 1;
-            self.sample_count = samples_to_fill - left_from_current_segment;
+            // we need some handling in case multiple segments fall into one block ...
+            while samples_to_fill_rest > 0 {
+                if let Some(next_segment) = self.segments.get_mut(self.segment_idx + 1) {
+                    let next_segment_samples = self.segment_samples[self.segment_idx + 1];
+                    if next_segment_samples >= samples_to_fill_rest {
+                        let out_next = next_segment.get_next_block(left_from_current_segment, bufs);
+
+                        for i in left_from_current_segment..samples_to_fill_total {
+                            out[i] = out_next[i]
+                        }
+
+                        self.sample_count = samples_to_fill_rest - left_from_current_segment;
+                        samples_to_fill_rest = 0;
+                    } else {
+                        let out_next = next_segment.get_next_block(left_from_current_segment, bufs);
+
+                        for i in left_from_current_segment
+                            ..left_from_current_segment + next_segment_samples
+                        {
+                            out[i] = out_next[i]
+                        }
+
+                        samples_to_fill_rest -= next_segment_samples;
+                        left_from_current_segment += next_segment_samples;
+                        self.sample_count = 0;
+                    }
+                } else {
+                    self.sample_count = 0;
+                    samples_to_fill_rest = 0;
+                }
+
+                self.segment_idx += 1;
+            }
 
             return out;
         }
@@ -365,7 +394,13 @@ mod tests {
 
         let num_blocks = (88200.0 / 512.0) as usize + 30;
 
-        for _ in 0..num_blocks {
+        let block = logramp.get_next_block(256, &Vec::new());
+        for i in 0..512 {
+            let a = block[i];
+            debug_plotter::plot!(a where caption = "ExpRampTest");
+        }
+
+        for _ in 1..num_blocks {
             let block = logramp.get_next_block(0, &Vec::new());
             for i in 0..512 {
                 let a = block[i];
@@ -395,23 +430,29 @@ mod tests {
             SegmentInfo {
                 from: 0.0,
                 to: 200.0,
-                time: 2.0,
+                time: 0.003,
                 segment_type: SegmentType::Lin,
             },
             SegmentInfo {
                 from: 200.0,
                 to: 100.0,
-                time: 1.0,
+                time: 0.05,
                 segment_type: SegmentType::Exp,
+            },
+            SegmentInfo {
+                from: 100.0,
+                to: 0.0,
+                time: 0.03,
+                segment_type: SegmentType::Log,
             },
         ];
 
-        let mut mpenv = MultiPointEnvelope::<512>::new(segments, false, 44100.0);
-        let num_blocks = (3.0 * 44100.0 / 512.0) as usize + 30;
+        let mut mpenv = MultiPointEnvelope::<2048>::new(segments, false, 44100.0);
+        let num_blocks = (0.2 * 44100.0 / 2048.0) as usize;
 
         for _ in 0..num_blocks {
             let block = mpenv.get_next_block(0, &Vec::new());
-            for i in 0..512 {
+            for i in 0..2048 {
                 let a = block[i];
                 debug_plotter::plot!(a where caption = "MultiPointTest");
             }
