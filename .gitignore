@@ -3,3 +3,4 @@
 .\#*
 *.lock
 target/*
+plots/*

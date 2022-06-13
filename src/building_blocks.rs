@@ -6,6 +6,7 @@ pub mod envelopes;
 pub mod filters;
 pub mod freeverb;
 pub mod interpolation;
+pub mod mod_env;
 pub mod modulator;
 pub mod oscillators;
 pub mod routing;
@@ -93,6 +94,7 @@ pub trait MonoSource<const BUFSIZE: usize>: MonoSourceClone<BUFSIZE> {
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue);
     fn set_modulator(&mut self, par: SynthParameterLabel, init: f32, modulator: Modulator<BUFSIZE>);
     fn finish(&mut self);
+    fn reset(&mut self);
     fn is_finished(&self) -> bool;
     fn get_next_block(&mut self, start_sample: usize, in_buffers: &[Vec<f32>]) -> [f32; BUFSIZE];
 }

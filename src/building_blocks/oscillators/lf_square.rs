@@ -40,6 +40,7 @@ impl<const BUFSIZE: usize> LFSquare<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSquare<BUFSIZE> {
+    fn reset(&mut self) {}
     fn set_modulator(
         &mut self,
         par: SynthParameterLabel,

@@ -34,6 +34,7 @@ impl<const BUFSIZE: usize> LFSaw<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSaw<BUFSIZE> {
+    fn reset(&mut self) {}
     fn set_modulator(
         &mut self,
         par: SynthParameterLabel,

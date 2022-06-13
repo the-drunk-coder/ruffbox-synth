@@ -45,6 +45,7 @@ impl<const BUFSIZE: usize> SineOsc<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
+    fn reset(&mut self) {}
     fn set_modulator(
         &mut self,
         par: SynthParameterLabel,

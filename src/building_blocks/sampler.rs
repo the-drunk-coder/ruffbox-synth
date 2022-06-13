@@ -159,6 +159,7 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
+    fn reset(&mut self) {}
     fn set_modulator(
         &mut self,
         par: SynthParameterLabel,
