@@ -198,19 +198,17 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
                     self.frac_index = self.index as f32;
                 }
             }
-            SynthParameterLabel::PlaybackRate => match val {
-                SynthParameterValue::ScalarF32(value) => {
+            SynthParameterLabel::PlaybackRate => {
+                if let SynthParameterValue::ScalarF32(value) = val {
                     self.playback_rate = *value;
                     self.frac_index_increment = 1.0 * *value;
                 }
-                _ => {}
-            },
-            SynthParameterLabel::OscillatorAmplitude => match val {
-                SynthParameterValue::ScalarF32(value) => {
+            }
+            SynthParameterLabel::OscillatorAmplitude => {
+                if let SynthParameterValue::ScalarF32(value) = val {
                     self.amp = *value;
                 }
-                _ => {}
-            },
+            }
             _ => (),
         };
     }
