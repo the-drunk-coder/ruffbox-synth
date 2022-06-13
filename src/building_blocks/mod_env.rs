@@ -53,8 +53,8 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LinearRamp<BUFSIZE> {
     fn get_next_block(&mut self, start_sample: usize, _: &[Vec<f32>]) -> [f32; BUFSIZE] {
         let mut out: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
-        for i in start_sample..BUFSIZE {
-            out[i] = self.cur_lvl;
+        for current_sample in out.iter_mut().take(BUFSIZE).skip(start_sample) {
+            *current_sample = self.cur_lvl;
 
             if self.sample_count < self.ramp_samples {
                 self.cur_lvl += self.inc_dec;
@@ -125,8 +125,8 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LogRamp<BUFSIZE> {
     fn get_next_block(&mut self, start_sample: usize, _: &[Vec<f32>]) -> [f32; BUFSIZE] {
         let mut out: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
-        for i in start_sample..BUFSIZE {
-            out[i] = self.from + self.cur_lvl * self.mul;
+        for current_sample in out.iter_mut().take(BUFSIZE).skip(start_sample) {
+            *current_sample = self.from + self.cur_lvl * self.mul;
             self.cur_lvl = if self.sample_count < self.ramp_samples {
                 ((self.curve * self.time_count).exp() - 1.0) / (self.curve.exp() - 1.0)
             } else {
@@ -198,8 +198,8 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for ExpRamp<BUFSIZE> {
     fn get_next_block(&mut self, start_sample: usize, _: &[Vec<f32>]) -> [f32; BUFSIZE] {
         let mut out: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
-        for i in start_sample..BUFSIZE {
-            out[i] = self.from + self.cur_lvl * self.mul;
+        for current_sample in out.iter_mut().take(BUFSIZE).skip(start_sample) {
+            *current_sample = self.from + self.cur_lvl * self.mul;
             self.cur_lvl = if self.sample_count < self.ramp_samples {
                 ((self.curve * self.time_count).exp() - 1.0) / (self.curve.exp() - 1.0)
             } else {
@@ -322,9 +322,8 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for MultiPointEnvelope<BUFSIZE> {
                 self.segment_samples[self.segment_idx] - self.sample_count;
 
             // handle leftover from current segment
-            for i in start_sample..left_from_current_segment {
-                out[i] = out_last[i]
-            }
+            out[start_sample..left_from_current_segment]
+                .copy_from_slice(&out_last[start_sample..left_from_current_segment]);
 
             samples_to_fill_rest -= left_from_current_segment;
 
@@ -335,19 +334,24 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for MultiPointEnvelope<BUFSIZE> {
                     if next_segment_samples >= samples_to_fill_rest {
                         let out_next = next_segment.get_next_block(left_from_current_segment, bufs);
 
-                        for i in left_from_current_segment..samples_to_fill_total {
-                            out[i] = out_next[i]
-                        }
+                        // copy samples
+                        out[left_from_current_segment..samples_to_fill_total].copy_from_slice(
+                            &out_next[left_from_current_segment..samples_to_fill_total],
+                        );
 
                         self.sample_count = samples_to_fill_rest - left_from_current_segment;
                         samples_to_fill_rest = 0;
                     } else {
                         let out_next = next_segment.get_next_block(left_from_current_segment, bufs);
 
+                        // copy samples
+                        out[left_from_current_segment
+                            ..(left_from_current_segment + next_segment_samples)]
+                            .copy_from_slice(
+                                &out_next[left_from_current_segment
+                                    ..(left_from_current_segment + next_segment_samples)],
+                            );
 
-			out[left_from_current_segment..(left_from_current_segment + next_segment_samples)]
-			    .copy_from_slice(&out_next[left_from_current_segment..(left_from_current_segment + next_segment_samples)]);
-					
                         samples_to_fill_rest -= next_segment_samples;
                         left_from_current_segment += next_segment_samples;
                         self.sample_count = 0;

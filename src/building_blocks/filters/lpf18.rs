@@ -118,18 +118,15 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for Lpf18<BUFSIZE> {
     }
     // some parameter limits might be nice ...
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
-        match value {
-            SynthParameterValue::ScalarF32(val) => {
-                match par {
-                    SynthParameterLabel::LowpassCutoffFrequency => self.cutoff = *val,
-                    SynthParameterLabel::LowpassQFactor => self.res = *val,
-                    SynthParameterLabel::LowpassFilterDistortion => self.dist = *val,
-                    _ => (),
-                };
+        if let SynthParameterValue::ScalarF32(val) = value {
+            match par {
+                SynthParameterLabel::LowpassCutoffFrequency => self.cutoff = *val,
+                SynthParameterLabel::LowpassQFactor => self.res = *val,
+                SynthParameterLabel::LowpassFilterDistortion => self.dist = *val,
+                _ => (),
+            };
 
-                self.update_internals(self.cutoff, self.res, self.dist);
-            }
-            _ => {}
+            self.update_internals(self.cutoff, self.res, self.dist);
         }
     }
 
