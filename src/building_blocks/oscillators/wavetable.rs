@@ -67,13 +67,12 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavetable<BUFSIZE> {
 
     fn set_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {
         match par {
-            SynthParameterLabel::PitchFrequency => match val {
-                SynthParameterValue::ScalarF32(value) => {
+            SynthParameterLabel::PitchFrequency => {
+                if let SynthParameterValue::ScalarF32(value) = val {
                     self.freq = *value;
                     self.phase_inc = self.tablesize as f32 * self.freq * self.sample_period;
                 }
-                _ => {}
-            },
+            }
             SynthParameterLabel::Wavetable => {
                 if let SynthParameterValue::VecF32(tab) = val {
                     self.tablesize = std::cmp::min(tab.len(), 2048);
@@ -81,12 +80,11 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Wavetable<BUFSIZE> {
                     self.phase_inc = self.tablesize as f32 * self.freq * self.sample_period;
                 }
             }
-            SynthParameterLabel::OscillatorAmplitude => match val {
-                SynthParameterValue::ScalarF32(value) => {
+            SynthParameterLabel::OscillatorAmplitude => {
+                if let SynthParameterValue::ScalarF32(value) = val {
                     self.amp = *value;
                 }
-                _ => {}
-            },
+            }
             _ => (),
         };
     }

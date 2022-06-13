@@ -62,19 +62,17 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFRSaw<BUFSIZE> {
                     self.cur_amp = *p / self.amp;
                 }
             }
-            SynthParameterLabel::PitchFrequency => match value {
-                SynthParameterValue::ScalarF32(f) => {
+            SynthParameterLabel::PitchFrequency => {
+                if let SynthParameterValue::ScalarF32(f) = value {
                     self.freq = *f;
                     self.amp_inc = 2.0 / (self.samplerate / self.freq);
                 }
-                _ => {}
-            },
-            SynthParameterLabel::OscillatorAmplitude => match value {
-                SynthParameterValue::ScalarF32(l) => {
+            }
+            SynthParameterLabel::OscillatorAmplitude => {
+                if let SynthParameterValue::ScalarF32(l) = value {
                     self.amp = *l;
                 }
-                _ => {}
-            },
+            }
             _ => (),
         };
     }
@@ -107,10 +105,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFRSaw<BUFSIZE> {
                 .take(BUFSIZE)
                 .skip(start_sample)
             {
-                if self.cur_amp > 1.0 {
-                    self.cur_amp = 1.0;
-                    *current_sample = amp_buf[idx];
-                } else if self.cur_amp < -1.0 {
+                if self.cur_amp > 1.0 || self.cur_amp < -1.0 {
                     self.cur_amp = 1.0;
                     *current_sample = amp_buf[idx];
                 } else {
@@ -122,11 +117,8 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFRSaw<BUFSIZE> {
             }
         } else {
             for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
-                if self.cur_amp > 1.0 {
+                if self.cur_amp > 1.0 || self.cur_amp < -1.0 {
                     self.cur_amp = 1.0; // this might not be necessary
-                    *current_sample = self.amp;
-                } else if self.cur_amp < -1.0 {
-                    self.cur_amp = 1.0;
                     *current_sample = self.amp;
                 } else {
                     *current_sample = self.cur_amp * self.amp;

@@ -71,23 +71,19 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for MonoDelay<BUFSIZE> {
     }
     // some parameter limits might be nice ...
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
-        match value {
-            SynthParameterValue::ScalarF32(val) => {
-                match par {
-                    SynthParameterLabel::DelayDampeningFrequency => self
-                        .dampening_filter
-                        .set_parameter(SynthParameterLabel::LowpassCutoffFrequency, value),
-                    SynthParameterLabel::DelayFeedback => self.feedback = *val,
-                    SynthParameterLabel::DelayRate => self.rate = *val,
-                    SynthParameterLabel::DelayTime => {
-                        self.time = *val;
-                        self.max_buffer_ptr = self.samplerate * self.time + 1.0;
-                    }
-                    _ => (),
-                };
-            }
-
-            _ => {}
+        if let SynthParameterValue::ScalarF32(val) = value {
+            match par {
+                SynthParameterLabel::DelayDampeningFrequency => self
+                    .dampening_filter
+                    .set_parameter(SynthParameterLabel::LowpassCutoffFrequency, value),
+                SynthParameterLabel::DelayFeedback => self.feedback = *val,
+                SynthParameterLabel::DelayRate => self.rate = *val,
+                SynthParameterLabel::DelayTime => {
+                    self.time = *val;
+                    self.max_buffer_ptr = self.samplerate * self.time + 1.0;
+                }
+                _ => (),
+            };
         }
     }
 

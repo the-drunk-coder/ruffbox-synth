@@ -40,6 +40,7 @@ impl<const BUFSIZE: usize> Modulator<BUFSIZE> {
     }
 
     /// init saw modulator
+    #[allow(clippy::too_many_arguments)]
     pub fn lfsaw(
         op: ValOp,
         freq: f32,
@@ -65,6 +66,7 @@ impl<const BUFSIZE: usize> Modulator<BUFSIZE> {
     }
 
     /// init saw modulator
+    #[allow(clippy::too_many_arguments)]
     pub fn lfrsaw(
         op: ValOp,
         freq: f32,
@@ -90,6 +92,7 @@ impl<const BUFSIZE: usize> Modulator<BUFSIZE> {
     }
 
     /// init tri modulator
+    #[allow(clippy::too_many_arguments)]
     pub fn lftri(
         op: ValOp,
         freq: f32,

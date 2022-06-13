@@ -8,6 +8,12 @@ pub struct PanChan<const BUFSIZE: usize, const NCHAN: usize> {
     pos: f32,
 }
 
+impl<const BUFSIZE: usize, const NCHAN: usize> Default for PanChan<BUFSIZE, NCHAN> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<const BUFSIZE: usize, const NCHAN: usize> PanChan<BUFSIZE, NCHAN> {
     pub fn new() -> Self {
         let mut lvls = [[0.0; BUFSIZE]; NCHAN];
@@ -37,20 +43,17 @@ impl<const BUFSIZE: usize, const NCHAN: usize> PanChan<BUFSIZE, NCHAN> {
         // if it was more parameters, match would be better,
         // but this way clippy doesn't complain
         if par == SynthParameterLabel::ChannelPosition {
-            match value {
-                SynthParameterValue::ScalarF32(p) => {
-                    self.pos = *p; // keep for later
+            if let SynthParameterValue::ScalarF32(p) = value {
+                self.pos = *p; // keep for later
 
-                    self.levels = [[0.0; BUFSIZE]; NCHAN];
+                self.levels = [[0.0; BUFSIZE]; NCHAN];
 
-                    let lower = p.floor();
-                    let angle_rad = (p - lower) * PI * 0.5;
-                    let upper = lower + 1.0;
+                let lower = p.floor();
+                let angle_rad = (p - lower) * PI * 0.5;
+                let upper = lower + 1.0;
 
-                    self.levels[lower as usize % (NCHAN as usize)] = [angle_rad.cos(); BUFSIZE];
-                    self.levels[upper as usize % (NCHAN as usize)] = [angle_rad.sin(); BUFSIZE];
-                }
-                _ => {}
+                self.levels[lower as usize % (NCHAN as usize)] = [angle_rad.cos(); BUFSIZE];
+                self.levels[upper as usize % (NCHAN as usize)] = [angle_rad.sin(); BUFSIZE];
             }
         }
     }

@@ -62,19 +62,17 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSaw<BUFSIZE> {
                     self.cur_amp = *p / self.amp;
                 }
             }
-            SynthParameterLabel::PitchFrequency => match value {
-                SynthParameterValue::ScalarF32(f) => {
+            SynthParameterLabel::PitchFrequency => {
+                if let SynthParameterValue::ScalarF32(f) = value {
                     self.freq = *f;
                     self.amp_inc = 2.0 / (self.samplerate / self.freq);
                 }
-                _ => {}
-            },
-            SynthParameterLabel::OscillatorAmplitude => match value {
-                SynthParameterValue::ScalarF32(l) => {
+            }
+            SynthParameterLabel::OscillatorAmplitude => {
+                if let SynthParameterValue::ScalarF32(l) = value {
                     self.amp = *l;
                 }
-                _ => {}
-            },
+            }
             _ => (),
         };
     }

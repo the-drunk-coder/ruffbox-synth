@@ -66,28 +66,25 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSquare<BUFSIZE> {
 
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
         match par {
-            SynthParameterLabel::PitchFrequency => match value {
-                SynthParameterValue::ScalarF32(f) => {
+            SynthParameterLabel::PitchFrequency => {
+                if let SynthParameterValue::ScalarF32(f) = value {
                     self.freq = *f;
                     self.period_samples = (self.samplerate / *f).round() as usize;
                     self.flank_point =
                         (self.period_samples as f32 * self.pulsewidth).round() as usize;
                 }
-                _ => {}
-            },
-            SynthParameterLabel::OscillatorAmplitude => match value {
-                SynthParameterValue::ScalarF32(l) => {
+            }
+            SynthParameterLabel::OscillatorAmplitude => {
+                if let SynthParameterValue::ScalarF32(l) = value {
                     self.amp = *l;
                 }
-                _ => {}
-            },
-            SynthParameterLabel::Pulsewidth => match value {
-                SynthParameterValue::ScalarF32(pw) => {
+            }
+            SynthParameterLabel::Pulsewidth => {
+                if let SynthParameterValue::ScalarF32(pw) = value {
                     self.pulsewidth = *pw;
                     self.flank_point = (self.period_samples as f32 * pw).round() as usize;
                 }
-                _ => {}
-            },
+            }
             _ => (),
         };
     }

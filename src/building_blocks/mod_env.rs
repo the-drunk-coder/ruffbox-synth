@@ -344,12 +344,10 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for MultiPointEnvelope<BUFSIZE> {
                     } else {
                         let out_next = next_segment.get_next_block(left_from_current_segment, bufs);
 
-                        for i in left_from_current_segment
-                            ..left_from_current_segment + next_segment_samples
-                        {
-                            out[i] = out_next[i]
-                        }
 
+			out[left_from_current_segment..(left_from_current_segment + next_segment_samples)]
+			    .copy_from_slice(&out_next[left_from_current_segment..(left_from_current_segment + next_segment_samples)]);
+					
                         samples_to_fill_rest -= next_segment_samples;
                         left_from_current_segment += next_segment_samples;
                         self.sample_count = 0;

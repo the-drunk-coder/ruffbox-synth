@@ -58,19 +58,17 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFCub<BUFSIZE> {
     // some parameter limits might be nice ...
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
         match par {
-            SynthParameterLabel::PitchFrequency => match value {
-                SynthParameterValue::ScalarF32(f) => {
+            SynthParameterLabel::PitchFrequency => {
+                if let SynthParameterValue::ScalarF32(f) = value {
                     self.freq = *f;
                     self.internal_freq = *f * self.sample_period;
                 }
-                _ => {}
-            },
-            SynthParameterLabel::OscillatorAmplitude => match value {
-                SynthParameterValue::ScalarF32(a) => {
+            }
+            SynthParameterLabel::OscillatorAmplitude => {
+                if let SynthParameterValue::ScalarF32(a) = value {
                     self.amp = *a;
                 }
-                _ => {}
-            },
+            }
             _ => (),
         };
     }

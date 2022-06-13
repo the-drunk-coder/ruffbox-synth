@@ -85,22 +85,18 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineOsc<BUFSIZE> {
                         ((-2.0 * PI * self.freq / self.samplerate) + (p / self.amp)).sin();
                 }
             }
-            SynthParameterLabel::PitchFrequency => match value {
-                SynthParameterValue::ScalarF32(f) => {
+            SynthParameterLabel::PitchFrequency => {
+                if let SynthParameterValue::ScalarF32(f) = value {
                     self.freq = *f;
                     self.x1_last = ((-2.0 * PI * self.freq) / self.samplerate).cos();
                     self.x2_last = ((-2.0 * PI * self.freq) / self.samplerate).sin();
                     self.mcf_buf = [-2.0 * (PI * (self.freq / self.samplerate)).sin(); BUFSIZE];
                 }
-                _ => {}
-            },
+            }
             SynthParameterLabel::OscillatorAmplitude => {
-                match value {
-                    SynthParameterValue::ScalarF32(l) => {
-                        self.amp = *l;
-                        self.amp_buf = [self.amp; BUFSIZE];
-                    }
-                    _ => { /* nothing to do, don't know how to handle this ... */ }
+                if let SynthParameterValue::ScalarF32(l) = value {
+                    self.amp = *l;
+                    self.amp_buf = [self.amp; BUFSIZE];
                 }
             }
             _ => (),
