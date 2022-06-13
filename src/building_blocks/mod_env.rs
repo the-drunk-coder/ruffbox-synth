@@ -299,12 +299,10 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for MultiPointEnvelope<BUFSIZE> {
         if self.segment_idx >= self.segments.len() {
             if self.loop_env {
                 self.reset();
+            } else if let Some(last_seg) = self.segments.last_mut() {
+                return last_seg.get_next_block(start_sample, bufs);
             } else {
-                if let Some(last_seg) = self.segments.last_mut() {
-                    return last_seg.get_next_block(start_sample, bufs);
-                } else {
-                    return [0.0; BUFSIZE]; // last value ?
-                }
+                return [0.0; BUFSIZE]; // last value ?
             }
         }
 
@@ -315,7 +313,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for MultiPointEnvelope<BUFSIZE> {
 
         if samples_to_fill_total < samples_left_in_segment {
             self.sample_count += samples_to_fill_total;
-            return self.segments[self.segment_idx].get_next_block(start_sample, bufs);
+            self.segments[self.segment_idx].get_next_block(start_sample, bufs)
         } else {
             let mut out: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
@@ -364,7 +362,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for MultiPointEnvelope<BUFSIZE> {
                 self.segment_idx += 1;
             }
 
-            return out;
+            out
         }
     }
 }
