@@ -4,6 +4,7 @@ use crate::building_blocks::filters::*;
 use crate::building_blocks::oscillators::*;
 use crate::building_blocks::{
     Modulator, MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
+    ValueOrModulator,
 };
 
 /// a low-frequency (non-bandlimited) squarewave synth with envelope and lpf18 filter
@@ -31,6 +32,17 @@ impl<const BUFSIZE: usize> LFSquareSynth<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for LFSquareSynth<BUFSIZE> {
+    fn set_param_or_modulator(
+        &mut self,
+        par: SynthParameterLabel,
+        val_or_mod: ValueOrModulator<BUFSIZE>,
+    ) {
+        match val_or_mod {
+            ValueOrModulator::Val(val) => self.set_parameter(par, &val),
+            ValueOrModulator::Mod(init, modulator) => self.set_modulator(par, init, modulator),
+        }
+    }
+
     fn set_modulator(
         &mut self,
         par: SynthParameterLabel,

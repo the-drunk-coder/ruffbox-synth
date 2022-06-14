@@ -1,5 +1,5 @@
 use crate::building_blocks::{
-    Modulator, MonoEffect, SynthParameterLabel, SynthParameterValue, SynthState,
+    Modulator, MonoEffect, SynthParameterLabel, SynthParameterValue, SynthState, ValueOrModulator,
 };
 
 /// simple linear attack-sustain-release envelope
@@ -51,6 +51,17 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for LinearASREnvelope<BUFSIZE> {
 
     fn is_finished(&self) -> bool {
         matches!(self.state, SynthState::Finished)
+    }
+
+    fn set_param_or_modulator(
+        &mut self,
+        par: SynthParameterLabel,
+        val_or_mod: ValueOrModulator<BUFSIZE>,
+    ) {
+        match val_or_mod {
+            ValueOrModulator::Val(val) => self.set_parameter(par, &val),
+            ValueOrModulator::Mod(init, modulator) => self.set_modulator(par, init, modulator),
+        }
     }
 
     fn set_modulator(&mut self, _: SynthParameterLabel, _: f32, _: Modulator<BUFSIZE>) {}

@@ -1,6 +1,8 @@
 use crate::building_blocks::filters::*;
 use crate::building_blocks::interpolation::*;
-use crate::building_blocks::{Modulator, MonoEffect, SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{
+    Modulator, MonoEffect, SynthParameterLabel, SynthParameterValue, ValueOrModulator,
+};
 
 pub struct MonoDelay<const BUFSIZE: usize> {
     // user parameters
@@ -40,6 +42,17 @@ impl<const BUFSIZE: usize> MonoDelay<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for MonoDelay<BUFSIZE> {
+    fn set_param_or_modulator(
+        &mut self,
+        par: SynthParameterLabel,
+        val_or_mod: ValueOrModulator<BUFSIZE>,
+    ) {
+        match val_or_mod {
+            ValueOrModulator::Val(val) => self.set_parameter(par, &val),
+            ValueOrModulator::Mod(init, modulator) => self.set_modulator(par, init, modulator),
+        }
+    }
+
     fn set_modulator(
         &mut self,
         par: SynthParameterLabel,

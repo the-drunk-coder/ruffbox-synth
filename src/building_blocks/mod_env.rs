@@ -1,5 +1,5 @@
 use crate::building_blocks::{
-    Modulator, MonoSource, SynthParameterLabel, SynthParameterValue, SynthState,
+    Modulator, MonoSource, SynthParameterLabel, SynthParameterValue, SynthState, ValueOrModulator,
 };
 
 /**
@@ -36,6 +36,17 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LinearRamp<BUFSIZE> {
     fn reset(&mut self) {
         self.sample_count = 0;
         self.cur_lvl = self.from;
+    }
+
+    fn set_param_or_modulator(
+        &mut self,
+        par: SynthParameterLabel,
+        val_or_mod: ValueOrModulator<BUFSIZE>,
+    ) {
+        match val_or_mod {
+            ValueOrModulator::Val(val) => self.set_parameter(par, &val),
+            ValueOrModulator::Mod(init, modulator) => self.set_modulator(par, init, modulator),
+        }
     }
 
     fn finish(&mut self) {
@@ -108,6 +119,17 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LogRamp<BUFSIZE> {
     fn reset(&mut self) {
         self.sample_count = 0;
         self.cur_lvl = self.from;
+    }
+
+    fn set_param_or_modulator(
+        &mut self,
+        par: SynthParameterLabel,
+        val_or_mod: ValueOrModulator<BUFSIZE>,
+    ) {
+        match val_or_mod {
+            ValueOrModulator::Val(val) => self.set_parameter(par, &val),
+            ValueOrModulator::Mod(init, modulator) => self.set_modulator(par, init, modulator),
+        }
     }
 
     fn finish(&mut self) {
@@ -191,6 +213,17 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for ExpRamp<BUFSIZE> {
         false
     }
 
+    fn set_param_or_modulator(
+        &mut self,
+        par: SynthParameterLabel,
+        val_or_mod: ValueOrModulator<BUFSIZE>,
+    ) {
+        match val_or_mod {
+            ValueOrModulator::Val(val) => self.set_parameter(par, &val),
+            ValueOrModulator::Mod(init, modulator) => self.set_modulator(par, init, modulator),
+        }
+    }
+
     fn set_modulator(&mut self, _: SynthParameterLabel, _: f32, _: Modulator<BUFSIZE>) {}
 
     fn set_parameter(&mut self, _: SynthParameterLabel, _: &SynthParameterValue) {}
@@ -241,6 +274,17 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for ConstantMod<BUFSIZE> {
 
     fn is_finished(&self) -> bool {
         false
+    }
+
+    fn set_param_or_modulator(
+        &mut self,
+        par: SynthParameterLabel,
+        val_or_mod: ValueOrModulator<BUFSIZE>,
+    ) {
+        match val_or_mod {
+            ValueOrModulator::Val(val) => self.set_parameter(par, &val),
+            ValueOrModulator::Mod(init, modulator) => self.set_modulator(par, init, modulator),
+        }
     }
 
     fn set_modulator(&mut self, _: SynthParameterLabel, _: f32, _: Modulator<BUFSIZE>) {}
@@ -319,6 +363,17 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for MultiPointEnvelope<BUFSIZE> {
         self.segment_idx = 0;
         for s in self.segments.iter_mut() {
             s.reset();
+        }
+    }
+
+    fn set_param_or_modulator(
+        &mut self,
+        par: SynthParameterLabel,
+        val_or_mod: ValueOrModulator<BUFSIZE>,
+    ) {
+        match val_or_mod {
+            ValueOrModulator::Val(val) => self.set_parameter(par, &val),
+            ValueOrModulator::Mod(init, modulator) => self.set_modulator(par, init, modulator),
         }
     }
 

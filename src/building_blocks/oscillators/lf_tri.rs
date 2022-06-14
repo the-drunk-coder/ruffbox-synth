@@ -1,4 +1,6 @@
-use crate::building_blocks::{Modulator, MonoSource, SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{
+    Modulator, MonoSource, SynthParameterLabel, SynthParameterValue, ValueOrModulator,
+};
 
 /**
  * A non-band-limited triangle oscillator.
@@ -36,6 +38,17 @@ impl<const BUFSIZE: usize> LFTri<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFTri<BUFSIZE> {
+    fn set_param_or_modulator(
+        &mut self,
+        par: SynthParameterLabel,
+        val_or_mod: ValueOrModulator<BUFSIZE>,
+    ) {
+        match val_or_mod {
+            ValueOrModulator::Val(val) => self.set_parameter(par, &val),
+            ValueOrModulator::Mod(init, modulator) => self.set_modulator(par, init, modulator),
+        }
+    }
+
     fn set_modulator(
         &mut self,
         par: SynthParameterLabel,

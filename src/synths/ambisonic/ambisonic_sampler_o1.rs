@@ -4,6 +4,7 @@ use crate::building_blocks::filters::*;
 use crate::building_blocks::sampler::Sampler;
 use crate::building_blocks::{
     Modulator, MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
+    ValueOrModulator,
 };
 
 /// a sampler with envelope etc.
@@ -36,6 +37,17 @@ impl<const BUFSIZE: usize> AmbisonicSamplerO1<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for AmbisonicSamplerO1<BUFSIZE> {
+    fn set_param_or_modulator(
+        &mut self,
+        par: SynthParameterLabel,
+        val_or_mod: ValueOrModulator<BUFSIZE>,
+    ) {
+        match val_or_mod {
+            ValueOrModulator::Val(val) => self.set_parameter(par, &val),
+            ValueOrModulator::Mod(init, modulator) => self.set_modulator(par, init, modulator),
+        }
+    }
+
     fn set_modulator(
         &mut self,
         par: SynthParameterLabel,

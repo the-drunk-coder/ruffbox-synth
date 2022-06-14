@@ -75,6 +75,7 @@ pub enum ValOp {
     Divide,
 }
 
+// from an outside perspective, there can be modulator-valued parameters (like, an lfo-valued parameter)
 #[derive(Clone)]
 pub enum SynthParameterValue {
     ScalarF32(f32),
@@ -93,10 +94,22 @@ pub enum SynthParameterValue {
     MultiPointEnvelope(Vec<mod_env::SegmentInfo>, bool, ValOp), // segments, loop ...
 }
 
+// but in practice, it's not that easy ...
+// so we need some helper enums
+pub enum ValueOrModulator<const BUFSIZE: usize> {
+    Val(SynthParameterValue),
+    Mod(f32, Modulator<BUFSIZE>),
+}
+
 /// oscillators, the sampler, etc are sources
 pub trait MonoSource<const BUFSIZE: usize>: MonoSourceClone<BUFSIZE> {
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue);
     fn set_modulator(&mut self, par: SynthParameterLabel, init: f32, modulator: Modulator<BUFSIZE>);
+    fn set_param_or_modulator(
+        &mut self,
+        par: SynthParameterLabel,
+        val_or_mod: ValueOrModulator<BUFSIZE>,
+    );
     fn finish(&mut self);
     fn reset(&mut self);
     fn is_finished(&self) -> bool;
@@ -128,6 +141,11 @@ pub trait MonoEffect<const BUFSIZE: usize> {
     fn is_finished(&self) -> bool;
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue);
     fn set_modulator(&mut self, par: SynthParameterLabel, init: f32, modulator: Modulator<BUFSIZE>);
+    fn set_param_or_modulator(
+        &mut self,
+        par: SynthParameterLabel,
+        val_or_mod: ValueOrModulator<BUFSIZE>,
+    );
     fn process_block(
         &mut self,
         block: [f32; BUFSIZE],
@@ -146,6 +164,11 @@ pub trait MultichannelReverb<const BUFSIZE: usize, const NCHAN: usize> {
 pub trait Synth<const BUFSIZE: usize, const NCHAN: usize> {
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue);
     fn set_modulator(&mut self, par: SynthParameterLabel, init: f32, modulator: Modulator<BUFSIZE>);
+    fn set_param_or_modulator(
+        &mut self,
+        par: SynthParameterLabel,
+        val_or_mod: ValueOrModulator<BUFSIZE>,
+    );
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
     fn get_next_block(
