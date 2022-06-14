@@ -214,14 +214,53 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for ExpRamp<BUFSIZE> {
     }
 }
 
-#[derive(Clone)]
+/**
+ * Constant (needed for envelope)
+ */
+#[derive(Clone, Copy)]
+pub struct ConstantMod<const BUFSIZE: usize> {
+    value: f32,
+    state: SynthState,
+}
+
+impl<const BUFSIZE: usize> ConstantMod<BUFSIZE> {
+    pub fn new(value: f32) -> Self {
+        ConstantMod {
+            value,
+            state: SynthState::Fresh,
+        }
+    }
+}
+
+impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for ConstantMod<BUFSIZE> {
+    fn reset(&mut self) {}
+
+    fn finish(&mut self) {
+        self.state = SynthState::Finished;
+    }
+
+    fn is_finished(&self) -> bool {
+        false
+    }
+
+    fn set_modulator(&mut self, _: SynthParameterLabel, _: f32, _: Modulator<BUFSIZE>) {}
+
+    fn set_parameter(&mut self, _: SynthParameterLabel, _: &SynthParameterValue) {}
+
+    fn get_next_block(&mut self, _: usize, _: &[Vec<f32>]) -> [f32; BUFSIZE] {
+        [self.value; BUFSIZE]
+    }
+}
+
+#[derive(Clone, Copy)]
 pub enum SegmentType {
     Lin,
     Log,
     Exp,
+    Constant,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct SegmentInfo {
     pub from: f32,
     pub to: f32,
@@ -230,7 +269,7 @@ pub struct SegmentInfo {
 }
 
 /**
- * Exponential Ramp
+ * Multi-Point Envelope
  */
 #[derive(Clone)]
 pub struct MultiPointEnvelope<const BUFSIZE: usize> {
@@ -259,6 +298,7 @@ impl<const BUFSIZE: usize> MultiPointEnvelope<BUFSIZE> {
                 SegmentType::Exp => {
                     Box::new(ExpRamp::new(info.from, info.to, info.time, samplerate))
                 }
+                SegmentType::Constant => Box::new(ConstantMod::new(info.to)),
             });
         }
 
