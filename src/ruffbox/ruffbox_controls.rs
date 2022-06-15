@@ -6,7 +6,9 @@ use rubato::{FftFixedIn, Resampler};
 use crossbeam::atomic::AtomicCell;
 use dashmap::DashMap;
 
-use crate::building_blocks::{Modulator, SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{
+    resolve_parameter_value, Modulator, SynthParameterLabel, SynthParameterValue,
+};
 use crate::ruffbox::{ControlMessage, ScheduledEvent};
 use crate::synths::*;
 
@@ -18,145 +20,8 @@ pub struct PreparedInstance<const BUFSIZE: usize, const NCHAN: usize> {
 
 impl<const BUFSIZE: usize, const NCHAN: usize> PreparedInstance<BUFSIZE, NCHAN> {
     pub fn set_instance_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {
-        match val {
-            SynthParameterValue::Lfo(init, freq, eff_phase, amp, add, op) => {
-                self.ev.set_modulator(
-                    par,
-                    *init,
-                    match par {
-                        SynthParameterLabel::LowpassCutoffFrequency => {
-                            Modulator::lfo(*op, *freq, *eff_phase, *amp, *add, true, false, self.sr)
-                        }
-                        SynthParameterLabel::HighpassCutoffFrequency => {
-                            Modulator::lfo(*op, *freq, *eff_phase, *amp, *add, true, false, self.sr)
-                        }
-                        SynthParameterLabel::PeakFrequency => {
-                            Modulator::lfo(*op, *freq, *eff_phase, *amp, *add, true, false, self.sr)
-                        }
-                        _ => Modulator::lfo(
-                            *op, *freq, *eff_phase, *amp, *add, false, false, self.sr,
-                        ),
-                    },
-                );
-            }
-            SynthParameterValue::LFSaw(init, freq, eff_phase, amp, add, op) => {
-                self.ev.set_modulator(
-                    par,
-                    *init,
-                    match par {
-                        SynthParameterLabel::LowpassCutoffFrequency => Modulator::lfsaw(
-                            *op, *freq, *eff_phase, *amp, *add, true, false, self.sr,
-                        ),
-                        SynthParameterLabel::HighpassCutoffFrequency => Modulator::lfsaw(
-                            *op, *freq, *eff_phase, *amp, *add, true, false, self.sr,
-                        ),
-                        SynthParameterLabel::PeakFrequency => Modulator::lfsaw(
-                            *op, *freq, *eff_phase, *amp, *add, true, false, self.sr,
-                        ),
-                        _ => Modulator::lfsaw(
-                            *op, *freq, *eff_phase, *amp, *add, false, false, self.sr,
-                        ),
-                    },
-                );
-            }
-            SynthParameterValue::LFRSaw(init, freq, eff_phase, amp, add, op) => {
-                self.ev.set_modulator(
-                    par,
-                    *init,
-                    match par {
-                        SynthParameterLabel::LowpassCutoffFrequency => Modulator::lfrsaw(
-                            *op, *freq, *eff_phase, *amp, *add, true, false, self.sr,
-                        ),
-                        SynthParameterLabel::HighpassCutoffFrequency => Modulator::lfrsaw(
-                            *op, *freq, *eff_phase, *amp, *add, true, false, self.sr,
-                        ),
-                        SynthParameterLabel::PeakFrequency => Modulator::lfrsaw(
-                            *op, *freq, *eff_phase, *amp, *add, true, false, self.sr,
-                        ),
-                        _ => Modulator::lfrsaw(
-                            *op, *freq, *eff_phase, *amp, *add, false, false, self.sr,
-                        ),
-                    },
-                );
-            }
-            SynthParameterValue::LFTri(init, freq, eff_phase, amp, add, op) => {
-                self.ev.set_modulator(
-                    par,
-                    *init,
-                    match par {
-                        SynthParameterLabel::LowpassCutoffFrequency => Modulator::lftri(
-                            *op, *freq, *eff_phase, *amp, *add, true, false, self.sr,
-                        ),
-                        SynthParameterLabel::HighpassCutoffFrequency => Modulator::lftri(
-                            *op, *freq, *eff_phase, *amp, *add, true, false, self.sr,
-                        ),
-                        SynthParameterLabel::PeakFrequency => Modulator::lftri(
-                            *op, *freq, *eff_phase, *amp, *add, true, false, self.sr,
-                        ),
-                        _ => Modulator::lftri(
-                            *op, *freq, *eff_phase, *amp, *add, false, false, self.sr,
-                        ),
-                    },
-                );
-            }
-            SynthParameterValue::LFSquare(init, freq, pw, amp, add, op) => {
-                self.ev.set_modulator(
-                    par,
-                    *init,
-                    match par {
-                        SynthParameterLabel::LowpassCutoffFrequency => {
-                            Modulator::lfsquare(*op, *freq, *pw, *amp, *add, true, false, self.sr)
-                        }
-                        SynthParameterLabel::HighpassCutoffFrequency => {
-                            Modulator::lfsquare(*op, *freq, *pw, *amp, *add, true, false, self.sr)
-                        }
-                        SynthParameterLabel::PeakFrequency => {
-                            Modulator::lfsquare(*op, *freq, *pw, *amp, *add, true, false, self.sr)
-                        }
-                        _ => {
-                            Modulator::lfsquare(*op, *freq, *pw, *amp, *add, false, false, self.sr)
-                        }
-                    },
-                );
-            }
-
-            SynthParameterValue::LinRamp(from, to, time, op) => {
-                self.ev.set_modulator(
-                    par,
-                    *from,
-                    Modulator::lin_ramp(*op, *from, *to, *time, self.sr),
-                );
-            }
-            SynthParameterValue::LogRamp(from, to, time, op) => {
-                self.ev.set_modulator(
-                    par,
-                    *from,
-                    Modulator::log_ramp(*op, *from, *to, *time, self.sr),
-                );
-            }
-            SynthParameterValue::ExpRamp(from, to, time, op) => {
-                self.ev.set_modulator(
-                    par,
-                    *from,
-                    Modulator::exp_ramp(*op, *from, *to, *time, self.sr),
-                );
-            }
-            SynthParameterValue::MultiPointEnvelope(segments, loop_env, op) => {
-                let init = if let Some(seg) = segments.first() {
-                    seg.from
-                } else {
-                    0.0
-                };
-                self.ev.set_modulator(
-                    par,
-                    init,
-                    Modulator::multi_point_envelope(*op, segments.to_vec(), *loop_env, self.sr),
-                );
-            }
-            _ => {
-                self.ev.set_parameter(par, val);
-            }
-        }
+        self.ev
+            .set_param_or_modulator(par, resolve_parameter_value::<BUFSIZE>(par, val, self.sr));
     }
 }
 
