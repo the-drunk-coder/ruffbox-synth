@@ -221,14 +221,10 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
 
         for cm in self.control_q_rec.try_iter() {
             match cm {
-                ControlMessage::SetGlobalParam(par, val) => {
-                    self.master_reverb.set_parameter(par, &val);
-                    self.master_delay.set_parameter(par, &val);
-                }
-                ControlMessage::SetGlobalModulator(par, init, modulator) => {
-                    //self.master_reverb.set_parameter(par, &val);
-                    self.master_delay.set_modulator(par, init, modulator);
-                }
+                ControlMessage::SetGlobalParamOrModulator(par, val) => {
+                    self.master_reverb.set_param_or_modulator(par, val);
+                    self.master_delay.set_param_or_modulator(par, val);
+                }                
                 ControlMessage::ScheduleEvent(new_event) => {
                     // add new instances
                     if new_event.timestamp == 0.0 || new_event.timestamp == now {

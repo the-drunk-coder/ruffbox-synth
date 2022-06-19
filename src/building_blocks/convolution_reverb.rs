@@ -1,5 +1,5 @@
 use crate::building_blocks::convolver::uniform_partitioned_convolution::UniformPartitionedConvolution;
-use crate::building_blocks::{MultichannelReverb, SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{MultichannelReverb, SynthParameterLabel, SynthParameterValue, ValueOrModulator};
 
 pub struct MultichannelConvolutionReverb<const BUFSIZE: usize, const NCHAN: usize> {
     channel_convolvers: Vec<UniformPartitionedConvolution<BUFSIZE>>,
@@ -20,6 +20,17 @@ impl<const BUFSIZE: usize, const NCHAN: usize> MultichannelReverb<BUFSIZE, NCHAN
 {
     fn set_parameter(&mut self, _par: SynthParameterLabel, _val: &SynthParameterValue) {
         // nothing to do here ...
+    }
+
+    fn set_param_or_modulator(
+        &mut self,
+        par: SynthParameterLabel,
+        val_or_mod: ValueOrModulator<BUFSIZE>,
+    ) {
+        match val_or_mod {
+            ValueOrModulator::Val(val) => self.set_parameter(par, &val),
+            ValueOrModulator::Mod(_, _) => {}, // no modulators possible so far
+        }
     }
 
     /**

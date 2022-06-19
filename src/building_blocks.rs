@@ -267,6 +267,11 @@ pub trait MonoEffect<const BUFSIZE: usize> {
 /// there's a freeverb- and a convolution-based implementation
 pub trait MultichannelReverb<const BUFSIZE: usize, const NCHAN: usize> {
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue);
+    fn set_param_or_modulator(
+	&mut self,
+	par: SynthParameterLabel,
+	val_or_mod: ValueOrModulator<BUFSIZE>
+    );
     fn process(&mut self, block: [[f32; BUFSIZE]; NCHAN]) -> [[f32; BUFSIZE]; NCHAN];
 }
 
