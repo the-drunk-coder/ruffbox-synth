@@ -77,6 +77,7 @@ pub enum ValOp {
 
 // from an outside perspective, there can be modulator-valued parameters (like, an lfo-valued parameter)
 #[derive(Clone)]
+#[rustfmt::skip]
 pub enum SynthParameterValue {
     ScalarF32(f32),
     ScalarU32(u32),
@@ -84,46 +85,11 @@ pub enum SynthParameterValue {
     VecF32(Vec<f32>),
     MatrixF32((usize, usize), Vec<Vec<f32>>), // dimension, content
     // lfo param order - init val, freq, phase, amp, add, operation (mul, add, sub, div, replace)
-    Lfo(
-        f32,
-        Box<SynthParameterValue>,
-        f32,
-        Box<SynthParameterValue>,
-        f32,
-        ValOp,
-    ), // sine lfo
-    LFSaw(
-        f32,
-        Box<SynthParameterValue>,
-        f32,
-        Box<SynthParameterValue>,
-        f32,
-        ValOp,
-    ), // sawtoth lfo
-    LFRSaw(
-        f32,
-        Box<SynthParameterValue>,
-        f32,
-        Box<SynthParameterValue>,
-        f32,
-        ValOp,
-    ), // rev saw lfo
-    LFSquare(
-        f32,
-        Box<SynthParameterValue>,
-        f32,
-        Box<SynthParameterValue>,
-        f32,
-        ValOp,
-    ), // square lfo - additional pulswidth arg
-    LFTri(
-        f32,
-        Box<SynthParameterValue>,
-        f32,
-        Box<SynthParameterValue>,
-        f32,
-        ValOp,
-    ), // tri lfo
+    Lfo(f32, Box<SynthParameterValue>, f32, Box<SynthParameterValue>, f32, ValOp), // sine lfo
+    LFSaw(f32, Box<SynthParameterValue>, f32, Box<SynthParameterValue>, f32, ValOp), // sawtooth lfo
+    LFRSaw(f32, Box<SynthParameterValue>, f32, Box<SynthParameterValue>, f32, ValOp), // reverse sawtooth lfo
+    LFTri(f32, Box<SynthParameterValue>, f32, Box<SynthParameterValue>, f32, ValOp), // triangle wave lfo
+    LFSquare(f32, Box<SynthParameterValue>, f32, Box<SynthParameterValue>, f32, ValOp), // squarewave lfo
     LinRamp(f32, f32, f32, ValOp), // linear ramp - from, to, time
     LogRamp(f32, f32, f32, ValOp), // logarithmic ramp - from, to, time
     ExpRamp(f32, f32, f32, ValOp), // exponential ramp - from, to, time
