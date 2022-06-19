@@ -6,9 +6,7 @@ use rubato::{FftFixedIn, Resampler};
 use crossbeam::atomic::AtomicCell;
 use dashmap::DashMap;
 
-use crate::building_blocks::{
-    resolve_parameter_value, SynthParameterLabel, SynthParameterValue,
-};
+use crate::building_blocks::{resolve_parameter_value, SynthParameterLabel, SynthParameterValue};
 use crate::ruffbox::{ControlMessage, ScheduledEvent};
 use crate::synths::*;
 
@@ -163,10 +161,13 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
         })
     }
 
-    pub fn set_master_parameter(&self, par: SynthParameterLabel, val: SynthParameterValue) {                
+    pub fn set_master_parameter(&self, par: SynthParameterLabel, val: SynthParameterValue) {
         self.control_q_send
-            .send(ControlMessage::SetGlobalParamOrModulator(par, resolve_parameter_value(par, &val, self.samplerate)))
-            .unwrap();                
+            .send(ControlMessage::SetGlobalParamOrModulator(
+                par,
+                resolve_parameter_value(par, &val, self.samplerate),
+            ))
+            .unwrap();
     }
 
     /// triggers a synth for buffer reference or a synth

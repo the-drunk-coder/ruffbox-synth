@@ -1,4 +1,6 @@
-use crate::building_blocks::{MultichannelReverb, SynthParameterLabel, SynthParameterValue, ValueOrModulator};
+use crate::building_blocks::{
+    MultichannelReverb, SynthParameterLabel, SynthParameterValue, ValueOrModulator,
+};
 
 struct FreeverbDefaultTuning;
 
@@ -385,7 +387,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> MultichannelReverb<BUFSIZE, NCHAN
     ) {
         match val_or_mod {
             ValueOrModulator::Val(val) => self.set_parameter(par, &val),
-            ValueOrModulator::Mod(_, _) => {}, // no modulators possible so far
+            ValueOrModulator::Mod(_, _) => {} // no modulators possible so far
         }
     }
 

@@ -222,9 +222,10 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
         for cm in self.control_q_rec.try_iter() {
             match cm {
                 ControlMessage::SetGlobalParamOrModulator(par, val) => {
-                    self.master_reverb.set_param_or_modulator(par, val);
+                    // BAD CLONE in audio thread, but it should happen only very rarely ...
+                    self.master_reverb.set_param_or_modulator(par, val.clone());
                     self.master_delay.set_param_or_modulator(par, val);
-                }                
+                }
                 ControlMessage::ScheduleEvent(new_event) => {
                     // add new instances
                     if new_event.timestamp == 0.0 || new_event.timestamp == now {

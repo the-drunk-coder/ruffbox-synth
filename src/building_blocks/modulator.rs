@@ -1,6 +1,8 @@
 use crate::building_blocks::mod_env::*;
 use crate::building_blocks::oscillators::*;
-use crate::building_blocks::{MonoSource, SynthParameterLabel, SynthParameterValue, ValOp};
+use crate::building_blocks::{
+    MonoSource, SynthParameterLabel, SynthParameterValue, ValOp, ValueOrModulator,
+};
 
 /// modulate things ...
 #[derive(Clone)]
@@ -17,19 +19,23 @@ impl<const BUFSIZE: usize> Modulator<BUFSIZE> {
     #[allow(clippy::too_many_arguments)]
     pub fn lfo(
         op: ValOp,
-        freq: f32,
+        freq: ValueOrModulator<BUFSIZE>,
         eff_phase: f32,
-        amp: f32,
+        amp: ValueOrModulator<BUFSIZE>,
         add: f32,
         positive: bool,
         rectify: bool,
         sr: f32,
     ) -> Modulator<BUFSIZE> {
-        let mut src_osc = SineOsc::new(freq, amp, sr);
+        let mut src_osc = SineOsc::new(5.0, 1.0, sr);
+
+        src_osc.set_param_or_modulator(SynthParameterLabel::PitchFrequency, freq);
+        src_osc.set_param_or_modulator(SynthParameterLabel::OscillatorAmplitude, amp);
         src_osc.set_parameter(
             SynthParameterLabel::OscillatorPhaseEffective,
             &SynthParameterValue::ScalarF32(eff_phase - add),
         );
+
         Modulator {
             source: Box::new(src_osc),
             op,
@@ -43,15 +49,17 @@ impl<const BUFSIZE: usize> Modulator<BUFSIZE> {
     #[allow(clippy::too_many_arguments)]
     pub fn lfsaw(
         op: ValOp,
-        freq: f32,
+        freq: ValueOrModulator<BUFSIZE>,
         eff_phase: f32,
-        amp: f32,
+        amp: ValueOrModulator<BUFSIZE>,
         add: f32,
         positive: bool,
         rectify: bool,
         sr: f32,
     ) -> Modulator<BUFSIZE> {
-        let mut src_osc = LFSaw::new(freq, amp, sr);
+        let mut src_osc = LFSaw::new(5.0, 1.0, sr);
+        src_osc.set_param_or_modulator(SynthParameterLabel::PitchFrequency, freq);
+        src_osc.set_param_or_modulator(SynthParameterLabel::OscillatorAmplitude, amp);
         src_osc.set_parameter(
             SynthParameterLabel::OscillatorPhaseEffective,
             &SynthParameterValue::ScalarF32(eff_phase - add),
@@ -69,15 +77,17 @@ impl<const BUFSIZE: usize> Modulator<BUFSIZE> {
     #[allow(clippy::too_many_arguments)]
     pub fn lfrsaw(
         op: ValOp,
-        freq: f32,
+        freq: ValueOrModulator<BUFSIZE>,
         eff_phase: f32,
-        amp: f32,
+        amp: ValueOrModulator<BUFSIZE>,
         add: f32,
         positive: bool,
         rectify: bool,
         sr: f32,
     ) -> Modulator<BUFSIZE> {
-        let mut src_osc = LFRSaw::new(freq, amp, sr);
+        let mut src_osc = LFRSaw::new(5.0, 1.0, sr);
+        src_osc.set_param_or_modulator(SynthParameterLabel::PitchFrequency, freq);
+        src_osc.set_param_or_modulator(SynthParameterLabel::OscillatorAmplitude, amp);
         src_osc.set_parameter(
             SynthParameterLabel::OscillatorPhaseEffective,
             &SynthParameterValue::ScalarF32(eff_phase - add),
@@ -95,15 +105,17 @@ impl<const BUFSIZE: usize> Modulator<BUFSIZE> {
     #[allow(clippy::too_many_arguments)]
     pub fn lftri(
         op: ValOp,
-        freq: f32,
+        freq: ValueOrModulator<BUFSIZE>,
         eff_phase: f32,
-        amp: f32,
+        amp: ValueOrModulator<BUFSIZE>,
         add: f32,
         positive: bool,
         rectify: bool,
         sr: f32,
     ) -> Modulator<BUFSIZE> {
-        let mut src_osc = LFTri::new(freq, amp, sr);
+        let mut src_osc = LFTri::new(5.0, 1.0, sr);
+        src_osc.set_param_or_modulator(SynthParameterLabel::PitchFrequency, freq);
+        src_osc.set_param_or_modulator(SynthParameterLabel::OscillatorAmplitude, amp);
         src_osc.set_parameter(
             SynthParameterLabel::OscillatorPhaseEffective,
             &SynthParameterValue::ScalarF32(eff_phase - add),
@@ -121,16 +133,19 @@ impl<const BUFSIZE: usize> Modulator<BUFSIZE> {
     #[allow(clippy::too_many_arguments)]
     pub fn lfsquare(
         op: ValOp,
-        freq: f32,
+        freq: ValueOrModulator<BUFSIZE>,
         pw: f32,
-        amp: f32,
+        amp: ValueOrModulator<BUFSIZE>,
         add: f32,
         positive: bool,
         rectify: bool,
         sr: f32,
     ) -> Modulator<BUFSIZE> {
+        let mut src_osc = LFSquare::new(5.0, 1.0, pw, sr);
+        src_osc.set_param_or_modulator(SynthParameterLabel::PitchFrequency, freq);
+        src_osc.set_param_or_modulator(SynthParameterLabel::OscillatorAmplitude, amp);
         Modulator {
-            source: Box::new(LFSquare::new(freq, pw, amp, sr)),
+            source: Box::new(src_osc),
             op,
             add,
             positive,
