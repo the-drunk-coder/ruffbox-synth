@@ -141,7 +141,7 @@ impl<const BUFSIZE: usize> Modulator<BUFSIZE> {
         rectify: bool,
         sr: f32,
     ) -> Modulator<BUFSIZE> {
-        let mut src_osc = LFSquare::new(5.0, 1.0, pw, sr);
+        let mut src_osc = LFSquare::new(5.0, pw, 1.0, sr);
         src_osc.set_param_or_modulator(SynthParameterLabel::PitchFrequency, freq);
         src_osc.set_param_or_modulator(SynthParameterLabel::OscillatorAmplitude, amp);
         Modulator {
@@ -287,15 +287,23 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_modulator_range() {
-        let mut modulator =
-            Modulator::<512>::lftri(ValOp::Replace, 1.0, 3.0, 1.0, 3.0, false, false, 44100.0);
+    fn test_modulator_range_square() {
+        let mut modulator = Modulator::<512>::lfsquare(
+            ValOp::Replace,
+            ValueOrModulator::Val(SynthParameterValue::ScalarF32(1.0)),
+            0.1,
+            ValueOrModulator::Val(SynthParameterValue::ScalarF32(1.0)),
+            0.0,
+            false,
+            false,
+            44100.0,
+        );
 
-        for _ in 0..100 {
+        for _ in 0..200 {
             let block = modulator.process(1.0, 0, &Vec::new());
             for i in 0..512 {
                 let a = block[i];
-                debug_plotter::plot!(a where caption = "LFOPlot");
+                debug_plotter::plot!(a where caption = "SQRPlot");
             }
         }
     }
