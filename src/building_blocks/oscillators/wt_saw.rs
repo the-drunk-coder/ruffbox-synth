@@ -1,5 +1,6 @@
 use crate::building_blocks::{
-    Modulator, MonoSource, SynthParameterLabel, SynthParameterValue, ValueOrModulator, oscillators::Wavetable,
+    oscillators::Wavetable, Modulator, MonoSource, SynthParameterLabel, SynthParameterValue,
+    ValueOrModulator,
 };
 
 /**
@@ -12,27 +13,30 @@ pub struct WTSaw<const BUFSIZE: usize> {
 
 impl<const BUFSIZE: usize> WTSaw<BUFSIZE> {
     pub fn new(freq: f32, amp: f32, samplerate: f32) -> Self {
-	let mut wt = Wavetable::new(samplerate);
+        let mut wt = Wavetable::new(samplerate);
 
-	let mut tab = vec![0.0; 2048];
+        let mut tab = vec![0.0; 2048];
 
-	for i in 0..2048 {
-	    tab[i] = -1.0 + ((2.0 / 2048.0) * i as f32)
-	}
+        for i in 0..2048 {
+            tab[i] = -1.0 + ((2.0 / 2048.0) * i as f32)
+        }
 
-	wt.set_parameter(SynthParameterLabel::Wavetable,
-			 &SynthParameterValue::VecF32(tab));
+        wt.set_parameter(
+            SynthParameterLabel::Wavetable,
+            &SynthParameterValue::VecF32(tab),
+        );
 
-	wt.set_parameter(SynthParameterLabel::PitchFrequency,
-			 &SynthParameterValue::ScalarF32(freq));
+        wt.set_parameter(
+            SynthParameterLabel::PitchFrequency,
+            &SynthParameterValue::ScalarF32(freq),
+        );
 
-	wt.set_parameter(SynthParameterLabel::OscillatorAmplitude,
-			 &SynthParameterValue::ScalarF32(amp));
-	
-	    
-        WTSaw {
-	    wt	    
-	}
+        wt.set_parameter(
+            SynthParameterLabel::OscillatorAmplitude,
+            &SynthParameterValue::ScalarF32(amp),
+        );
+
+        WTSaw { wt }
     }
 }
 
@@ -72,6 +76,6 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for WTSaw<BUFSIZE> {
     }
 
     fn get_next_block(&mut self, start_sample: usize, in_buffers: &[Vec<f32>]) -> [f32; BUFSIZE] {
-	self.wt.get_next_block(start_sample, in_buffers)
+        self.wt.get_next_block(start_sample, in_buffers)
     }
 }
