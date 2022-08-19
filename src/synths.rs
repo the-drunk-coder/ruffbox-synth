@@ -4,6 +4,7 @@ pub mod n_channel;
 // channel-based synths
 pub use crate::synths::n_channel::lf_cub_synth::LFCubSynth;
 pub use crate::synths::n_channel::lf_saw_synth::LFSawSynth;
+pub use crate::synths::n_channel::wt_saw_synth::WTSawSynth;
 pub use crate::synths::n_channel::lf_square_synth::LFSquareSynth;
 pub use crate::synths::n_channel::lf_tri_synth::LFTriSynth;
 pub use crate::synths::n_channel::n_channel_sampler::NChannelSampler;
@@ -33,4 +34,5 @@ pub enum SynthType {
     RissetBell,
     Wavetable,
     Wavematrix,
+    WTSawSynth,
 }
