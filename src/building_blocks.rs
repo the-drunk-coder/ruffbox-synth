@@ -1,14 +1,13 @@
 pub mod ambisonics;
-pub mod convolution_reverb;
 pub mod convolver;
 pub mod delay;
 pub mod envelopes;
 pub mod filters;
-pub mod freeverb;
 pub mod interpolation;
 pub mod mod_env;
 pub mod modulator;
 pub mod oscillators;
+pub mod reverb;
 pub mod routing;
 pub mod sampler;
 
@@ -115,11 +114,7 @@ pub fn resolve_parameter_value<const BUFSIZE: usize>(
             match par {
                 SynthParameterLabel::LowpassCutoffFrequency => Modulator::lfo(
                     *op,
-                    resolve_parameter_value(
-                        SynthParameterLabel::PitchFrequency,
-                        freq,
-                        samplerate,
-                    ),
+                    resolve_parameter_value(SynthParameterLabel::PitchFrequency, freq, samplerate),
                     *eff_phase,
                     resolve_parameter_value(
                         SynthParameterLabel::OscillatorAmplitude,
@@ -133,11 +128,7 @@ pub fn resolve_parameter_value<const BUFSIZE: usize>(
                 ),
                 SynthParameterLabel::HighpassCutoffFrequency => Modulator::lfo(
                     *op,
-                    resolve_parameter_value(
-                        SynthParameterLabel::PitchFrequency,
-                        freq,
-                        samplerate,
-                    ),
+                    resolve_parameter_value(SynthParameterLabel::PitchFrequency, freq, samplerate),
                     *eff_phase,
                     resolve_parameter_value(
                         SynthParameterLabel::OscillatorAmplitude,
@@ -151,11 +142,7 @@ pub fn resolve_parameter_value<const BUFSIZE: usize>(
                 ),
                 SynthParameterLabel::PeakFrequency => Modulator::lfo(
                     *op,
-                    resolve_parameter_value(
-                        SynthParameterLabel::PitchFrequency,
-                        freq,
-                        samplerate,
-                    ),
+                    resolve_parameter_value(SynthParameterLabel::PitchFrequency, freq, samplerate),
                     *eff_phase,
                     resolve_parameter_value(
                         SynthParameterLabel::OscillatorAmplitude,
@@ -169,11 +156,7 @@ pub fn resolve_parameter_value<const BUFSIZE: usize>(
                 ),
                 _ => Modulator::lfo(
                     *op,
-                    resolve_parameter_value(
-                        SynthParameterLabel::PitchFrequency,
-                        freq,
-                        samplerate,
-                    ),
+                    resolve_parameter_value(SynthParameterLabel::PitchFrequency, freq, samplerate),
                     *eff_phase,
                     resolve_parameter_value(
                         SynthParameterLabel::OscillatorAmplitude,
@@ -192,11 +175,7 @@ pub fn resolve_parameter_value<const BUFSIZE: usize>(
             match par {
                 SynthParameterLabel::LowpassCutoffFrequency => Modulator::lfsaw(
                     *op,
-                    resolve_parameter_value(
-                        SynthParameterLabel::PitchFrequency,
-                        freq,
-                        samplerate,
-                    ),
+                    resolve_parameter_value(SynthParameterLabel::PitchFrequency, freq, samplerate),
                     *eff_phase,
                     resolve_parameter_value(
                         SynthParameterLabel::OscillatorAmplitude,
@@ -210,11 +189,7 @@ pub fn resolve_parameter_value<const BUFSIZE: usize>(
                 ),
                 SynthParameterLabel::HighpassCutoffFrequency => Modulator::lfsaw(
                     *op,
-                    resolve_parameter_value(
-                        SynthParameterLabel::PitchFrequency,
-                        freq,
-                        samplerate,
-                    ),
+                    resolve_parameter_value(SynthParameterLabel::PitchFrequency, freq, samplerate),
                     *eff_phase,
                     resolve_parameter_value(
                         SynthParameterLabel::OscillatorAmplitude,
@@ -228,11 +203,7 @@ pub fn resolve_parameter_value<const BUFSIZE: usize>(
                 ),
                 SynthParameterLabel::PeakFrequency => Modulator::lfsaw(
                     *op,
-                    resolve_parameter_value(
-                        SynthParameterLabel::PitchFrequency,
-                        freq,
-                        samplerate,
-                    ),
+                    resolve_parameter_value(SynthParameterLabel::PitchFrequency, freq, samplerate),
                     *eff_phase,
                     resolve_parameter_value(
                         SynthParameterLabel::OscillatorAmplitude,
@@ -246,11 +217,7 @@ pub fn resolve_parameter_value<const BUFSIZE: usize>(
                 ),
                 _ => Modulator::lfsaw(
                     *op,
-                    resolve_parameter_value(
-                        SynthParameterLabel::PitchFrequency,
-                        freq,
-                        samplerate,
-                    ),
+                    resolve_parameter_value(SynthParameterLabel::PitchFrequency, freq, samplerate),
                     *eff_phase,
                     resolve_parameter_value(
                         SynthParameterLabel::OscillatorAmplitude,
@@ -269,11 +236,7 @@ pub fn resolve_parameter_value<const BUFSIZE: usize>(
             match par {
                 SynthParameterLabel::LowpassCutoffFrequency => Modulator::lfrsaw(
                     *op,
-                    resolve_parameter_value(
-                        SynthParameterLabel::PitchFrequency,
-                        freq,
-                        samplerate,
-                    ),
+                    resolve_parameter_value(SynthParameterLabel::PitchFrequency, freq, samplerate),
                     *eff_phase,
                     resolve_parameter_value(
                         SynthParameterLabel::OscillatorAmplitude,
@@ -287,11 +250,7 @@ pub fn resolve_parameter_value<const BUFSIZE: usize>(
                 ),
                 SynthParameterLabel::HighpassCutoffFrequency => Modulator::lfrsaw(
                     *op,
-                    resolve_parameter_value(
-                        SynthParameterLabel::PitchFrequency,
-                        freq,
-                        samplerate,
-                    ),
+                    resolve_parameter_value(SynthParameterLabel::PitchFrequency, freq, samplerate),
                     *eff_phase,
                     resolve_parameter_value(
                         SynthParameterLabel::OscillatorAmplitude,
@@ -305,11 +264,7 @@ pub fn resolve_parameter_value<const BUFSIZE: usize>(
                 ),
                 SynthParameterLabel::PeakFrequency => Modulator::lfrsaw(
                     *op,
-                    resolve_parameter_value(
-                        SynthParameterLabel::PitchFrequency,
-                        freq,
-                        samplerate,
-                    ),
+                    resolve_parameter_value(SynthParameterLabel::PitchFrequency, freq, samplerate),
                     *eff_phase,
                     resolve_parameter_value(
                         SynthParameterLabel::OscillatorAmplitude,
@@ -323,11 +278,7 @@ pub fn resolve_parameter_value<const BUFSIZE: usize>(
                 ),
                 _ => Modulator::lfrsaw(
                     *op,
-                    resolve_parameter_value(
-                        SynthParameterLabel::PitchFrequency,
-                        freq,
-                        samplerate,
-                    ),
+                    resolve_parameter_value(SynthParameterLabel::PitchFrequency, freq, samplerate),
                     *eff_phase,
                     resolve_parameter_value(
                         SynthParameterLabel::OscillatorAmplitude,
@@ -346,11 +297,7 @@ pub fn resolve_parameter_value<const BUFSIZE: usize>(
             match par {
                 SynthParameterLabel::LowpassCutoffFrequency => Modulator::lftri(
                     *op,
-                    resolve_parameter_value(
-                        SynthParameterLabel::PitchFrequency,
-                        freq,
-                        samplerate,
-                    ),
+                    resolve_parameter_value(SynthParameterLabel::PitchFrequency, freq, samplerate),
                     *eff_phase,
                     resolve_parameter_value(
                         SynthParameterLabel::OscillatorAmplitude,
@@ -364,11 +311,7 @@ pub fn resolve_parameter_value<const BUFSIZE: usize>(
                 ),
                 SynthParameterLabel::HighpassCutoffFrequency => Modulator::lftri(
                     *op,
-                    resolve_parameter_value(
-                        SynthParameterLabel::PitchFrequency,
-                        freq,
-                        samplerate,
-                    ),
+                    resolve_parameter_value(SynthParameterLabel::PitchFrequency, freq, samplerate),
                     *eff_phase,
                     resolve_parameter_value(
                         SynthParameterLabel::OscillatorAmplitude,
@@ -382,11 +325,7 @@ pub fn resolve_parameter_value<const BUFSIZE: usize>(
                 ),
                 SynthParameterLabel::PeakFrequency => Modulator::lftri(
                     *op,
-                    resolve_parameter_value(
-                        SynthParameterLabel::PitchFrequency,
-                        freq,
-                        samplerate,
-                    ),
+                    resolve_parameter_value(SynthParameterLabel::PitchFrequency, freq, samplerate),
                     *eff_phase,
                     resolve_parameter_value(
                         SynthParameterLabel::OscillatorAmplitude,
@@ -400,11 +339,7 @@ pub fn resolve_parameter_value<const BUFSIZE: usize>(
                 ),
                 _ => Modulator::lftri(
                     *op,
-                    resolve_parameter_value(
-                        SynthParameterLabel::PitchFrequency,
-                        freq,
-                        samplerate,
-                    ),
+                    resolve_parameter_value(SynthParameterLabel::PitchFrequency, freq, samplerate),
                     *eff_phase,
                     resolve_parameter_value(
                         SynthParameterLabel::OscillatorAmplitude,
@@ -423,11 +358,7 @@ pub fn resolve_parameter_value<const BUFSIZE: usize>(
             match par {
                 SynthParameterLabel::LowpassCutoffFrequency => Modulator::lfsquare(
                     *op,
-                    resolve_parameter_value(
-                        SynthParameterLabel::PitchFrequency,
-                        freq,
-                        samplerate,
-                    ),
+                    resolve_parameter_value(SynthParameterLabel::PitchFrequency, freq, samplerate),
                     *pw,
                     resolve_parameter_value(
                         SynthParameterLabel::OscillatorAmplitude,
@@ -441,11 +372,7 @@ pub fn resolve_parameter_value<const BUFSIZE: usize>(
                 ),
                 SynthParameterLabel::HighpassCutoffFrequency => Modulator::lfsquare(
                     *op,
-                    resolve_parameter_value(
-                        SynthParameterLabel::PitchFrequency,
-                        freq,
-                        samplerate,
-                    ),
+                    resolve_parameter_value(SynthParameterLabel::PitchFrequency, freq, samplerate),
                     *pw,
                     resolve_parameter_value(
                         SynthParameterLabel::OscillatorAmplitude,
@@ -459,11 +386,7 @@ pub fn resolve_parameter_value<const BUFSIZE: usize>(
                 ),
                 SynthParameterLabel::PeakFrequency => Modulator::lfsquare(
                     *op,
-                    resolve_parameter_value(
-                        SynthParameterLabel::PitchFrequency,
-                        freq,
-                        samplerate,
-                    ),
+                    resolve_parameter_value(SynthParameterLabel::PitchFrequency, freq, samplerate),
                     *pw,
                     resolve_parameter_value(
                         SynthParameterLabel::OscillatorAmplitude,
@@ -477,11 +400,7 @@ pub fn resolve_parameter_value<const BUFSIZE: usize>(
                 ),
                 _ => Modulator::lfsquare(
                     *op,
-                    resolve_parameter_value(
-                        SynthParameterLabel::PitchFrequency,
-                        freq,
-                        samplerate,
-                    ),
+                    resolve_parameter_value(SynthParameterLabel::PitchFrequency, freq, samplerate),
                     *pw,
                     resolve_parameter_value(
                         SynthParameterLabel::OscillatorAmplitude,
