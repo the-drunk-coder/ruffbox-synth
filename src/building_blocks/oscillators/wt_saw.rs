@@ -17,8 +17,8 @@ impl<const BUFSIZE: usize> WTSaw<BUFSIZE> {
 
         let mut tab = vec![0.0; 2048];
 
-        for i in 0..2048 {
-            tab[i] = -1.0 + ((2.0 / 2048.0) * i as f32)
+        for (i, sample) in tab.iter_mut().enumerate().take(2048) {
+            *sample = -1.0 + ((2.0 / 2048.0) * i as f32)
         }
 
         wt.set_parameter(
