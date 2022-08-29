@@ -11,7 +11,7 @@ use crate::building_blocks::{
 pub struct WavetableSynth<const BUFSIZE: usize, const NCHAN: usize> {
     wavetable: Wavetable<BUFSIZE>,
     envelope: LinearASREnvelope<BUFSIZE>,
-    hpf: BiquadHpf<BUFSIZE>,
+    hpf: BiquadHpf12dB<BUFSIZE>,
     lpf: Lpf18<BUFSIZE>,
     balance: PanChan<BUFSIZE, NCHAN>,
     reverb: f32,
@@ -23,7 +23,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> WavetableSynth<BUFSIZE, NCHAN> {
         WavetableSynth {
             wavetable: Wavetable::new(sr),
             envelope: LinearASREnvelope::new(1.0, 0.0001, 0.1, 0.0001, sr),
-            hpf: BiquadHpf::new(20.0, 0.3, sr),
+            hpf: BiquadHpf12dB::new(20.0, 0.3, sr),
             lpf: Lpf18::new(19500.0, 0.01, 0.01, sr),
             balance: PanChan::new(),
             reverb: 0.0,

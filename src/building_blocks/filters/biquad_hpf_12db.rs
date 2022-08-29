@@ -3,9 +3,9 @@ use crate::building_blocks::{
 };
 
 /**
- * Biquad LowPass Filter, 12dB/oct
+ * Biquad HiPass Filter, 12dB/oct
  */
-pub struct BiquadLpf<const BUFSIZE: usize> {
+pub struct BiquadHpf12dB<const BUFSIZE: usize> {
     // user parameters
     cutoff: f32,
     q: f32,
@@ -26,18 +26,18 @@ pub struct BiquadLpf<const BUFSIZE: usize> {
     q_mod: Option<Modulator<BUFSIZE>>,
 }
 
-impl<const BUFSIZE: usize> BiquadLpf<BUFSIZE> {
+impl<const BUFSIZE: usize> BiquadHpf12dB<BUFSIZE> {
     pub fn new(freq: f32, q: f32, sr: f32) -> Self {
         let k = ((std::f32::consts::PI * freq) / sr).tanh();
         let k_pow_two = k.powf(2.0);
-        let b0 = (k_pow_two * q) / ((k_pow_two * q) + k + q);
-        BiquadLpf {
+        let b0 = q / ((k_pow_two * q) + k + q);
+        BiquadHpf12dB {
             cutoff: freq,
             q,
             a1: (2.0 * q * (k_pow_two - 1.0)) / ((k_pow_two * q) + k + q),
             a2: ((k_pow_two * q) - k + q) / ((k_pow_two * q) + k + q),
             b0,
-            b1: ((2.0 * k_pow_two * q) / ((k_pow_two * q) + k + q)),
+            b1: -1.0 * ((2.0 * q) / ((k_pow_two * q) + k + q)),
             b2: b0,
             del1: 0.0,
             del2: 0.0,
@@ -54,13 +54,13 @@ impl<const BUFSIZE: usize> BiquadLpf<BUFSIZE> {
         let k_pow_two = self.k.powf(2.0);
         self.a1 = (2.0 * q * (k_pow_two - 1.0)) / ((k_pow_two * q) + self.k + q);
         self.a2 = ((k_pow_two * q) - self.k + q) / ((k_pow_two * q) + self.k + q);
-        self.b0 = (k_pow_two * q) / ((k_pow_two * q) + self.k + q);
-        self.b1 = (2.0 * k_pow_two * q) / ((k_pow_two * q) + self.k + q);
+        self.b0 = q / ((k_pow_two * q) + self.k + q);
+        self.b1 = -1.0 * ((2.0 * q) / ((k_pow_two * q) + self.k + q));
         self.b2 = self.b0;
     }
 }
 
-impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for BiquadLpf<BUFSIZE> {
+impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for BiquadHpf12dB<BUFSIZE> {
     fn set_param_or_modulator(
         &mut self,
         par: SynthParameterLabel,
@@ -95,8 +95,8 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for BiquadLpf<BUFSIZE> {
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
         if let SynthParameterValue::ScalarF32(val) = value {
             match par {
-                SynthParameterLabel::LowpassCutoffFrequency => self.cutoff = *val,
-                SynthParameterLabel::LowpassQFactor => self.q = *val,
+                SynthParameterLabel::HighpassCutoffFrequency => self.cutoff = *val,
+                SynthParameterLabel::HighpassQFactor => self.q = *val,
                 _ => (),
             };
             self.update_internals(self.cutoff, self.q);

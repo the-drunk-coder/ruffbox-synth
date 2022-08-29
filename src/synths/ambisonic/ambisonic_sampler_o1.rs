@@ -11,7 +11,7 @@ use crate::building_blocks::{
 pub struct AmbisonicSamplerO1<const BUFSIZE: usize> {
     sampler: Sampler<BUFSIZE>,
     envelope: LinearASREnvelope<BUFSIZE>,
-    hpf: BiquadHpf<BUFSIZE>,
+    hpf: BiquadHpf12dB<BUFSIZE>,
     peak_eq: PeakEq<BUFSIZE>,
     lpf: Lpf18<BUFSIZE>,
     encoder: EncoderO1<BUFSIZE>,
@@ -26,7 +26,7 @@ impl<const BUFSIZE: usize> AmbisonicSamplerO1<BUFSIZE> {
         AmbisonicSamplerO1 {
             sampler: Sampler::with_bufnum_len(bufnum, buflen, true),
             envelope: LinearASREnvelope::new(1.0, 0.0001, dur, 0.0001, sr),
-            hpf: BiquadHpf::new(10.0, 0.01, sr),
+            hpf: BiquadHpf12dB::new(10.0, 0.01, sr),
             peak_eq: PeakEq::new(700.0, 100.0, 0.0, sr),
             lpf: Lpf18::new(19500.0, 0.01, 0.01, sr),
             encoder: EncoderO1::new(),
