@@ -13,6 +13,16 @@ pub mod sampler;
 
 pub use crate::building_blocks::modulator::Modulator;
 
+#[repr(C)]
+pub enum FilterType {
+    Lpf18,
+    BiquadHpf12dB,
+    BiquadLpf12dB,
+    BiquadHpf24dB,
+    BiquadLpf24dB,
+    PeakEQ,
+}
+
 #[derive(Clone, Copy)]
 pub enum SynthState {
     Fresh, // Fresh Synths for everyone !!!

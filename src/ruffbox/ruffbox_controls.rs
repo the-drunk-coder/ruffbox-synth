@@ -6,7 +6,9 @@ use rubato::{FftFixedIn, Resampler};
 use crossbeam::atomic::AtomicCell;
 use dashmap::DashMap;
 
-use crate::building_blocks::{resolve_parameter_value, SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{
+    resolve_parameter_value, FilterType, SynthParameterLabel, SynthParameterValue,
+};
 use crate::ruffbox::{ControlMessage, ScheduledEvent};
 use crate::synths::*;
 
@@ -101,11 +103,13 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
                 SynthType::RissetBell => {
                     ScheduledEvent::new(timestamp, Box::new(RissetBell::new(self.samplerate)))
                 }
-                SynthType::Sampler => ScheduledEvent::new(
+                SynthType::Sampler(hpf_type, lpf_type) => ScheduledEvent::new(
                     timestamp,
                     Box::new(NChannelSampler::with_bufnum_len(
                         sample_buf,
                         *self.buffer_lengths.get(&sample_buf).unwrap(),
+                        hpf_type,
+                        lpf_type,
                         self.samplerate,
                     )),
                 ),
@@ -120,6 +124,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
                         Box::new(NChannelSampler::with_bufnum_len(
                             final_bufnum,
                             *self.buffer_lengths.get(&final_bufnum).unwrap(),
+                            FilterType::BiquadHpf12dB,
+                            FilterType::Lpf18,
                             self.samplerate,
                         )),
                     )
@@ -135,6 +141,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
                         Box::new(NChannelSampler::with_bufnum_len(
                             final_bufnum,
                             *self.buffer_lengths.get(&final_bufnum).unwrap(),
+                            FilterType::BiquadHpf12dB,
+                            FilterType::Lpf18,
                             self.samplerate,
                         )),
                     )

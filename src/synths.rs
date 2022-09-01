@@ -20,9 +20,11 @@ pub use crate::synths::ambisonic::lf_square_synth::LFSquareSynth as AmbisonicLFS
 pub use crate::synths::ambisonic::lf_tri_synth::LFTriSynth as AmbisonicLFTriSynth;
 pub use crate::synths::ambisonic::sine_synth::SineSynth as AmbisonicSineSynth;
 
+use crate::building_blocks::FilterType;
+
 #[repr(C)]
 pub enum SynthType {
-    Sampler,
+    Sampler(FilterType, FilterType),
     LiveSampler,
     FrozenSampler,
     SineOsc,

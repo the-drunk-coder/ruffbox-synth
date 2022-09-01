@@ -3,7 +3,7 @@ use crate::building_blocks::filters::*;
 use crate::building_blocks::routing::PanChan;
 use crate::building_blocks::sampler::Sampler;
 use crate::building_blocks::{
-    Modulator, MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
+    FilterType, Modulator, MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
     ValueOrModulator,
 };
 
@@ -11,9 +11,9 @@ use crate::building_blocks::{
 pub struct NChannelSampler<const BUFSIZE: usize, const NCHAN: usize> {
     sampler: Sampler<BUFSIZE>,
     envelope: LinearASREnvelope<BUFSIZE>,
-    hpf: BiquadHpf12dB<BUFSIZE>,
+    hpf: Box<dyn MonoEffect<BUFSIZE> + Send + Sync>,
     peak_eq: PeakEq<BUFSIZE>,
-    lpf: Lpf18<BUFSIZE>,
+    lpf: Box<dyn MonoEffect<BUFSIZE> + Send + Sync>,
     balance: PanChan<BUFSIZE, NCHAN>,
     reverb: f32,
     delay: f32,
@@ -23,6 +23,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> NChannelSampler<BUFSIZE, NCHAN> {
     pub fn with_bufnum_len(
         bufnum: usize,
         buflen: usize,
+        hpf_type: FilterType,
+        lpf_type: FilterType,
         sr: f32,
     ) -> NChannelSampler<BUFSIZE, NCHAN> {
         let dur = (buflen as f32 / sr) - 0.0002;
@@ -30,9 +32,18 @@ impl<const BUFSIZE: usize, const NCHAN: usize> NChannelSampler<BUFSIZE, NCHAN> {
         NChannelSampler {
             sampler: Sampler::with_bufnum_len(bufnum, buflen, true),
             envelope: LinearASREnvelope::new(1.0, 0.0001, dur, 0.0001, sr),
-            hpf: BiquadHpf12dB::new(20.0, 0.3, sr),
+            hpf: match hpf_type {
+                FilterType::BiquadHpf12dB => Box::new(BiquadHpf12dB::new(20.0, 0.3, sr)),
+                FilterType::BiquadHpf24dB => Box::new(BiquadHpf24dB::new(20.0, 0.3, sr)),
+                _ => Box::new(BiquadHpf12dB::new(20.0, 0.3, sr)),
+            },
             peak_eq: PeakEq::new(700.0, 100.0, 0.0, sr),
-            lpf: Lpf18::new(19500.0, 0.01, 0.01, sr),
+            lpf: match lpf_type {
+                FilterType::BiquadLpf12dB => Box::new(BiquadLpf12dB::new(20.0, 0.3, sr)),
+                FilterType::BiquadLpf24dB => Box::new(BiquadLpf24dB::new(20.0, 0.3, sr)),
+                FilterType::Lpf18 => Box::new(Lpf18::new(20.0, 0.1, 0.01, sr)),
+                _ => Box::new(Lpf18::new(20.0, 0.1, 0.01, sr)),
+            },
             balance: PanChan::new(),
             reverb: 0.0,
             delay: 0.0,
