@@ -3,18 +3,20 @@ use crate::building_blocks::{
 };
 
 use crate::building_blocks::filters::sos::*;
+use crate::building_blocks::filters::BiquadHpf12dB;
 
 /**
- * Biquad HiPass Filter, 12dB/oct
+ * Biquad HiPass Filter, 24dB/oct, cascaded second-order sections
  */
-pub struct BiquadHpf12dB<const BUFSIZE: usize> {
+pub struct BiquadHpf24dB<const BUFSIZE: usize> {
     // user parameters
     cutoff: f32,
     q: f32,
 
     // internal parameters
     coefs: SOSCoefs,
-    delay: SOSDelay,
+    delay1: SOSDelay,
+    delay2: SOSDelay,
     samplerate: f32,
 
     // modulator slots
@@ -22,36 +24,26 @@ pub struct BiquadHpf12dB<const BUFSIZE: usize> {
     q_mod: Option<Modulator<BUFSIZE>>,
 }
 
-impl<const BUFSIZE: usize> BiquadHpf12dB<BUFSIZE> {
+impl<const BUFSIZE: usize> BiquadHpf24dB<BUFSIZE> {
     pub fn new(freq: f32, q: f32, sr: f32) -> Self {
         let mut coefs: SOSCoefs = SOSCoefs::default();
 
         BiquadHpf12dB::<BUFSIZE>::generate_coefs(&mut coefs, freq, q, sr);
 
-        BiquadHpf12dB {
+        BiquadHpf24dB {
             cutoff: freq,
             q,
             coefs,
-            delay: SOSDelay::default(),
+            delay1: SOSDelay::default(),
+            delay2: SOSDelay::default(),
             samplerate: sr,
             cutoff_mod: None,
             q_mod: None,
         }
     }
-
-    #[inline(always)]
-    pub fn generate_coefs(coefs: &mut SOSCoefs, cutoff: f32, q: f32, sr: f32) {
-        let k = ((std::f32::consts::PI * cutoff) / sr).tanh();
-        let k_pow_two = k.powf(2.0);
-        coefs.a1 = (2.0 * q * (k_pow_two - 1.0)) / ((k_pow_two * q) + k + q);
-        coefs.a2 = ((k_pow_two * q) - k + q) / ((k_pow_two * q) + k + q);
-        coefs.b0 = q / ((k_pow_two * q) + k + q);
-        coefs.b1 = -1.0 * ((2.0 * q) / ((k_pow_two * q) + k + q));
-        coefs.b2 = coefs.b0;
-    }
 }
 
-impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for BiquadHpf12dB<BUFSIZE> {
+impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for BiquadHpf24dB<BUFSIZE> {
     fn set_param_or_modulator(
         &mut self,
         par: SynthParameterLabel,
@@ -139,12 +131,20 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for BiquadHpf12dB<BUFSIZE> {
                     q_buf[i],
                     self.samplerate,
                 );
-                out_buf[i] = process_sos_sample(&self.coefs, &mut self.delay, block[i]);
+                out_buf[i] = process_sos_sample(
+                    &self.coefs,
+                    &mut self.delay2,
+                    process_sos_sample(&self.coefs, &mut self.delay1, block[i]),
+                );
             }
 
             out_buf
         } else {
-            process_sos_block::<BUFSIZE>(&self.coefs, &mut self.delay, block)
+            process_sos_block::<BUFSIZE>(
+                &self.coefs,
+                &mut self.delay2,
+                process_sos_block::<BUFSIZE>(&self.coefs, &mut self.delay1, block),
+            )
         }
     }
 }
