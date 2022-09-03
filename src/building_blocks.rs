@@ -14,6 +14,7 @@ pub mod sampler;
 pub use crate::building_blocks::modulator::Modulator;
 
 #[repr(C)]
+#[derive(Clone, Copy)]
 pub enum FilterType {
     Lpf18,
     BiquadHpf12dB,
@@ -46,6 +47,7 @@ pub enum SynthParameterLabel {
     PitchNote,                // 9
     HighpassCutoffFrequency,  // 10
     HighpassQFactor,          // 11
+    HighpassFilterType,       //
     EnvelopeLevel,            // 12
     OscillatorAmplitude,      // 13 (oscillator amplitude)
     OscillatorPhaseRelative,  // 14 (radians)
@@ -53,6 +55,7 @@ pub enum SynthParameterLabel {
     LowpassCutoffFrequency,   // 16
     LowpassQFactor,           // 17
     LowpassFilterDistortion,  // 18
+    LowpassFilterType,        //
     PeakFrequency,            // 19
     PeakGain,                 // 20
     PeakQFactor,              // 21
@@ -92,6 +95,7 @@ pub enum SynthParameterValue {
     ScalarU32(u32),
     ScalarUsize(usize),
     VecF32(Vec<f32>),
+    FilterType(FilterType), // these aren't really treated as parameters so far, but as a pragmatic solition that's ok for now ...
     MatrixF32((usize, usize), Vec<Vec<f32>>), // dimension, content
     // lfo param order - init val, freq, phase, amp, add, operation (mul, add, sub, div, replace)
     Lfo(f32, Box<SynthParameterValue>, f32, Box<SynthParameterValue>, f32, ValOp), // sine lfo

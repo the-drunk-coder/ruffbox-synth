@@ -150,6 +150,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
                 SynthType::LFSawSynth => {
                     ScheduledEvent::new(timestamp, Box::new(LFSawSynth::new(self.samplerate)))
                 }
+		SynthType::FMSawSynth => {
+                    ScheduledEvent::new(timestamp, Box::new(FMSawSynth::new(self.samplerate)))
+                }
                 SynthType::WTSawSynth => {
                     ScheduledEvent::new(timestamp, Box::new(WTSawSynth::new(self.samplerate)))
                 }

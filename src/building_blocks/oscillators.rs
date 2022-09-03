@@ -1,5 +1,6 @@
 /// A collection of oscillators, some of which are modeled
 /// after scsynth, csound, etc ...
+pub mod fm_saw;
 pub mod lf_cub;
 pub mod lf_rsaw;
 pub mod lf_saw;
@@ -19,6 +20,7 @@ pub use crate::building_blocks::oscillators::sine_osc::SineOsc;
 pub use crate::building_blocks::oscillators::wavematrix::Wavematrix;
 pub use crate::building_blocks::oscillators::wavetable::Wavetable;
 
+pub use crate::building_blocks::oscillators::fm_saw::FMSaw;
 pub use crate::building_blocks::oscillators::wt_saw::WTSaw;
 
 // TEST TEST TEST

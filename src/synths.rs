@@ -12,6 +12,7 @@ pub use crate::synths::n_channel::sine_synth::SineSynth;
 pub use crate::synths::n_channel::wavematrix_synth::WavematrixSynth;
 pub use crate::synths::n_channel::wavetable_synth::WavetableSynth;
 pub use crate::synths::n_channel::wt_saw_synth::WTSawSynth;
+pub use crate::synths::n_channel::fm_saw_synth::FMSawSynth;
 
 // ambisonic synths
 pub use crate::synths::ambisonic::ambisonic_sampler_o1::AmbisonicSamplerO1;
@@ -31,6 +32,7 @@ pub enum SynthType {
     SineSynth,
     LFCubSynth,
     LFSawSynth,
+    FMSawSynth,
     LFSquareSynth,
     LFTriangleSynth,
     RissetBell,
