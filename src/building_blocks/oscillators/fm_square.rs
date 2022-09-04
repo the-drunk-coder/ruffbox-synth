@@ -5,7 +5,7 @@ use crate::building_blocks::{
 use std::f32::consts::PI;
 
 /**
- * A quasi-bandlimited sqaurewave oscillator using fm synthesis, following:
+ * A quasi-bandlimited squarewave oscillator using fm synthesis, following:
  *
  * Peter Schoffhauzer - Synthesis of Quasi-Bandliminted Analog Waveforms
  * Using Frequency Modulation
