@@ -115,7 +115,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LFSquare<BUFSIZE> {
     fn get_next_block(&mut self, start_sample: usize, in_buffers: &[Vec<f32>]) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
-        if self.freq_mod.is_some() || self.amp_mod.is_some() {
+        if self.freq_mod.is_some() || self.amp_mod.is_some() || self.pw_mod.is_some() {
             let amp_buf = if let Some(m) = self.amp_mod.as_mut() {
                 m.process(self.amp, start_sample, in_buffers)
             } else {
