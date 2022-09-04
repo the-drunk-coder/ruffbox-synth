@@ -39,18 +39,18 @@ pub struct FMSaw<const BUFSIZE: usize> {
 
 impl<const BUFSIZE: usize> FMSaw<BUFSIZE> {
     pub fn new(freq: f32, amp: f32, samplerate: f32) -> Self {
-        let w: f32 = (freq * 0.5) / samplerate;
+        let w: f32 = freq / samplerate;
         let n: f32 = 0.5 - w;
         FMSaw {
             freq,
             amp,
             samplerate,
-            osc: 0.0,                    // current output sample
-            phase: 0.0,                  // phase accumulator
-            w,                           // normalized frequency
-            scaling: 13.0 * n.powf(4.0), // scaling amount
-            dc_comp: 0.376 - w * 0.752,  // DC compensation
-            norm: 1.0 - 2.0 * w,         // normalization
+            osc: 0.0,                      // current output sample
+            phase: 0.0,                    // phase accumulator
+            w,                             // normalized frequency
+            scaling: 13.0 * n * n * n * n, // scaling amount
+            dc_comp: 0.376 - w * 0.752,    // DC compensation
+            norm: 1.0 - 2.0 * w,           // normalization
             // pre-calculated filter constants
             a0: 2.5,
             a1: -1.5,
@@ -62,9 +62,9 @@ impl<const BUFSIZE: usize> FMSaw<BUFSIZE> {
 
     #[inline(always)]
     pub fn update_internals(&mut self, freq: f32) {
-        self.w = (freq * 0.5) / self.samplerate;
+        self.w = freq / self.samplerate;
         let n: f32 = 0.5 - self.w;
-        self.scaling = 13.0 * n.powf(4.0);
+        self.scaling = 13.0 * n * n * n * n;
         self.dc_comp = 0.376 - self.w * 0.752;
         self.norm = 1.0 - 2.0 * self.w;
     }
@@ -152,32 +152,27 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for FMSaw<BUFSIZE> {
                 self.update_internals(freq_buf[i]);
 
                 // phase accum
-                self.phase += 2.0 * self.w;
-                if self.phase >= 1.0 {
-                    self.phase -= 2.0;
-                }
+                self.phase += self.w;
+                self.phase -= self.phase.floor();
+                let iphase = 2.0 * self.phase - 1.0;
 
                 // next sample
-                self.osc =
-                    (self.osc + (2.0 * PI * (self.phase + self.osc * self.scaling)).sin()) * 0.5;
+                self.osc = (self.osc + (PI * (iphase + self.scaling * self.osc)).sin()) * 0.5;
 
-                *current_sample = self.a0 * self.osc + self.a1 * self.del;
+                *current_sample = self.a0 * self.osc - self.a1 * self.del;
                 self.del = self.osc;
                 *current_sample += (self.dc_comp * self.norm) * amp_buf[i];
             }
         } else {
             for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
                 // phase accum
-                self.phase += 2.0 * self.w;
-                if self.phase >= 1.0 {
-                    self.phase -= 2.0;
-                }
+                self.phase += self.w;
+                self.phase -= self.phase.floor();
+                let iphase = 2.0 * self.phase - 1.0;
 
                 // next sample
-                self.osc =
-                    (self.osc + (2.0 * PI * (self.phase + self.osc * self.scaling)).sin()) * 0.5;
-
-                *current_sample = self.a0 * self.osc + self.a1 * self.del;
+                self.osc = (self.osc + (PI * (iphase + self.scaling * self.osc)).sin()) * 0.5;
+                *current_sample = self.a0 * self.osc - self.a1 * self.del;
                 self.del = self.osc;
                 *current_sample += (self.dc_comp * self.norm) * self.amp;
             }
