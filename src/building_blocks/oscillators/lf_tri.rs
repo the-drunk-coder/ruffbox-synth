@@ -4,6 +4,9 @@ use crate::building_blocks::{
 
 /**
  * A non-band-limited triangle oscillator.
+ *
+ * Probably the most naive implementation of such an oscillator,
+ * doesn't tune well, etc ...
  */
 #[derive(Clone)]
 pub struct LFTri<const BUFSIZE: usize> {

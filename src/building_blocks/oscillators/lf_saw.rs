@@ -4,6 +4,9 @@ use crate::building_blocks::{
 
 /**
  * A non-band-limited sawtooth oscillator.
+ *
+ * Probably the most naive implementation of such an oscillator,
+ * doesn't tune well, etc ...
  */
 #[derive(Clone)]
 pub struct LFSaw<const BUFSIZE: usize> {

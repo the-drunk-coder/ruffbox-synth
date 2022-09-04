@@ -4,6 +4,9 @@ use crate::building_blocks::{
 
 /**
  * A non-band-limited square-wave oscillator.
+ *
+ * Probably the most naive implementation of such an oscillator,
+ * doesn't tune well, etc ...
  */
 #[derive(Clone)]
 pub struct LFSquare<const BUFSIZE: usize> {
@@ -21,7 +24,7 @@ pub struct LFSquare<const BUFSIZE: usize> {
     // modulator slots
     freq_mod: Option<Modulator<BUFSIZE>>, // currently allows modulating frequency ..
     amp_mod: Option<Modulator<BUFSIZE>>,  // and level
-    pw_mod: Option<Modulator<BUFSIZE>>,   // and level
+    pw_mod: Option<Modulator<BUFSIZE>>,   // and pulsewidth
 }
 
 impl<const BUFSIZE: usize> LFSquare<BUFSIZE> {

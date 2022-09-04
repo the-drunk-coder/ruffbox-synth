@@ -5,7 +5,7 @@ use crate::building_blocks::{
 use std::f32::consts::PI;
 
 /**
- * A quasi-bandlimited sawtooth oscillator using fm synthesis, following:
+ * A quasi-bandlimited sqaurewave oscillator using fm synthesis, following:
  *
  * Peter Schoffhauzer - Synthesis of Quasi-Bandliminted Analog Waveforms
  * Using Frequency Modulation
@@ -13,14 +13,16 @@ use std::f32::consts::PI;
  * http://scp.web.elte.hu/papers/synthesis1.pdf
  */
 #[derive(Clone)]
-pub struct FMSaw<const BUFSIZE: usize> {
+pub struct FMSquare<const BUFSIZE: usize> {
     // user parameters
     freq: f32,
     amp: f32,
+    pulsewidth: f32,
 
     // internal parameters
     samplerate: f32,
-    osc: f32,     // current output sample
+    osc1: f32,    // current output sample
+    osc2: f32,    // current output sample
     phase: f32,   // phase accumulator
     w: f32,       // normalized frequency
     scaling: f32, // scaling amount
@@ -35,17 +37,20 @@ pub struct FMSaw<const BUFSIZE: usize> {
     // modulator slots
     freq_mod: Option<Modulator<BUFSIZE>>, // allows modulating frequency ..
     amp_mod: Option<Modulator<BUFSIZE>>,  // and level
+    pw_mod: Option<Modulator<BUFSIZE>>,   // and pulsewidth
 }
 
-impl<const BUFSIZE: usize> FMSaw<BUFSIZE> {
-    pub fn new(freq: f32, amp: f32, samplerate: f32) -> Self {
+impl<const BUFSIZE: usize> FMSquare<BUFSIZE> {
+    pub fn new(freq: f32, amp: f32, pw: f32, samplerate: f32) -> Self {
         let w: f32 = freq / samplerate;
         let n: f32 = 0.5 - w;
-        FMSaw {
+        FMSquare {
             freq,
             amp,
+            pulsewidth: pw,
             samplerate,
-            osc: 0.0,                      // current output sample
+            osc1: 0.0,                     // current output sample
+            osc2: 0.0,                     // current output sample
             phase: 0.0,                    // phase accumulator
             w,                             // normalized frequency
             scaling: 13.0 * n * n * n * n, // scaling amount
@@ -57,6 +62,7 @@ impl<const BUFSIZE: usize> FMSaw<BUFSIZE> {
             del: 0.0, // filter delay
             freq_mod: None,
             amp_mod: None,
+            pw_mod: None,
         }
     }
 
@@ -70,7 +76,7 @@ impl<const BUFSIZE: usize> FMSaw<BUFSIZE> {
     }
 }
 
-impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for FMSaw<BUFSIZE> {
+impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for FMSquare<BUFSIZE> {
     fn reset(&mut self) {}
 
     fn set_param_or_modulator(
@@ -99,6 +105,10 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for FMSaw<BUFSIZE> {
                 self.amp = init;
                 self.amp_mod = Some(modulator);
             }
+            SynthParameterLabel::Pulsewidth => {
+                self.pulsewidth = init;
+                self.pw_mod = Some(modulator);
+            }
             _ => {}
         }
     }
@@ -115,6 +125,11 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for FMSaw<BUFSIZE> {
             SynthParameterLabel::OscillatorAmplitude => {
                 if let SynthParameterValue::ScalarF32(l) = value {
                     self.amp = *l;
+                }
+            }
+            SynthParameterLabel::Pulsewidth => {
+                if let SynthParameterValue::ScalarF32(l) = value {
+                    self.pulsewidth = *l;
                 }
             }
             _ => (),
@@ -143,6 +158,12 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for FMSaw<BUFSIZE> {
                 [self.freq; BUFSIZE]
             };
 
+            let pw_buf = if let Some(m) = self.pw_mod.as_mut() {
+                m.process(self.pulsewidth, start_sample, in_buffers)
+            } else {
+                [self.pulsewidth; BUFSIZE]
+            };
+
             for (i, current_sample) in out_buf
                 .iter_mut()
                 .enumerate()
@@ -157,12 +178,14 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for FMSaw<BUFSIZE> {
                 let iphase = 2.0 * self.phase - 1.0;
 
                 // next sample
-                self.osc = (self.osc + (PI * (iphase + self.scaling * self.osc)).sin()) * 0.5;
-
-                *current_sample = self.a0 * self.osc - self.a1 * self.del;
-                self.del = self.osc;
-                *current_sample += self.dc_comp * self.norm;
-                *current_sample *= amp_buf[i];
+                // next sample
+                self.osc1 = (self.osc1 + (PI * (iphase + self.scaling * self.osc1)).sin()) * 0.5;
+                self.osc2 = (self.osc2
+                    + (PI * (iphase + pw_buf[i] + self.scaling * self.osc2)).sin())
+                    * 0.5;
+                let out = self.osc1 - self.osc2;
+                *current_sample = (self.a0 * out - self.a1 * self.del + self.norm) * amp_buf[i];
+                self.del = out;
             }
         } else {
             for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
@@ -172,11 +195,13 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for FMSaw<BUFSIZE> {
                 let iphase = 2.0 * self.phase - 1.0;
 
                 // next sample
-                self.osc = (self.osc + (PI * (iphase + self.scaling * self.osc)).sin()) * 0.5;
-                *current_sample = self.a0 * self.osc - self.a1 * self.del;
-                self.del = self.osc;
-                *current_sample += self.dc_comp * self.norm;
-                *current_sample *= self.amp;
+                self.osc1 = (self.osc1 + (PI * (iphase + self.scaling * self.osc1)).sin()) * 0.5;
+                self.osc2 = (self.osc2
+                    + (PI * (iphase + self.pulsewidth + self.scaling * self.osc2)).sin())
+                    * 0.5;
+                let out = self.osc1 - self.osc2;
+                *current_sample = (self.a0 * out - self.a1 * self.del + self.norm) * self.amp;
+                self.del = out;
             }
         }
 
