@@ -5,7 +5,7 @@ use crate::building_blocks::{
 use std::f32::consts::PI;
 
 /**
- * A quasi-limited sawtooth oscillator using fm synthesis, following
+ * A quasi-bandlimited sawtooth oscillator using fm synthesis, following:
  *
  * Peter Schoffhauzer - Synthesis of Quasi-Bandliminted Analog Waveforms
  * Using Frequency Modulation
@@ -162,6 +162,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for FMSaw<BUFSIZE> {
                 *current_sample = self.a0 * self.osc - self.a1 * self.del;
                 self.del = self.osc;
                 *current_sample += (self.dc_comp * self.norm) * amp_buf[i];
+		*current_sample *= amp_buf[i];
             }
         } else {
             for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
@@ -174,7 +175,8 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for FMSaw<BUFSIZE> {
                 self.osc = (self.osc + (PI * (iphase + self.scaling * self.osc)).sin()) * 0.5;
                 *current_sample = self.a0 * self.osc - self.a1 * self.del;
                 self.del = self.osc;
-                *current_sample += (self.dc_comp * self.norm) * self.amp;
+                *current_sample += (self.dc_comp * self.norm);
+		*current_sample *= self.amp;
             }
         }
 
