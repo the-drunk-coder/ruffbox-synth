@@ -161,7 +161,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for FMSaw<BUFSIZE> {
 
                 *current_sample = self.a0 * self.osc - self.a1 * self.del;
                 self.del = self.osc;
-                *current_sample += (self.dc_comp * self.norm) * amp_buf[i];
+                *current_sample += (self.dc_comp * self.norm);
 		*current_sample *= amp_buf[i];
             }
         } else {
