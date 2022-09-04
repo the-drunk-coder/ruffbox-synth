@@ -2,6 +2,7 @@
 /// after scsynth, csound, etc ...
 pub mod fm_saw;
 pub mod fm_square;
+pub mod fm_tri;
 pub mod lf_cub;
 pub mod lf_rsaw;
 pub mod lf_saw;
@@ -23,6 +24,7 @@ pub use crate::building_blocks::oscillators::wavetable::Wavetable;
 
 pub use crate::building_blocks::oscillators::fm_saw::FMSaw;
 pub use crate::building_blocks::oscillators::fm_square::FMSquare;
+pub use crate::building_blocks::oscillators::fm_tri::FMTri;
 pub use crate::building_blocks::oscillators::wt_saw::WTSaw;
 
 // TEST TEST TEST

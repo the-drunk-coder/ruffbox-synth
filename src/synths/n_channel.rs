@@ -12,6 +12,7 @@ pub mod wavetable_synth;
 
 pub mod fm_saw_synth;
 pub mod fm_square_synth;
+pub mod fm_tri_synth;
 pub mod wt_saw_synth;
 
 pub use crate::synths::n_channel::lf_cub_synth::LFCubSynth;
@@ -28,3 +29,4 @@ pub use crate::synths::n_channel::wt_saw_synth::WTSawSynth;
 
 pub use crate::synths::n_channel::fm_saw_synth::FMSawSynth;
 pub use crate::synths::n_channel::fm_square_synth::FMSquareSynth;
+pub use crate::synths::n_channel::fm_tri_synth::FMTriSynth;

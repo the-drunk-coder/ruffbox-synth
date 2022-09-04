@@ -4,6 +4,7 @@ pub mod n_channel;
 // channel-based synths
 pub use crate::synths::n_channel::fm_saw_synth::FMSawSynth;
 pub use crate::synths::n_channel::fm_square_synth::FMSquareSynth;
+pub use crate::synths::n_channel::fm_tri_synth::FMTriSynth;
 pub use crate::synths::n_channel::lf_cub_synth::LFCubSynth;
 pub use crate::synths::n_channel::lf_saw_synth::LFSawSynth;
 pub use crate::synths::n_channel::lf_square_synth::LFSquareSynth;
@@ -35,6 +36,7 @@ pub enum SynthType {
     LFSawSynth,
     FMSawSynth,
     FMSquareSynth,
+    FMTriSynth,
     LFSquareSynth,
     LFTriangleSynth,
     RissetBell,
