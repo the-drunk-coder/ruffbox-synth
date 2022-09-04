@@ -104,7 +104,24 @@ mod tests {
             debug_plotter::plot!(b, c  where caption = "BlockPlotAbsPhase");
             //assert_approx_eq::assert_approx_eq!(out_1[i], comp_1[i], 0.008);
         }
-    }*/
+}*/
+    #[test]
+    fn plot_tri() {
+        let mut osc = FMTri::<128>::new(440.0, 200.0, 44100.0);
+	
+	
+	for _ in 0..20 {
+	    let out_1 = osc.get_next_block(0, &Vec::new());
+            
+	    
+            // the new sine osc seems to be a bit less precise ....
+            for i in 0usize..128usize {
+		let b = out_1[i];
+				
+		debug_plotter::plot!(b  where caption = "PlotFmTri");		
+            }
+	}
+    }
 
     #[test]
     fn sine_osc_test_start_in_block() {

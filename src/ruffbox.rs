@@ -145,6 +145,7 @@ mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
     use crate::synths::SynthType;
+    use crate::building_blocks::FilterType;
     use std::f32::consts::PI;
 
     #[test]
@@ -285,7 +286,7 @@ mod tests {
 
         ruff.process(0.0, true);
 
-        if let Some(mut inst_1) = ctrl.prepare_instance(SynthType::Sampler, 0.0, bnum1) {
+        if let Some(mut inst_1) = ctrl.prepare_instance(SynthType::Sampler(FilterType::BiquadHpf12dB, FilterType::Lpf18), 0.0, bnum1) {
             // pan to left, neutralize
             inst_1.set_instance_parameter(
                 SynthParameterLabel::ChannelPosition,
@@ -317,7 +318,7 @@ mod tests {
             );
             ctrl.trigger(inst_1);
         }
-        if let Some(mut inst_2) = ctrl.prepare_instance(SynthType::Sampler, 0.0, bnum2) {
+        if let Some(mut inst_2) = ctrl.prepare_instance(SynthType::Sampler(FilterType::BiquadHpf12dB, FilterType::Lpf18), 0.0, bnum2) {
             inst_2.set_instance_parameter(
                 SynthParameterLabel::ChannelPosition,
                 &SynthParameterValue::ScalarF32(0.0),
@@ -372,7 +373,7 @@ mod tests {
 
         ruff.process(0.0, true);
 
-        if let Some(mut inst_1) = ctrl.prepare_instance(SynthType::Sampler, 0.0, bnum1) {
+        if let Some(mut inst_1) = ctrl.prepare_instance(SynthType::Sampler(FilterType::BiquadHpf12dB, FilterType::Lpf18), 0.0, bnum1) {
             // pan to left
             inst_1.set_instance_parameter(
                 SynthParameterLabel::ChannelPosition,
@@ -432,7 +433,7 @@ mod tests {
         let bnum1 = ctrl.load_sample(&mut sample1, false, 44100.0);
         let bnum2 = ctrl.load_sample(&mut sample2, false, 44100.0);
 
-        if let Some(mut inst_1) = ctrl.prepare_instance(SynthType::Sampler, 0.291, bnum1) {
+        if let Some(mut inst_1) = ctrl.prepare_instance(SynthType::Sampler(FilterType::BiquadHpf12dB, FilterType::Lpf18), 0.291, bnum1) {
             // pan to left
             inst_1.set_instance_parameter(
                 SynthParameterLabel::ChannelPosition,
@@ -465,7 +466,7 @@ mod tests {
             ctrl.trigger(inst_1);
         }
 
-        if let Some(mut inst_2) = ctrl.prepare_instance(SynthType::Sampler, 0.291, bnum2) {
+        if let Some(mut inst_2) = ctrl.prepare_instance(SynthType::Sampler(FilterType::BiquadHpf12dB, FilterType::Lpf18), 0.291, bnum2) {
             inst_2.set_instance_parameter(
                 SynthParameterLabel::ChannelPosition,
                 &SynthParameterValue::ScalarF32(0.0),
@@ -530,7 +531,7 @@ mod tests {
         let bnum1 = ctrl.load_sample(&mut sample1, false, 44100.0);
         let bnum2 = ctrl.load_sample(&mut sample2, false, 44100.0);
 
-        if let Some(mut inst_1) = ctrl.prepare_instance(SynthType::Sampler, 0.291, bnum1) {
+        if let Some(mut inst_1) = ctrl.prepare_instance(SynthType::Sampler(FilterType::BiquadHpf12dB, FilterType::Lpf18), 0.291, bnum1) {
             // pan to left
             inst_1.set_instance_parameter(
                 SynthParameterLabel::ChannelPosition,
@@ -564,7 +565,7 @@ mod tests {
         }
 
         if let Some(mut inst_2) =
-            ctrl.prepare_instance(SynthType::Sampler, 0.291 + (4.0 * sec_per_sample), bnum2)
+            ctrl.prepare_instance(SynthType::Sampler(FilterType::BiquadHpf12dB, FilterType::Lpf18), 0.291 + (4.0 * sec_per_sample), bnum2)
         {
             inst_2.set_instance_parameter(
                 SynthParameterLabel::ChannelPosition,
@@ -645,7 +646,7 @@ mod tests {
         // second sample should appear ten blocks later
         let second_sample_timestamp = 0.291 + (10.0 * block_duration);
 
-        if let Some(mut inst_1) = ctrl.prepare_instance(SynthType::Sampler, 0.291, bnum1) {
+        if let Some(mut inst_1) = ctrl.prepare_instance(SynthType::Sampler(FilterType::BiquadHpf12dB, FilterType::Lpf18), 0.291, bnum1) {
             // pan to left
             inst_1.set_instance_parameter(
                 SynthParameterLabel::ChannelPosition,
@@ -678,7 +679,7 @@ mod tests {
             ctrl.trigger(inst_1);
         }
         if let Some(mut inst_2) =
-            ctrl.prepare_instance(SynthType::Sampler, second_sample_timestamp, bnum2)
+            ctrl.prepare_instance(SynthType::Sampler(FilterType::BiquadHpf12dB, FilterType::Lpf18), second_sample_timestamp, bnum2)
         {
             inst_2.set_instance_parameter(
                 SynthParameterLabel::ChannelPosition,
@@ -750,7 +751,7 @@ mod tests {
 
         ruff.process(0.0, false);
 
-        if let Some(mut inst_1) = ctrl.prepare_instance(SynthType::Sampler, 0.1, bnum1) {
+        if let Some(mut inst_1) = ctrl.prepare_instance(SynthType::Sampler(FilterType::BiquadHpf12dB, FilterType::Lpf18), 0.1, bnum1) {
             // pan to left
             inst_1.set_instance_parameter(
                 SynthParameterLabel::ChannelPosition,
