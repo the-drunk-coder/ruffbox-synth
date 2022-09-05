@@ -107,17 +107,15 @@ mod tests {
     }*/
     #[test]
     fn plot_tri() {
-        let mut osc = FMSquare::<128>::new(100.0, 1.0, 0.5, 44100.0);
+        let mut osc = FMSaw::<128>::new(10000.0, 1.0, 44100.0);
 
-        for _ in 0..500 {
+        for _ in 0..50 {
             let out_1 = osc.get_next_block(0, &Vec::new());
 
             // the new sine osc seems to be a bit less precise ....
             for i in 0usize..128usize {
                 let b = out_1[i];
-                let c = -b;
-                let d = f32::min(b, c);
-                debug_plotter::plot!(b  where caption = "PlotFmTri2");
+                debug_plotter::plot!(b where caption = "PlotFmTri2");
             }
         }
     }

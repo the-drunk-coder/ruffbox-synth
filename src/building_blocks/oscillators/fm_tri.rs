@@ -29,8 +29,6 @@ pub struct FMTri<const BUFSIZE: usize> {
     norm: f32,    // normalization
 
     // pre-calculated filter constants
-    a0: f32,
-    a1: f32,
     del: f32, // filter delay
 
     // modulator slots
@@ -46,16 +44,14 @@ impl<const BUFSIZE: usize> FMTri<BUFSIZE> {
             freq,
             amp,
             samplerate,
-            osc1: 0.0,                     // current output sample
-            osc2: 0.0,                     // current output sample
-            phase: 0.0,                    // phase accumulator
-            w,                             // normalized frequency
-            scaling: 13.0 * n * n * n * n, // scaling amount
-            dc_comp: 0.376 - w * 0.752,    // DC compensation
-            norm: 1.0 - 2.0 * w,           // normalization
+            osc1: 0.0,                           // current output sample
+            osc2: 0.0,                           // current output sample
+            phase: 0.0,                          // phase accumulator
+            w,                                   // normalized frequency
+            scaling: 13.0 * n * n * n * n * 0.5, // scaling amount
+            dc_comp: 0.11 + w * 0.2,             // DC compensation
+            norm: 1.0 - 2.0 * w,                 // normalization
             // pre-calculated filter constants
-            a0: 2.5,
-            a1: -1.5,
             del: 0.0, // filter delay
             freq_mod: None,
             amp_mod: None,
@@ -66,8 +62,8 @@ impl<const BUFSIZE: usize> FMTri<BUFSIZE> {
     pub fn update_internals(&mut self, freq: f32) {
         self.w = freq / self.samplerate;
         let n: f32 = 0.5 - self.w;
-        self.scaling = 13.0 * n * n * n * n;
-        self.dc_comp = 0.376 - self.w * 0.752;
+        self.scaling = 13.0 * n * n * n * n * 0.5;
+        self.dc_comp = 0.11 + self.w * 0.2;
         self.norm = 1.0 - 2.0 * self.w;
     }
 }
@@ -153,32 +149,43 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for FMTri<BUFSIZE> {
             {
                 self.update_internals(freq_buf[i]);
 
-                // phase accum
-                self.phase += self.w;
-                self.phase -= self.phase.floor();
-                let iphase = 2.0 * self.phase - 1.0;
+                self.phase += 2.0 * self.w;
+                if self.phase >= 1.0 {
+                    self.phase -= 2.0;
+                }
 
-                // next sample
-                // next sample
-                self.osc1 = (self.osc1 + (PI * (iphase + self.scaling * self.osc1)).sin()) * 0.5;
-                let out = self.osc1 - self.osc2;
-                *current_sample = (self.a0 * out - self.a1 * self.del + self.norm) * amp_buf[i];
-                self.del = out;
+                self.osc1 =
+                    (self.osc1 + (PI * (self.phase + self.scaling * self.osc1)).sin()) * 0.5;
+                self.osc2 = (self.osc2
+                    + (PI * ((self.phase + 0.25) + self.scaling * self.osc2)).sin())
+                    * 0.5;
+
+                let min = f32::min(self.osc1, -self.osc2);
+                let o = 2.5 * min - 1.5 * self.del;
+                self.del = min;
+
+                *current_sample = (((o + 0.5) * 2.0) - self.dc_comp) * self.norm * amp_buf[i];
             }
         } else {
             for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
                 // phase accum
-                self.phase += self.w;
-                self.phase -= self.phase.floor();
-                let iphase = 2.0 * self.phase - 1.0;
 
-                // next sample
-                self.osc1 = (self.osc1 + (PI * (iphase + self.scaling * self.osc1)).sin()) * 0.5;
-                let mut out = self.a0 * self.osc1 - self.a1 * self.del;
-                self.del = self.osc1;
-                out += self.dc_comp * self.norm;
-                out = (f32::min(out, -out) + 0.5) * 2.0;
-                *current_sample = out * self.amp;
+                self.phase += 2.0 * self.w;
+                if self.phase >= 1.0 {
+                    self.phase -= 2.0;
+                }
+
+                self.osc1 =
+                    (self.osc1 + (PI * (self.phase + self.scaling * self.osc1)).sin()) * 0.5;
+                self.osc2 = (self.osc2
+                    + (PI * ((self.phase + 0.25) + self.scaling * self.osc2)).sin())
+                    * 0.5;
+
+                let min = f32::min(self.osc1, -self.osc2);
+                let o = 2.5 * min - 1.5 * self.del;
+                self.del = min;
+
+                *current_sample = (((o + 0.5) * 2.0) - self.dc_comp) * self.norm * self.amp;
             }
         }
 
