@@ -26,13 +26,11 @@ pub struct FMSquare<const BUFSIZE: usize> {
     phase: f32,   // phase accumulator
     w: f32,       // normalized frequency
     scaling: f32, // scaling amount
-    dc_comp: f32, // DC compensation
-    norm: f32,    // normalization
 
-    // pre-calculated filter constants
-    a0: f32,
-    a1: f32,
-    del: f32, // filter delay
+    dc_comp: f32,
+    norm: f32,
+
+    del: f32, // one-pole filter delay
 
     // modulator slots
     freq_mod: Option<Modulator<BUFSIZE>>, // allows modulating frequency ..
@@ -54,11 +52,9 @@ impl<const BUFSIZE: usize> FMSquare<BUFSIZE> {
             phase: 0.0,                    // phase accumulator
             w,                             // normalized frequency
             scaling: 13.0 * n * n * n * n, // scaling amount
-            dc_comp: 0.376 - w * 0.752,    // DC compensation
-            norm: 1.0 - 2.0 * w,           // normalization
+            dc_comp: 0.4 * (1.0 - 2.0 * w),
+            norm: 0.67 - 2.0 * w,
             // pre-calculated filter constants
-            a0: 2.5,
-            a1: -1.5,
             del: 0.0, // filter delay
             freq_mod: None,
             amp_mod: None,
@@ -71,8 +67,8 @@ impl<const BUFSIZE: usize> FMSquare<BUFSIZE> {
         self.w = freq / self.samplerate;
         let n: f32 = 0.5 - self.w;
         self.scaling = 13.0 * n * n * n * n;
-        self.dc_comp = 0.376 - self.w * 0.752;
-        self.norm = 1.0 - 2.0 * self.w;
+        self.dc_comp = 0.4 * (1.0 - 2.0 * self.w);
+        self.norm = 0.67 - 2.0 * self.w;
     }
 }
 
@@ -173,35 +169,46 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for FMSquare<BUFSIZE> {
                 self.update_internals(freq_buf[i]);
 
                 // phase accum
-                self.phase += self.w;
-                self.phase -= self.phase.floor();
-                let iphase = 2.0 * self.phase - 1.0;
+                self.phase += 2.0 * self.w;
+                if self.phase >= 1.0 {
+                    self.phase -= 2.0;
+                }
 
                 // next sample
-                // next sample
-                self.osc1 = (self.osc1 + (PI * (iphase + self.scaling * self.osc1)).sin()) * 0.5;
+                // paper says 2pi, but that soesn't work at all
+                self.osc1 =
+                    (self.osc1 + (PI * (self.phase + self.scaling * self.osc1)).sin()) * 0.5;
                 self.osc2 = (self.osc2
-                    + (PI * (iphase + pw_buf[i] + self.scaling * self.osc2)).sin())
+                    + (PI * ((self.phase + pw_buf[i]) + self.scaling * self.osc2)).sin())
                     * 0.5;
-                let out = self.osc1 - self.osc2;
-                *current_sample = (self.a0 * out - self.a1 * self.del + self.norm) * amp_buf[i];
-                self.del = out;
+
+                let diff = self.osc2 - self.osc1;
+                let o = 2.5 * diff - 1.5 * self.del;
+                self.del = diff;
+
+                *current_sample = (o - self.dc_comp) * self.norm * amp_buf[i];
             }
         } else {
             for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
                 // phase accum
-                self.phase += self.w;
-                self.phase -= self.phase.floor();
-                let iphase = 2.0 * self.phase - 1.0;
+                self.phase += 2.0 * self.w;
+                if self.phase >= 1.0 {
+                    self.phase -= 2.0;
+                }
 
                 // next sample
-                self.osc1 = (self.osc1 + (PI * (iphase + self.scaling * self.osc1)).sin()) * 0.5;
+                // paper says 2pi, but that soesn't work at all
+                self.osc1 =
+                    (self.osc1 + (PI * (self.phase + self.scaling * self.osc1)).sin()) * 0.5;
                 self.osc2 = (self.osc2
-                    + (PI * (iphase + self.pulsewidth + self.scaling * self.osc2)).sin())
+                    + (PI * ((self.phase + self.pulsewidth) + self.scaling * self.osc2)).sin())
                     * 0.5;
-                let out = self.osc1 - self.osc2;
-                *current_sample = (self.a0 * out - self.a1 * self.del + self.norm) * self.amp;
-                self.del = out;
+
+                let diff = self.osc2 - self.osc1;
+                let o = 2.5 * diff - 1.5 * self.del;
+                self.del = diff;
+
+                *current_sample = (o - self.dc_comp) * self.norm * self.amp;
             }
         }
 

@@ -58,70 +58,68 @@ mod tests {
     }
 
     /*
-    #[test]
-    fn sine_osc_rel_phase_offset() {
-        let mut osc = SineOsc::<128>::new(440.0, 1.0, 44100.0);
+        #[test]
+        fn sine_osc_rel_phase_offset() {
+            let mut osc = SineOsc::<128>::new(440.0, 1.0, 44100.0);
 
-    osc.set_parameter(SynthParameterLabel::OscillatorPhaseRelative,
-              &SynthParameterValue::ScalarF32(0.5));
+        osc.set_parameter(SynthParameterLabel::OscillatorPhaseRelative,
+                  &SynthParameterValue::ScalarF32(0.5));
 
-        let out_1 = osc.get_next_block(0, &Vec::new());
-        let mut comp_1 = [0.0; 128];
+            let out_1 = osc.get_next_block(0, &Vec::new());
+            let mut comp_1 = [0.0; 128];
 
-        for i in 0..128 {
-            comp_1[i] = (2.0 * PI * 440.0 * (i as f32 * (1.0 / 44100.0))).cos()
-        }
+            for i in 0..128 {
+                comp_1[i] = (2.0 * PI * 440.0 * (i as f32 * (1.0 / 44100.0))).cos()
+            }
 
-        // the new sine osc seems to be a bit less precise ....
-        for i in 0usize..128usize {
-            let b = out_1[i];
-            let c = comp_1[i];
-
-            debug_plotter::plot!(b, c  where caption = "BlockPlotRelPhase");
-            //assert_approx_eq::assert_approx_eq!(out_1[i], comp_1[i], 0.008);
-        }
-    }
-
-    #[test]
-    fn sine_osc_abs_phase_offset() {
-        let mut osc = SineOsc::<128>::new(440.0, 200.0, 44100.0);
-
-    osc.set_parameter(SynthParameterLabel::OscillatorPhaseEffective,
-              &SynthParameterValue::ScalarF32(100.0));
-
-        let out_1 = osc.get_next_block(0, &Vec::new());
-        let mut comp_1 = [0.0; 128];
-
-        for i in 0..128 {
-            comp_1[i] = (2.0 * PI * 440.0 * (i as f32 * (1.0 / 44100.0))).sin() * 200.0
-        }
-
-        // the new sine osc seems to be a bit less precise ....
-        for i in 0usize..128usize {
-            let b = out_1[i];
-            let c = comp_1[i];
-
-            debug_plotter::plot!(b, c  where caption = "BlockPlotAbsPhase");
-            //assert_approx_eq::assert_approx_eq!(out_1[i], comp_1[i], 0.008);
-        }
-}*/
-    #[test]
-    fn plot_tri() {
-        let mut osc = FMSaw::<128>::new(400.0, 1.0, 44100.0);
-	
-	
-	for _ in 0..5 {
-	    let out_1 = osc.get_next_block(0, &Vec::new());
-            
-	    
             // the new sine osc seems to be a bit less precise ....
             for i in 0usize..128usize {
-		let b = out_1[i];
-		let c = -b;
-		let d = f32::min(b,c);
-		debug_plotter::plot!(b  where caption = "PlotFmTri");		
+                let b = out_1[i];
+                let c = comp_1[i];
+
+                debug_plotter::plot!(b, c  where caption = "BlockPlotRelPhase");
+                //assert_approx_eq::assert_approx_eq!(out_1[i], comp_1[i], 0.008);
             }
-	}
+        }
+
+        #[test]
+        fn sine_osc_abs_phase_offset() {
+            let mut osc = SineOsc::<128>::new(440.0, 200.0, 44100.0);
+
+        osc.set_parameter(SynthParameterLabel::OscillatorPhaseEffective,
+                  &SynthParameterValue::ScalarF32(100.0));
+
+            let out_1 = osc.get_next_block(0, &Vec::new());
+            let mut comp_1 = [0.0; 128];
+
+            for i in 0..128 {
+                comp_1[i] = (2.0 * PI * 440.0 * (i as f32 * (1.0 / 44100.0))).sin() * 200.0
+            }
+
+            // the new sine osc seems to be a bit less precise ....
+            for i in 0usize..128usize {
+                let b = out_1[i];
+                let c = comp_1[i];
+
+                debug_plotter::plot!(b, c  where caption = "BlockPlotAbsPhase");
+                //assert_approx_eq::assert_approx_eq!(out_1[i], comp_1[i], 0.008);
+            }
+    }*/
+    #[test]
+    fn plot_tri() {
+        let mut osc = FMSquare::<128>::new(100.0, 1.0, 0.5, 44100.0);
+
+        for _ in 0..500 {
+            let out_1 = osc.get_next_block(0, &Vec::new());
+
+            // the new sine osc seems to be a bit less precise ....
+            for i in 0usize..128usize {
+                let b = out_1[i];
+                let c = -b;
+                let d = f32::min(b, c);
+                debug_plotter::plot!(b  where caption = "PlotFmTri2");
+            }
+        }
     }
 
     #[test]

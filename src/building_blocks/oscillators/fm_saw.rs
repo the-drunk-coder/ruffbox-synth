@@ -24,13 +24,10 @@ pub struct FMSaw<const BUFSIZE: usize> {
     phase: f32,   // phase accumulator
     w: f32,       // normalized frequency
     scaling: f32, // scaling amount
-    dc_comp: f32, // DC compensation
-    norm: f32,    // normalization
 
-    // pre-calculated filter constants
-    a0: f32,
-    a1: f32,
-    del: f32, // filter delay
+    dc_comp: f32,
+    norm: f32,
+    del: f32, // one-pole filter delay
 
     // modulator slots
     freq_mod: Option<Modulator<BUFSIZE>>, // allows modulating frequency ..
@@ -49,11 +46,8 @@ impl<const BUFSIZE: usize> FMSaw<BUFSIZE> {
             phase: 0.0,                    // phase accumulator
             w,                             // normalized frequency
             scaling: 13.0 * n * n * n * n, // scaling amount
-            dc_comp: 0.376 - w * 0.752,    // DC compensation
-            norm: 1.0 - 2.0 * w,           // normalization
-            // pre-calculated filter constants
-            a0: 2.5,
-            a1: -1.5,
+            dc_comp: 0.1 + w * 0.2,
+            norm: 1.0 - 2.0 * w,
             del: 0.0, // filter delay
             freq_mod: None,
             amp_mod: None,
@@ -65,7 +59,7 @@ impl<const BUFSIZE: usize> FMSaw<BUFSIZE> {
         self.w = freq / self.samplerate;
         let n: f32 = 0.5 - self.w;
         self.scaling = 13.0 * n * n * n * n;
-        self.dc_comp = 0.376 - self.w * 0.752;
+        self.dc_comp = 0.1 + self.w * 0.2;
         self.norm = 1.0 - 2.0 * self.w;
     }
 }
@@ -152,31 +146,37 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for FMSaw<BUFSIZE> {
                 self.update_internals(freq_buf[i]);
 
                 // phase accum
-                self.phase += self.w;
-                self.phase -= self.phase.floor();
-                let iphase = 2.0 * self.phase - 1.0;
+                self.phase += 2.0 * self.w;
+                if self.phase >= 1.0 {
+                    self.phase -= 2.0;
+                }
 
                 // next sample
-                self.osc = (self.osc + (PI * (iphase + self.scaling * self.osc)).sin()) * 0.5;
-
-                *current_sample = self.a0 * self.osc - self.a1 * self.del;
+                // the paper says 2pi, but that doesn't make sense when you look at the plots ...
+                self.osc = (self.osc + (PI * (self.phase + self.scaling * self.osc)).sin()) * 0.5;
+                let o = 2.5 * self.osc - 1.5 * self.del;
                 self.del = self.osc;
-                *current_sample += self.dc_comp * self.norm;
-                *current_sample *= amp_buf[i];
+                // the normalization is different than in the paper, but it seems more symmetric
+                // to me this way ..
+                *current_sample = (o - self.dc_comp) * self.norm * amp_buf[i];
             }
         } else {
             for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
                 // phase accum
-                self.phase += self.w;
-                self.phase -= self.phase.floor();
-                let iphase = 2.0 * self.phase - 1.0;
+                self.phase += 2.0 * self.w;
+                if self.phase >= 1.0 {
+                    self.phase -= 2.0;
+                }
 
                 // next sample
-                self.osc = (self.osc + (PI * (iphase + self.scaling * self.osc)).sin()) * 0.5;
-                *current_sample = self.a0 * self.osc - self.a1 * self.del;
+                // the paper says 2pi, but that doesn't make sense when you look at the plots ...
+                self.osc = (self.osc + (PI * (self.phase + self.scaling * self.osc)).sin()) * 0.5;
+                // one-pole lowpass filter
+                let o = 2.5 * self.osc - 1.5 * self.del;
                 self.del = self.osc;
-                *current_sample += self.dc_comp * self.norm;
-                *current_sample *= self.amp;
+                // the normalization is different than in the paper, but it seems more symmetric
+                // to me this way ..
+                *current_sample = (o - self.dc_comp) * self.norm * self.amp;
             }
         }
 
