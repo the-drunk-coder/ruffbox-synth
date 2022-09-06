@@ -1,3 +1,4 @@
+mod dummy;
 mod biquad_hpf_12db;
 mod biquad_hpf_24db;
 mod biquad_lpf_12db;
@@ -8,6 +9,7 @@ mod sos;
 
 pub use sos::*;
 
+pub use dummy::*;
 pub use biquad_hpf_12db::*;
 pub use biquad_hpf_24db::*;
 pub use biquad_lpf_12db::*;
