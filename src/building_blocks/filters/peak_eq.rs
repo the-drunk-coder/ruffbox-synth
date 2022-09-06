@@ -30,8 +30,8 @@ impl<const BUFSIZE: usize> PeakEq<BUFSIZE> {
     pub fn new(center_freq: f32, bw: f32, gain: f32, sr: f32) -> Self {
         let w_c = (2.0 * center_freq) / sr;
         let w_b = (2.0 * bw) / sr;
-        let d = -((std::f32::consts::PI * w_c).cos());
-        let v_zero = (gain / 20.0).powf(10.0);
+        let d = -((std::f32::consts::PI * w_c).cos());        
+	let v_zero = 10_f32.powf(gain/20.0);
         let h_zero = v_zero - 1.0;
         let cf_tan = (std::f32::consts::PI * w_b / 2.0).tan();
 
