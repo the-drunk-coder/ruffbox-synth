@@ -16,6 +16,7 @@ pub use crate::building_blocks::modulator::Modulator;
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub enum FilterType {
+    Dummy,
     Lpf18,
     BiquadHpf12dB,
     BiquadLpf12dB,
@@ -58,7 +59,13 @@ pub enum SynthParameterLabel {
     LowpassFilterType,        //
     PeakFrequency,            // 19
     PeakGain,                 // 20
-    PeakQFactor,              // 21
+    PeakBandwidth,            // 21
+    Peak1Frequency,           // 19
+    Peak1Gain,                // 20
+    Peak1Bandwidth,           // 21
+    Peak2Frequency,           // 19
+    Peak2Gain,                // 20
+    Peak2Bandwidth,           // 21
     Pulsewidth,               // 22
     PlaybackRate,             // 23
     PlaybackStart,            // 24

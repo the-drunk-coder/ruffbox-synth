@@ -6,9 +6,7 @@ use rubato::{FftFixedIn, Resampler};
 use crossbeam::atomic::AtomicCell;
 use dashmap::DashMap;
 
-use crate::building_blocks::{
-    resolve_parameter_value, FilterType, SynthParameterLabel, SynthParameterValue,
-};
+use crate::building_blocks::{resolve_parameter_value, SynthParameterLabel, SynthParameterValue};
 use crate::ruffbox::{ControlMessage, ScheduledEvent};
 use crate::synths::*;
 
@@ -103,17 +101,21 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
                 SynthType::RissetBell => {
                     ScheduledEvent::new(timestamp, Box::new(RissetBell::new(self.samplerate)))
                 }
-                SynthType::Sampler(hpf_type, lpf_type) => ScheduledEvent::new(
+                SynthType::Sampler(hpf_type, pf1_type, pf2_type, lpf_type) => ScheduledEvent::new(
                     timestamp,
                     Box::new(NChannelSampler::with_bufnum_len(
                         sample_buf,
                         *self.buffer_lengths.get(&sample_buf).unwrap(),
                         hpf_type,
+                        pf1_type,
+                        pf2_type,
                         lpf_type,
                         self.samplerate,
                     )),
                 ),
-                SynthType::LiveSampler if self.num_live_buffers > 0 => {
+                SynthType::LiveSampler(hpf_type, pf1_type, pf2_type, lpf_type)
+                    if self.num_live_buffers > 0 =>
+                {
                     let final_bufnum = if sample_buf < self.num_live_buffers {
                         sample_buf
                     } else {
@@ -124,13 +126,17 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
                         Box::new(NChannelSampler::with_bufnum_len(
                             final_bufnum,
                             *self.buffer_lengths.get(&final_bufnum).unwrap(),
-                            FilterType::BiquadHpf12dB,
-                            FilterType::Lpf18,
+                            hpf_type,
+                            pf1_type,
+                            pf2_type,
+                            lpf_type,
                             self.samplerate,
                         )),
                     )
                 }
-                SynthType::FrozenSampler if self.num_freeze_buffers > 0 => {
+                SynthType::FrozenSampler(hpf_type, pf1_type, pf2_type, lpf_type)
+                    if self.num_freeze_buffers > 0 =>
+                {
                     let final_bufnum = if sample_buf < self.num_freeze_buffers {
                         sample_buf + self.freeze_buffer_offset
                     } else {
@@ -141,8 +147,10 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
                         Box::new(NChannelSampler::with_bufnum_len(
                             final_bufnum,
                             *self.buffer_lengths.get(&final_bufnum).unwrap(),
-                            FilterType::BiquadHpf12dB,
-                            FilterType::Lpf18,
+                            hpf_type,
+                            pf1_type,
+                            pf2_type,
+                            lpf_type,
                             self.samplerate,
                         )),
                     )

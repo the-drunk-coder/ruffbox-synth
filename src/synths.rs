@@ -27,9 +27,9 @@ use crate::building_blocks::FilterType;
 
 #[repr(C)]
 pub enum SynthType {
-    Sampler(FilterType, FilterType),
-    LiveSampler,
-    FrozenSampler,
+    Sampler(FilterType, FilterType, FilterType, FilterType),
+    LiveSampler(FilterType, FilterType, FilterType, FilterType),
+    FrozenSampler(FilterType, FilterType, FilterType, FilterType),
     SineOsc,
     SineSynth,
     LFCubSynth,

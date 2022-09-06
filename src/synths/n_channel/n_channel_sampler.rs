@@ -12,7 +12,8 @@ pub struct NChannelSampler<const BUFSIZE: usize, const NCHAN: usize> {
     sampler: Sampler<BUFSIZE>,
     envelope: LinearASREnvelope<BUFSIZE>,
     hpf: Box<dyn MonoEffect<BUFSIZE> + Send + Sync>,
-    peak_eq: PeakEq<BUFSIZE>,
+    peak_eq_1: Box<dyn MonoEffect<BUFSIZE> + Send + Sync>,
+    peak_eq_2: Box<dyn MonoEffect<BUFSIZE> + Send + Sync>,
     lpf: Box<dyn MonoEffect<BUFSIZE> + Send + Sync>,
     balance: PanChan<BUFSIZE, NCHAN>,
     reverb: f32,
@@ -24,6 +25,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> NChannelSampler<BUFSIZE, NCHAN> {
         bufnum: usize,
         buflen: usize,
         hpf_type: FilterType,
+        pf1_type: FilterType,
+        pf2_type: FilterType,
         lpf_type: FilterType,
         sr: f32,
     ) -> NChannelSampler<BUFSIZE, NCHAN> {
@@ -37,7 +40,14 @@ impl<const BUFSIZE: usize, const NCHAN: usize> NChannelSampler<BUFSIZE, NCHAN> {
                 FilterType::BiquadHpf24dB => Box::new(BiquadHpf24dB::new(20.0, 0.3, sr)),
                 _ => Box::new(BiquadHpf12dB::new(20.0, 0.3, sr)),
             },
-            peak_eq: PeakEq::new(700.0, 100.0, 0.0, sr),
+            peak_eq_1: match pf1_type {
+                FilterType::PeakEQ => Box::new(PeakEq::new(700.0, 100.0, 0.0, sr)),
+                _ => Box::new(DummyFilter::new()),
+            },
+            peak_eq_2: match pf2_type {
+                FilterType::PeakEQ => Box::new(PeakEq::new(1500.0, 100.0, 0.0, sr)),
+                _ => Box::new(DummyFilter::new()),
+            },
             lpf: match lpf_type {
                 FilterType::BiquadLpf12dB => Box::new(BiquadLpf12dB::new(19000.0, 0.3, sr)),
                 FilterType::BiquadLpf24dB => Box::new(BiquadLpf24dB::new(19000.0, 0.3, sr)),
@@ -73,7 +83,39 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
     ) {
         self.sampler.set_modulator(par, init, modulator.clone());
         self.hpf.set_modulator(par, init, modulator.clone());
-        self.peak_eq.set_modulator(par, init, modulator.clone());
+
+        match par {
+            SynthParameterLabel::Peak1Frequency => self.peak_eq_1.set_modulator(
+                SynthParameterLabel::PeakFrequency,
+                init,
+                modulator.clone(),
+            ),
+            SynthParameterLabel::Peak1Gain => {
+                self.peak_eq_1
+                    .set_modulator(SynthParameterLabel::PeakGain, init, modulator.clone())
+            }
+            SynthParameterLabel::Peak1Bandwidth => self.peak_eq_1.set_modulator(
+                SynthParameterLabel::PeakBandwidth,
+                init,
+                modulator.clone(),
+            ),
+            SynthParameterLabel::Peak2Frequency => self.peak_eq_2.set_modulator(
+                SynthParameterLabel::PeakFrequency,
+                init,
+                modulator.clone(),
+            ),
+            SynthParameterLabel::Peak2Gain => {
+                self.peak_eq_2
+                    .set_modulator(SynthParameterLabel::PeakGain, init, modulator.clone())
+            }
+            SynthParameterLabel::Peak2Bandwidth => self.peak_eq_2.set_modulator(
+                SynthParameterLabel::PeakBandwidth,
+                init,
+                modulator.clone(),
+            ),
+            _ => {}
+        }
+
         self.lpf.set_modulator(par, init, modulator.clone());
         self.envelope.set_modulator(par, init, modulator.clone());
         self.balance.set_modulator(par, init, modulator);
@@ -82,7 +124,29 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
     fn set_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {
         self.sampler.set_parameter(par, val);
         self.hpf.set_parameter(par, val);
-        self.peak_eq.set_parameter(par, val);
+
+        match par {
+            SynthParameterLabel::Peak1Frequency => self
+                .peak_eq_1
+                .set_parameter(SynthParameterLabel::PeakFrequency, val),
+            SynthParameterLabel::Peak1Gain => self
+                .peak_eq_1
+                .set_parameter(SynthParameterLabel::PeakGain, val),
+            SynthParameterLabel::Peak1Bandwidth => self
+                .peak_eq_1
+                .set_parameter(SynthParameterLabel::PeakBandwidth, val),
+            SynthParameterLabel::Peak2Frequency => self
+                .peak_eq_2
+                .set_parameter(SynthParameterLabel::PeakFrequency, val),
+            SynthParameterLabel::Peak2Gain => self
+                .peak_eq_2
+                .set_parameter(SynthParameterLabel::PeakGain, val),
+            SynthParameterLabel::Peak2Bandwidth => self
+                .peak_eq_2
+                .set_parameter(SynthParameterLabel::PeakBandwidth, val),
+            _ => {}
+        }
+
         self.lpf.set_parameter(par, val);
         self.envelope.set_parameter(par, val);
         self.balance.set_parameter(par, val);
@@ -118,7 +182,10 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
         let mut out: [f32; BUFSIZE] = self.sampler.get_next_block(start_sample, sample_buffers);
         out = self.hpf.process_block(out, start_sample, sample_buffers);
         out = self
-            .peak_eq
+            .peak_eq_1
+            .process_block(out, start_sample, sample_buffers);
+        out = self
+            .peak_eq_2
             .process_block(out, start_sample, sample_buffers);
         out = self.lpf.process_block(out, start_sample, sample_buffers);
         out = self
