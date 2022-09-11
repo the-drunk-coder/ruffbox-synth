@@ -15,6 +15,24 @@ pub use crate::building_blocks::modulator::Modulator;
 
 #[repr(C)]
 #[derive(Clone, Copy)]
+pub enum OscillatorType {
+    Sine,
+    LFTri,
+    LFSquare,
+    LFSaw,
+    LFRsaw,
+    LFCub,
+    FMSquare,
+    FMSaw,
+    FMTri,
+    WTSaw,
+    Wavetable,
+    Wavematrix,
+}
+
+
+#[repr(C)]
+#[derive(Clone, Copy)]
 pub enum FilterType {
     Dummy,
     Lpf18,

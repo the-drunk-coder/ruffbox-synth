@@ -9,14 +9,18 @@ pub mod risset_bell;
 pub mod sine_synth;
 pub mod wavematrix_synth;
 pub mod wavetable_synth;
+pub mod single_oscillator_synth;
 
 pub mod fm_saw_synth;
 pub mod fm_square_synth;
 pub mod fm_tri_synth;
 pub mod wt_saw_synth;
 
+pub use crate::synths::n_channel::single_oscillator_synth::SingleOscillatorSynth;
+
 pub use crate::synths::n_channel::lf_cub_synth::LFCubSynth;
 pub use crate::synths::n_channel::lf_saw_synth::LFSawSynth;
+
 pub use crate::synths::n_channel::lf_square_synth::LFSquareSynth;
 pub use crate::synths::n_channel::lf_tri_synth::LFTriSynth;
 pub use crate::synths::n_channel::n_channel_sampler::NChannelSampler;
