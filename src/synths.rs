@@ -8,10 +8,6 @@ pub use crate::synths::n_channel::single_oscillator_synth::SingleOscillatorSynth
 
 // ambisonic synths
 pub use crate::synths::ambisonic::ambisonic_sampler_o1::AmbisonicSamplerO1;
-pub use crate::synths::ambisonic::lf_saw_synth::LFSawSynth as AmbisonicLFSawSynth;
-pub use crate::synths::ambisonic::lf_square_synth::LFSquareSynth as AmbisonicLFSquareSynth;
-pub use crate::synths::ambisonic::lf_tri_synth::LFTriSynth as AmbisonicLFTriSynth;
-pub use crate::synths::ambisonic::sine_synth::SineSynth as AmbisonicSineSynth;
 
 use crate::building_blocks::FilterType;
 

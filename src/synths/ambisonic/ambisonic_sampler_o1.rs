@@ -3,7 +3,7 @@ use crate::building_blocks::envelopes::*;
 use crate::building_blocks::filters::*;
 use crate::building_blocks::sampler::Sampler;
 use crate::building_blocks::{
-    Modulator, MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
+    FilterType, Modulator, MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
     ValueOrModulator,
 };
 
@@ -11,24 +11,51 @@ use crate::building_blocks::{
 pub struct AmbisonicSamplerO1<const BUFSIZE: usize> {
     sampler: Sampler<BUFSIZE>,
     envelope: LinearASREnvelope<BUFSIZE>,
-    hpf: BiquadHpf12dB<BUFSIZE>,
-    peak_eq: PeakEq<BUFSIZE>,
-    lpf: Lpf18<BUFSIZE>,
+    hpf: Box<dyn MonoEffect<BUFSIZE> + Send + Sync>,
+    peak_eq_1: Box<dyn MonoEffect<BUFSIZE> + Send + Sync>,
+    peak_eq_2: Box<dyn MonoEffect<BUFSIZE> + Send + Sync>,
+    lpf: Box<dyn MonoEffect<BUFSIZE> + Send + Sync>,
     encoder: EncoderO1<BUFSIZE>,
     reverb: f32,
     delay: f32,
 }
 
 impl<const BUFSIZE: usize> AmbisonicSamplerO1<BUFSIZE> {
-    pub fn with_bufnum_len(bufnum: usize, buflen: usize, sr: f32) -> AmbisonicSamplerO1<BUFSIZE> {
+    pub fn with_bufnum_len(
+        bufnum: usize,
+        buflen: usize,
+        hpf_type: FilterType,
+        pf1_type: FilterType,
+        pf2_type: FilterType,
+        lpf_type: FilterType,
+        sr: f32,
+    ) -> AmbisonicSamplerO1<BUFSIZE> {
         let dur = (buflen as f32 / sr) - 0.0002;
 
         AmbisonicSamplerO1 {
             sampler: Sampler::with_bufnum_len(bufnum, buflen, true),
             envelope: LinearASREnvelope::new(1.0, 0.0001, dur, 0.0001, sr),
-            hpf: BiquadHpf12dB::new(10.0, 0.01, sr),
-            peak_eq: PeakEq::new(700.0, 100.0, 0.0, sr),
-            lpf: Lpf18::new(19500.0, 0.01, 0.01, sr),
+            hpf: match hpf_type {
+                FilterType::BiquadHpf12dB => Box::new(BiquadHpf12dB::new(20.0, 0.3, sr)),
+                FilterType::BiquadHpf24dB => Box::new(BiquadHpf24dB::new(20.0, 0.3, sr)),
+                FilterType::Dummy => Box::new(DummyFilter::new()),
+                _ => Box::new(BiquadHpf12dB::new(20.0, 0.3, sr)),
+            },
+            peak_eq_1: match pf1_type {
+                FilterType::PeakEQ => Box::new(PeakEq::new(700.0, 100.0, 0.0, sr)),
+                _ => Box::new(DummyFilter::new()),
+            },
+            peak_eq_2: match pf2_type {
+                FilterType::PeakEQ => Box::new(PeakEq::new(1500.0, 100.0, 0.0, sr)),
+                _ => Box::new(DummyFilter::new()),
+            },
+            lpf: match lpf_type {
+                FilterType::BiquadLpf12dB => Box::new(BiquadLpf12dB::new(19000.0, 0.3, sr)),
+                FilterType::BiquadLpf24dB => Box::new(BiquadLpf24dB::new(19000.0, 0.3, sr)),
+                FilterType::Lpf18 => Box::new(Lpf18::new(19000.0, 0.1, 0.01, sr)),
+                FilterType::Dummy => Box::new(DummyFilter::new()),
+                _ => Box::new(Lpf18::new(19000.0, 0.1, 0.01, sr)),
+            },
             encoder: EncoderO1::new(),
             reverb: 0.0,
             delay: 0.0,
@@ -56,14 +83,16 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for AmbisonicSamplerO1<BUFSIZE> {
     ) {
         self.sampler.set_modulator(par, init, modulator.clone());
         self.hpf.set_modulator(par, init, modulator.clone());
-        self.peak_eq.set_modulator(par, init, modulator.clone());
+        self.peak_eq_1.set_modulator(par, init, modulator.clone());
+        self.peak_eq_2.set_modulator(par, init, modulator.clone());
         self.lpf.set_modulator(par, init, modulator.clone());
         self.envelope.set_modulator(par, init, modulator);
     }
     fn set_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {
         self.sampler.set_parameter(par, val);
         self.hpf.set_parameter(par, val);
-        self.peak_eq.set_parameter(par, val);
+        self.peak_eq_1.set_parameter(par, val);
+        self.peak_eq_2.set_parameter(par, val);
         self.lpf.set_parameter(par, val);
         self.envelope.set_parameter(par, val);
         self.encoder.set_parameter(par, val);
@@ -99,7 +128,10 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for AmbisonicSamplerO1<BUFSIZE> {
         let mut out: [f32; BUFSIZE] = self.sampler.get_next_block(start_sample, sample_buffers);
         out = self.hpf.process_block(out, start_sample, sample_buffers);
         out = self
-            .peak_eq
+            .peak_eq_1
+            .process_block(out, start_sample, sample_buffers);
+        out = self
+            .peak_eq_1
             .process_block(out, start_sample, sample_buffers);
         out = self.lpf.process_block(out, start_sample, sample_buffers);
         out = self
