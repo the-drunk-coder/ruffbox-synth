@@ -30,7 +30,6 @@ pub enum OscillatorType {
     Wavematrix,
 }
 
-
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub enum FilterType {

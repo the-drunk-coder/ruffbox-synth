@@ -7,9 +7,9 @@ pub mod lf_tri_synth;
 pub mod n_channel_sampler;
 pub mod risset_bell;
 pub mod sine_synth;
+pub mod single_oscillator_synth;
 pub mod wavematrix_synth;
 pub mod wavetable_synth;
-pub mod single_oscillator_synth;
 
 pub mod fm_saw_synth;
 pub mod fm_square_synth;

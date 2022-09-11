@@ -12,6 +12,7 @@ pub use crate::synths::n_channel::lf_tri_synth::LFTriSynth;
 pub use crate::synths::n_channel::n_channel_sampler::NChannelSampler;
 pub use crate::synths::n_channel::risset_bell::RissetBell;
 pub use crate::synths::n_channel::sine_synth::SineSynth;
+pub use crate::synths::n_channel::single_oscillator_synth::SingleOscillatorSynth;
 pub use crate::synths::n_channel::wavematrix_synth::WavematrixSynth;
 pub use crate::synths::n_channel::wavetable_synth::WavetableSynth;
 pub use crate::synths::n_channel::wt_saw_synth::WTSawSynth;
@@ -30,17 +31,16 @@ pub enum SynthType {
     Sampler(FilterType, FilterType, FilterType, FilterType),
     LiveSampler(FilterType, FilterType, FilterType, FilterType),
     FrozenSampler(FilterType, FilterType, FilterType, FilterType),
-    SineOsc,
-    SineSynth,
-    LFCubSynth,
-    LFSawSynth,
-    FMSawSynth,
-    FMSquareSynth,
-    FMTriSynth,
-    LFSquareSynth,
-    LFTriangleSynth,
+    SineSynth(FilterType, FilterType),
+    LFCubSynth(FilterType, FilterType),
+    LFSawSynth(FilterType, FilterType),
+    FMSawSynth(FilterType, FilterType),
+    FMSquareSynth(FilterType, FilterType),
+    FMTriSynth(FilterType, FilterType),
+    LFSquareSynth(FilterType, FilterType),
+    LFTriangleSynth(FilterType, FilterType),
     RissetBell,
-    Wavetable,
-    Wavematrix,
-    WTSawSynth,
+    Wavetable(FilterType, FilterType),
+    Wavematrix(FilterType, FilterType),
+    WTSawSynth(FilterType, FilterType),
 }
