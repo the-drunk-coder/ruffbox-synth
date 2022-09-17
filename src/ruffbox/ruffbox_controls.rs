@@ -6,9 +6,7 @@ use rubato::{FftFixedIn, Resampler};
 use crossbeam::atomic::AtomicCell;
 use dashmap::DashMap;
 
-use crate::building_blocks::{
-    resolve_parameter_value, OscillatorType, SynthParameterLabel, SynthParameterValue,
-};
+use crate::building_blocks::{resolve_parameter_value, SynthParameterLabel, SynthParameterValue};
 use crate::ruffbox::{ControlMessage, ScheduledEvent};
 use crate::synths::*;
 
@@ -91,19 +89,10 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
         Some(PreparedInstance {
             sr: self.samplerate,
             ev: match src_type {
-                SynthType::SineSynth(lp_type, hp_type) => ScheduledEvent::new(
+                SynthType::SingleOscillator(osc_type, lp_type, hp_type) => ScheduledEvent::new(
                     timestamp,
                     Box::new(SingleOscillatorSynth::new(
-                        OscillatorType::Sine,
-                        lp_type,
-                        hp_type,
-                        self.samplerate,
-                    )),
-                ),
-                SynthType::LFTriangleSynth(lp_type, hp_type) => ScheduledEvent::new(
-                    timestamp,
-                    Box::new(SingleOscillatorSynth::new(
-                        OscillatorType::LFTri,
+                        osc_type,
                         lp_type,
                         hp_type,
                         self.samplerate,
@@ -166,87 +155,6 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
                         )),
                     )
                 }
-                SynthType::LFSawSynth(lp_type, hp_type) => ScheduledEvent::new(
-                    timestamp,
-                    Box::new(SingleOscillatorSynth::new(
-                        OscillatorType::LFSaw,
-                        lp_type,
-                        hp_type,
-                        self.samplerate,
-                    )),
-                ),
-                SynthType::FMSawSynth(lp_type, hp_type) => ScheduledEvent::new(
-                    timestamp,
-                    Box::new(SingleOscillatorSynth::new(
-                        OscillatorType::FMSaw,
-                        lp_type,
-                        hp_type,
-                        self.samplerate,
-                    )),
-                ),
-                SynthType::FMSquareSynth(lp_type, hp_type) => ScheduledEvent::new(
-                    timestamp,
-                    Box::new(SingleOscillatorSynth::new(
-                        OscillatorType::FMSquare,
-                        lp_type,
-                        hp_type,
-                        self.samplerate,
-                    )),
-                ),
-                SynthType::FMTriSynth(lp_type, hp_type) => ScheduledEvent::new(
-                    timestamp,
-                    Box::new(SingleOscillatorSynth::new(
-                        OscillatorType::FMTri,
-                        lp_type,
-                        hp_type,
-                        self.samplerate,
-                    )),
-                ),
-                SynthType::WTSawSynth(lp_type, hp_type) => ScheduledEvent::new(
-                    timestamp,
-                    Box::new(SingleOscillatorSynth::new(
-                        OscillatorType::WTSaw,
-                        lp_type,
-                        hp_type,
-                        self.samplerate,
-                    )),
-                ),
-                SynthType::LFSquareSynth(lp_type, hp_type) => ScheduledEvent::new(
-                    timestamp,
-                    Box::new(SingleOscillatorSynth::new(
-                        OscillatorType::LFSquare,
-                        lp_type,
-                        hp_type,
-                        self.samplerate,
-                    )),
-                ),
-                SynthType::LFCubSynth(lp_type, hp_type) => ScheduledEvent::new(
-                    timestamp,
-                    Box::new(SingleOscillatorSynth::new(
-                        OscillatorType::LFCub,
-                        lp_type,
-                        hp_type,
-                        self.samplerate,
-                    )),
-                ),
-                SynthType::Wavetable(lp_type, hp_type) => ScheduledEvent::new(
-                    timestamp,
-                    Box::new(SingleOscillatorSynth::new(
-                        OscillatorType::Wavetable,
-                        lp_type,
-                        hp_type,
-                        self.samplerate,
-                    )),
-                ),
-                SynthType::Wavematrix(lp_type, hp_type) => ScheduledEvent::new(
-                    timestamp,
-                    Box::new(SingleOscillatorSynth::new(
-                        OscillatorType::Wavematrix,
-                        lp_type,
-                        hp_type,
-                        self.samplerate,
-                    )),
-                ),
                 _ => {
                     return None;
                 } // jump out
