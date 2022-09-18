@@ -92,34 +92,52 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for PeakEq<BUFSIZE> {
         init: f32,
         modulator: Modulator<BUFSIZE>,
     ) {
+        let mut update = false;
         match par {
             SynthParameterLabel::PeakFrequency => {
                 self.center = init;
                 self.center_mod = Some(modulator);
+                update = true;
             }
             SynthParameterLabel::PeakGain => {
                 self.gain = init;
                 self.gain_mod = Some(modulator);
+                update = true;
             }
             SynthParameterLabel::PeakBandwidth => {
                 self.bw = init;
-                self.bw_mod = Some(modulator)
+                self.bw_mod = Some(modulator);
+                update = true;
             }
             _ => {}
         }
-        self.update_internals(self.center, self.bw, self.gain);
+        if update {
+            self.update_internals(self.center, self.bw, self.gain);
+        }
     }
 
     // some parameter limits might be nice ...
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
+        let mut update = true;
         if let SynthParameterValue::ScalarF32(val) = value {
             match par {
-                SynthParameterLabel::PeakFrequency => self.center = *val,
-                SynthParameterLabel::PeakGain => self.gain = *val,
-                SynthParameterLabel::PeakBandwidth => self.bw = *val,
+                SynthParameterLabel::PeakFrequency => {
+                    self.center = *val;
+                    update = true;
+                }
+                SynthParameterLabel::PeakGain => {
+                    self.gain = *val;
+                    update = true;
+                }
+                SynthParameterLabel::PeakBandwidth => {
+                    self.bw = *val;
+                    update = true;
+                }
                 _ => (),
             };
-            self.update_internals(self.center, self.bw, self.gain);
+            if update {
+                self.update_internals(self.center, self.bw, self.gain);
+            }
         }
     }
 

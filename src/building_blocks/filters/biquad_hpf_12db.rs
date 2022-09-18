@@ -69,39 +69,54 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for BiquadHpf12dB<BUFSIZE> {
         init: f32,
         modulator: Modulator<BUFSIZE>,
     ) {
+        let mut update = false;
         match par {
             SynthParameterLabel::HighpassCutoffFrequency => {
                 self.cutoff = init;
                 self.cutoff_mod = Some(modulator);
+                update = true;
             }
             SynthParameterLabel::HighpassQFactor => {
                 self.q = init;
                 self.q_mod = Some(modulator);
+                update = true;
             }
             _ => {}
         }
 
-        BiquadHpf12dB::<BUFSIZE>::generate_coefs(
-            &mut self.coefs,
-            self.cutoff,
-            self.q,
-            self.samplerate,
-        );
-    }
-    // some parameter limits might be nice ...
-    fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
-        if let SynthParameterValue::ScalarF32(val) = value {
-            match par {
-                SynthParameterLabel::HighpassCutoffFrequency => self.cutoff = *val,
-                SynthParameterLabel::HighpassQFactor => self.q = *val,
-                _ => (),
-            };
+        if update {
             BiquadHpf12dB::<BUFSIZE>::generate_coefs(
                 &mut self.coefs,
                 self.cutoff,
                 self.q,
                 self.samplerate,
             );
+        }
+    }
+    // some parameter limits might be nice ...
+    fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
+        let mut update = false;
+        if let SynthParameterValue::ScalarF32(val) = value {
+            match par {
+                SynthParameterLabel::HighpassCutoffFrequency => {
+                    self.cutoff = *val;
+                    update = true;
+                }
+                SynthParameterLabel::HighpassQFactor => {
+                    self.q = *val;
+                    update = true;
+                }
+                _ => (),
+            };
+
+            if update {
+                BiquadHpf12dB::<BUFSIZE>::generate_coefs(
+                    &mut self.coefs,
+                    self.cutoff,
+                    self.q,
+                    self.samplerate,
+                );
+            }
         }
     }
 

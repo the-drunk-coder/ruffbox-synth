@@ -243,7 +243,6 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for ButterworthHpf<BUFSIZE> {
             ValueOrModulator::Val(val) => self.set_parameter(par, &val),
             ValueOrModulator::Mod(init, modulator) => self.set_modulator(par, init, modulator),
         }
-        self.regenerate_coefs(self.cutoff);
     }
 
     fn set_modulator(
@@ -256,6 +255,7 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for ButterworthHpf<BUFSIZE> {
             SynthParameterLabel::HighpassCutoffFrequency => {
                 self.cutoff = init;
                 self.cutoff_mod = Some(modulator);
+                self.regenerate_coefs(self.cutoff);
             }
             _ => {}
         }
@@ -264,7 +264,10 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for ButterworthHpf<BUFSIZE> {
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
         if let SynthParameterValue::ScalarF32(val) = value {
             match par {
-                SynthParameterLabel::HighpassCutoffFrequency => self.cutoff = *val,
+                SynthParameterLabel::HighpassCutoffFrequency => {
+                    self.cutoff = *val;
+                    self.regenerate_coefs(self.cutoff);
+                }
                 _ => (),
             };
         }

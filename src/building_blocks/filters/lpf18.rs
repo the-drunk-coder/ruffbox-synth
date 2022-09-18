@@ -112,34 +112,51 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for Lpf18<BUFSIZE> {
         init: f32,
         modulator: Modulator<BUFSIZE>,
     ) {
+        let mut update = false;
         match par {
             SynthParameterLabel::LowpassCutoffFrequency => {
                 self.cutoff = init;
                 self.cutoff_mod = Some(modulator);
+                update = true;
             }
             SynthParameterLabel::LowpassQFactor => {
                 self.res = init;
                 self.res_mod = Some(modulator);
+                update = true;
             }
             SynthParameterLabel::LowpassFilterDistortion => {
                 self.dist = init;
-                self.dist_mod = Some(modulator)
+                self.dist_mod = Some(modulator);
+                update = true;
             }
             _ => {}
         }
-        self.update_internals(self.cutoff, self.res, self.dist);
+        if update {
+            self.update_internals(self.cutoff, self.res, self.dist);
+        }
     }
     // some parameter limits might be nice ...
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
+        let mut update = false;
         if let SynthParameterValue::ScalarF32(val) = value {
             match par {
-                SynthParameterLabel::LowpassCutoffFrequency => self.cutoff = *val,
-                SynthParameterLabel::LowpassQFactor => self.res = *val,
-                SynthParameterLabel::LowpassFilterDistortion => self.dist = *val,
+                SynthParameterLabel::LowpassCutoffFrequency => {
+                    self.cutoff = *val;
+                    update = true;
+                }
+                SynthParameterLabel::LowpassQFactor => {
+                    self.res = *val;
+                }
+                SynthParameterLabel::LowpassFilterDistortion => {
+                    self.dist = *val;
+                    update = true
+                }
                 _ => (),
             };
 
-            self.update_internals(self.cutoff, self.res, self.dist);
+            if update {
+                self.update_internals(self.cutoff, self.res, self.dist);
+            }
         }
     }
 
