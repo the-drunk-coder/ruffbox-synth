@@ -3,12 +3,12 @@ use crate::building_blocks::{
 };
 
 use crate::building_blocks::filters::sos::*;
-use crate::building_blocks::filters::BiquadLpf12dB;
+use crate::building_blocks::filters::BiquadHpf12dB;
 
 /**
  * Biquad LowPass Filter, 12dB/oct
  */
-pub struct Butterworth4Lpf<const BUFSIZE: usize> {
+pub struct Butterworth4Hpf<const BUFSIZE: usize> {
     // user parameters
     cutoff: f32,
 
@@ -23,14 +23,14 @@ pub struct Butterworth4Lpf<const BUFSIZE: usize> {
     cutoff_mod: Option<Modulator<BUFSIZE>>,
 }
 
-impl<const BUFSIZE: usize> Butterworth4Lpf<BUFSIZE> {
+impl<const BUFSIZE: usize> Butterworth4Hpf<BUFSIZE> {
     pub fn new(freq: f32, sr: f32) -> Self {
         let mut coefs1: SOSCoefs = SOSCoefs::default();
         let mut coefs2: SOSCoefs = SOSCoefs::default();
-        BiquadLpf12dB::<BUFSIZE>::generate_coefs(&mut coefs1, freq, 0.924, sr);
-        BiquadLpf12dB::<BUFSIZE>::generate_coefs(&mut coefs2, freq, 0.383, sr);
+        BiquadHpf12dB::<BUFSIZE>::generate_coefs(&mut coefs1, freq, 0.924, sr);
+        BiquadHpf12dB::<BUFSIZE>::generate_coefs(&mut coefs2, freq, 0.383, sr);
 
-        Butterworth4Lpf {
+        Butterworth4Hpf {
             cutoff: freq,
             coefs1,
             coefs2,
@@ -43,7 +43,7 @@ impl<const BUFSIZE: usize> Butterworth4Lpf<BUFSIZE> {
 }
 
 #[allow(clippy::single_match)]
-impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for Butterworth4Lpf<BUFSIZE> {
+impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for Butterworth4Hpf<BUFSIZE> {
     fn set_param_or_modulator(
         &mut self,
         par: SynthParameterLabel,
@@ -68,13 +68,13 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for Butterworth4Lpf<BUFSIZE> {
             }
             _ => {}
         }
-        BiquadLpf12dB::<BUFSIZE>::generate_coefs(
+        BiquadHpf12dB::<BUFSIZE>::generate_coefs(
             &mut self.coefs1,
             self.cutoff,
             0.924,
             self.samplerate,
         );
-        BiquadLpf12dB::<BUFSIZE>::generate_coefs(
+        BiquadHpf12dB::<BUFSIZE>::generate_coefs(
             &mut self.coefs2,
             self.cutoff,
             0.383,
@@ -88,13 +88,13 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for Butterworth4Lpf<BUFSIZE> {
                 SynthParameterLabel::LowpassCutoffFrequency => self.cutoff = *val,
                 _ => (),
             };
-            BiquadLpf12dB::<BUFSIZE>::generate_coefs(
+            BiquadHpf12dB::<BUFSIZE>::generate_coefs(
                 &mut self.coefs1,
                 self.cutoff,
                 0.924,
                 self.samplerate,
             );
-            BiquadLpf12dB::<BUFSIZE>::generate_coefs(
+            BiquadHpf12dB::<BUFSIZE>::generate_coefs(
                 &mut self.coefs2,
                 self.cutoff,
                 0.383,
@@ -125,13 +125,13 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for Butterworth4Lpf<BUFSIZE> {
             };
 
             for i in start_sample..BUFSIZE {
-                BiquadLpf12dB::<BUFSIZE>::generate_coefs(
+                BiquadHpf12dB::<BUFSIZE>::generate_coefs(
                     &mut self.coefs1,
                     cutoff_buf[i],
                     0.924,
                     self.samplerate,
                 );
-                BiquadLpf12dB::<BUFSIZE>::generate_coefs(
+                BiquadHpf12dB::<BUFSIZE>::generate_coefs(
                     &mut self.coefs2,
                     cutoff_buf[i],
                     0.383,
