@@ -21,8 +21,8 @@ pub struct SingleOscillatorSynthO1<const BUFSIZE: usize> {
 impl<const BUFSIZE: usize> SingleOscillatorSynthO1<BUFSIZE> {
     pub fn new(
         osc_type: OscillatorType,
-        lp_type: FilterType,
-        hp_type: FilterType,
+        lpf_type: FilterType,
+        hpf_type: FilterType,
         sr: f32,
     ) -> Self {
         SingleOscillatorSynthO1 {
@@ -40,20 +40,22 @@ impl<const BUFSIZE: usize> SingleOscillatorSynthO1<BUFSIZE> {
                 OscillatorType::Wavetable => Box::new(Wavetable::new(sr)),
                 OscillatorType::Wavematrix => Box::new(Wavematrix::new(sr)),
             },
-            lp_filter: match lp_type {
+            lp_filter: match lpf_type {
                 FilterType::Dummy => Box::new(DummyFilter::new()),
                 FilterType::Lpf18 => Box::new(Lpf18::new(1500.0, 0.5, 0.1, sr)),
                 FilterType::BiquadLpf12dB => Box::new(BiquadLpf12dB::new(1500.0, 0.5, sr)),
                 FilterType::BiquadLpf24dB => Box::new(BiquadLpf24dB::new(1500.0, 0.5, sr)),
+                FilterType::ButterworthLpf(o) => Box::new(ButterworthLpf::new(1500.0, o, sr)),
                 FilterType::PeakEQ => Box::new(PeakEq::new(1500.0, 100.0, 0.0, sr)),
                 _ => Box::new(Lpf18::new(1500.0, 0.5, 0.1, sr)),
             },
-            hp_filter: match hp_type {
+            hp_filter: match hpf_type {
                 FilterType::Dummy => Box::new(DummyFilter::new()),
-                FilterType::BiquadLpf12dB => Box::new(BiquadLpf12dB::new(1500.0, 0.5, sr)),
-                FilterType::BiquadLpf24dB => Box::new(BiquadLpf24dB::new(1500.0, 0.5, sr)),
-                FilterType::PeakEQ => Box::new(PeakEq::new(1500.0, 100.0, 0.0, sr)),
-                _ => Box::new(BiquadHpf12dB::new(1500.0, 0.5, sr)),
+                FilterType::BiquadHpf12dB => Box::new(BiquadLpf12dB::new(20.0, 0.5, sr)),
+                FilterType::BiquadHpf24dB => Box::new(BiquadLpf24dB::new(20.0, 0.5, sr)),
+                FilterType::ButterworthHpf(o) => Box::new(ButterworthHpf::new(20.0, o, sr)),
+                FilterType::PeakEQ => Box::new(PeakEq::new(20.0, 100.0, 0.0, sr)),
+                _ => Box::new(BiquadHpf12dB::new(20.0, 0.5, sr)),
             },
             envelope: LinearASREnvelope::new(0.3, 0.05, 0.1, 0.05, sr),
             encoder: EncoderO1::new(),
