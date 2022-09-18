@@ -38,6 +38,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> NChannelSampler<BUFSIZE, NCHAN> {
             hpf: match hpf_type {
                 FilterType::BiquadHpf12dB => Box::new(BiquadHpf12dB::new(20.0, 0.3, sr)),
                 FilterType::BiquadHpf24dB => Box::new(BiquadHpf24dB::new(20.0, 0.3, sr)),
+                FilterType::ButterworthHpf(order) => Box::new(ButterworthHpf::new(20.0, order, sr)),
                 FilterType::Dummy => Box::new(DummyFilter::new()),
                 _ => Box::new(BiquadHpf12dB::new(20.0, 0.3, sr)),
             },
@@ -52,6 +53,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> NChannelSampler<BUFSIZE, NCHAN> {
             lpf: match lpf_type {
                 FilterType::BiquadLpf12dB => Box::new(BiquadLpf12dB::new(19000.0, 0.3, sr)),
                 FilterType::BiquadLpf24dB => Box::new(BiquadLpf24dB::new(19000.0, 0.3, sr)),
+                FilterType::ButterworthLpf(order) => {
+                    Box::new(ButterworthLpf::new(19000.0, order, sr))
+                }
                 FilterType::Lpf18 => Box::new(Lpf18::new(19000.0, 0.1, 0.01, sr)),
                 FilterType::Dummy => Box::new(DummyFilter::new()),
                 _ => Box::new(Lpf18::new(19000.0, 0.1, 0.01, sr)),

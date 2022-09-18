@@ -39,8 +39,8 @@ pub enum FilterType {
     BiquadLpf12dB,
     BiquadHpf24dB,
     BiquadLpf24dB,
-    Butterworth4Lpf,
-    Butterworth4Hpf,
+    ButterworthLpf(usize),
+    ButterworthHpf(usize),
     PeakEQ,
 }
 
