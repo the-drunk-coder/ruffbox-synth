@@ -313,7 +313,7 @@ pub struct SegmentInfo {
 }
 
 /**
- * Multi-Point Envelope
+ * Multi-Point Modulator Envelope
  */
 #[derive(Clone)]
 pub struct MultiPointEnvelope<const BUFSIZE: usize> {

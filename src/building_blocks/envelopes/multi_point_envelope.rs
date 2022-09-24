@@ -1,0 +1,66 @@
+use crate::building_blocks::{
+    mod_env::{MultiPointEnvelope, SegmentInfo},
+    Modulator, MonoEffect, MonoSource, SynthParameterLabel, SynthParameterValue, ValueOrModulator,
+};
+
+/// more complex, configurable envelope
+#[derive(Clone)]
+pub struct MultiPointEffectEnvelope<const BUFSIZE: usize> {
+    inner_env: MultiPointEnvelope<BUFSIZE>,
+}
+
+impl<const BUFSIZE: usize> MultiPointEffectEnvelope<BUFSIZE> {
+    pub fn new(segment_infos: Vec<SegmentInfo>, loop_env: bool, samplerate: f32) -> Self {
+        MultiPointEffectEnvelope {
+            inner_env: MultiPointEnvelope::new(segment_infos, loop_env, samplerate),
+        }
+    }
+}
+
+impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for MultiPointEffectEnvelope<BUFSIZE> {
+    fn finish(&mut self) {
+        self.inner_env.finish();
+    }
+
+    fn is_finished(&self) -> bool {
+        self.inner_env.is_finished()
+    }
+
+    fn set_param_or_modulator(
+        &mut self,
+        par: SynthParameterLabel,
+        val_or_mod: ValueOrModulator<BUFSIZE>,
+    ) {
+        match val_or_mod {
+            ValueOrModulator::Val(val) => self.set_parameter(par, &val),
+            ValueOrModulator::Mod(init, modulator) => self.set_modulator(par, init, modulator),
+        }
+    }
+
+    fn set_modulator(
+        &mut self,
+        label: SynthParameterLabel,
+        init: f32,
+        modulator: Modulator<BUFSIZE>,
+    ) {
+        self.inner_env.set_modulator(label, init, modulator);
+    }
+
+    fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
+        self.inner_env.set_parameter(par, value);
+    }
+
+    fn process_block(
+        &mut self,
+        block: [f32; BUFSIZE],
+        start_sample: usize,
+        bufs: &[Vec<f32>],
+    ) -> [f32; BUFSIZE] {
+        let mut out: [f32; BUFSIZE] = [0.0; BUFSIZE];
+        let env = self.inner_env.get_next_block(start_sample, bufs);
+        for i in start_sample..BUFSIZE {
+            out[i] = block[i] * env[i];
+        }
+        out
+    }
+}
