@@ -1,8 +1,10 @@
 pub mod exp_perc_envelope;
 pub mod linear_asr_envelope;
+pub mod multi_point_envelope;
 
 pub use crate::building_blocks::envelopes::exp_perc_envelope::ExpPercEnvelope;
 pub use crate::building_blocks::envelopes::linear_asr_envelope::LinearASREnvelope;
+pub use crate::building_blocks::envelopes::multi_point_envelope::MultiPointEffectEnvelope;
 
 // TEST TEST TEST
 #[cfg(test)]

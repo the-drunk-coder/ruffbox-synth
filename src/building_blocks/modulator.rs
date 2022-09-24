@@ -1,7 +1,8 @@
 use crate::building_blocks::mod_env::*;
 use crate::building_blocks::oscillators::*;
 use crate::building_blocks::{
-    MonoSource, SynthParameterLabel, SynthParameterValue, ValOp, ValueOrModulator,
+    EnvelopeSegmentInfo, MonoSource, SynthParameterLabel, SynthParameterValue, ValOp,
+    ValueOrModulator,
 };
 
 /// modulate things ...
@@ -189,7 +190,7 @@ impl<const BUFSIZE: usize> Modulator<BUFSIZE> {
     /// init multi-point envelope modulator
     pub fn multi_point_envelope(
         op: ValOp,
-        segments: Vec<SegmentInfo>,
+        segments: Vec<EnvelopeSegmentInfo>,
         loop_env: bool,
         sr: f32,
     ) -> Modulator<BUFSIZE> {

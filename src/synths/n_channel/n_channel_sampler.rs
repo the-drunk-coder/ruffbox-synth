@@ -10,7 +10,7 @@ use crate::building_blocks::{
 /// a sampler with envelope etc.
 pub struct NChannelSampler<const BUFSIZE: usize, const NCHAN: usize> {
     sampler: Sampler<BUFSIZE>,
-    envelope: LinearASREnvelope<BUFSIZE>,
+    envelope: Box<dyn MonoEffect<BUFSIZE> + Send + Sync>,
     hpf: Box<dyn MonoEffect<BUFSIZE> + Send + Sync>,
     peak_eq_1: Box<dyn MonoEffect<BUFSIZE> + Send + Sync>,
     peak_eq_2: Box<dyn MonoEffect<BUFSIZE> + Send + Sync>,
@@ -34,7 +34,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> NChannelSampler<BUFSIZE, NCHAN> {
 
         NChannelSampler {
             sampler: Sampler::with_bufnum_len(bufnum, buflen, true),
-            envelope: LinearASREnvelope::new(1.0, 0.0001, dur, 0.0001, sr),
+            envelope: Box::new(LinearASREnvelope::new(1.0, 0.0001, dur, 0.0001, sr)),
             hpf: match hpf_type {
                 FilterType::BiquadHpf12dB => Box::new(BiquadHpf12dB::new(20.0, 0.3, sr)),
                 FilterType::BiquadHpf24dB => Box::new(BiquadHpf24dB::new(20.0, 0.3, sr)),

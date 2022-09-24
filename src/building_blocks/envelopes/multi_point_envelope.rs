@@ -1,6 +1,6 @@
 use crate::building_blocks::{
-    mod_env::{MultiPointEnvelope, SegmentInfo},
-    Modulator, MonoEffect, MonoSource, SynthParameterLabel, SynthParameterValue, ValueOrModulator,
+    mod_env::MultiPointEnvelope, EnvelopeSegmentInfo, Modulator, MonoEffect, MonoSource,
+    SynthParameterLabel, SynthParameterValue, ValueOrModulator,
 };
 
 /// more complex, configurable envelope
@@ -10,7 +10,7 @@ pub struct MultiPointEffectEnvelope<const BUFSIZE: usize> {
 }
 
 impl<const BUFSIZE: usize> MultiPointEffectEnvelope<BUFSIZE> {
-    pub fn new(segment_infos: Vec<SegmentInfo>, loop_env: bool, samplerate: f32) -> Self {
+    pub fn new(segment_infos: Vec<EnvelopeSegmentInfo>, loop_env: bool, samplerate: f32) -> Self {
         MultiPointEffectEnvelope {
             inner_env: MultiPointEnvelope::new(segment_infos, loop_env, samplerate),
         }

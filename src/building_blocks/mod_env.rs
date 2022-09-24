@@ -1,5 +1,6 @@
 use crate::building_blocks::{
-    Modulator, MonoSource, SynthParameterLabel, SynthParameterValue, SynthState, ValueOrModulator,
+    EnvelopeSegmentInfo, EnvelopeSegmentType, Modulator, MonoSource, SynthParameterLabel,
+    SynthParameterValue, SynthState, ValueOrModulator,
 };
 
 /**
@@ -296,22 +297,6 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for ConstantMod<BUFSIZE> {
     }
 }
 
-#[derive(Clone, Copy)]
-pub enum SegmentType {
-    Lin,
-    Log,
-    Exp,
-    Constant,
-}
-
-#[derive(Clone, Copy)]
-pub struct SegmentInfo {
-    pub from: f32,
-    pub to: f32,
-    pub time: f32,
-    pub segment_type: SegmentType,
-}
-
 /**
  * Multi-Point Modulator Envelope
  */
@@ -326,23 +311,23 @@ pub struct MultiPointEnvelope<const BUFSIZE: usize> {
 }
 
 impl<const BUFSIZE: usize> MultiPointEnvelope<BUFSIZE> {
-    pub fn new(segment_infos: Vec<SegmentInfo>, loop_env: bool, samplerate: f32) -> Self {
+    pub fn new(segment_infos: Vec<EnvelopeSegmentInfo>, loop_env: bool, samplerate: f32) -> Self {
         let mut segments: Vec<Box<dyn MonoSource<BUFSIZE> + Sync + Send>> = Vec::new();
         let mut segment_samples = Vec::new();
 
         for info in segment_infos.iter() {
             segment_samples.push((info.time * samplerate).round() as usize);
             segments.push(match info.segment_type {
-                SegmentType::Lin => {
+                EnvelopeSegmentType::Lin => {
                     Box::new(LinearRamp::new(info.from, info.to, info.time, samplerate))
                 }
-                SegmentType::Log => {
+                EnvelopeSegmentType::Log => {
                     Box::new(LogRamp::new(info.from, info.to, info.time, samplerate))
                 }
-                SegmentType::Exp => {
+                EnvelopeSegmentType::Exp => {
                     Box::new(ExpRamp::new(info.from, info.to, info.time, samplerate))
                 }
-                SegmentType::Constant => Box::new(ConstantMod::new(info.to)),
+                EnvelopeSegmentType::Constant => Box::new(ConstantMod::new(info.to)),
             });
         }
 
@@ -524,23 +509,23 @@ mod tests {
     #[test]
     fn test_multi_point() {
         let segments = vec![
-            SegmentInfo {
+            EnvelopeSegmentInfo {
                 from: 0.0,
                 to: 200.0,
                 time: 0.003,
-                segment_type: SegmentType::Lin,
+                segment_type: EnvelopeSegmentType::Lin,
             },
-            SegmentInfo {
+            EnvelopeSegmentInfo {
                 from: 200.0,
                 to: 100.0,
                 time: 0.05,
-                segment_type: SegmentType::Exp,
+                segment_type: EnvelopeSegmentType::Exp,
             },
-            SegmentInfo {
+            EnvelopeSegmentInfo {
                 from: 100.0,
                 to: 0.0,
                 time: 0.03,
-                segment_type: SegmentType::Log,
+                segment_type: EnvelopeSegmentType::Log,
             },
         ];
 

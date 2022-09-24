@@ -113,6 +113,22 @@ pub enum ValOp {
     Divide,
 }
 
+#[derive(Clone, Copy)]
+pub enum EnvelopeSegmentType {
+    Lin,
+    Log,
+    Exp,
+    Constant,
+}
+
+#[derive(Clone, Copy)]
+pub struct EnvelopeSegmentInfo {
+    pub from: f32,
+    pub to: f32,
+    pub time: f32,
+    pub segment_type: EnvelopeSegmentType,
+}
+
 // from an outside perspective, there can be modulator-valued parameters (like, an lfo-valued parameter)
 #[derive(Clone)]
 #[rustfmt::skip]
@@ -132,7 +148,7 @@ pub enum SynthParameterValue {
     LinRamp(f32, f32, f32, ValOp), // linear ramp - from, to, time
     LogRamp(f32, f32, f32, ValOp), // logarithmic ramp - from, to, time
     ExpRamp(f32, f32, f32, ValOp), // exponential ramp - from, to, time
-    MultiPointEnvelope(Vec<mod_env::SegmentInfo>, bool, ValOp), // segments, loop ...
+    MultiPointEnvelope(Vec<EnvelopeSegmentInfo>, bool, ValOp), // segments, loop ...
 }
 
 // but in practice, it's not that easy ...
