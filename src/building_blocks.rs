@@ -13,6 +13,7 @@ pub mod sampler;
 
 pub use crate::building_blocks::modulator::Modulator;
 
+/// currently available oscillator types
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub enum OscillatorType {
@@ -30,6 +31,8 @@ pub enum OscillatorType {
     Wavematrix,
 }
 
+/// the available filter types.
+/// dummy filter just passes the block through unprocessed.
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub enum FilterType {
@@ -44,25 +47,31 @@ pub enum FilterType {
     PeakEQ,
 }
 
+/// used to determine whether something has finished
+/// especially envelopes (oscillators never finish)
 #[derive(Clone, Copy)]
 pub enum SynthState {
     Fresh, // Fresh Synths for everyone !!!
     Finished,
 }
 
-/// a collection of common parameters
+/// a collection of common parameters that should be enough to
+/// control just about anything
 #[allow(dead_code)]
 #[repr(C)]
 #[derive(Hash, Eq, PartialEq, Clone, Copy, Debug)]
 pub enum SynthParameterLabel {
-    Attack,                   // 0
-    Decay,                    // 1
-    DelayDampeningFrequency,  // 2
-    DelayFeedback,            // 3
-    DelayMix,                 // 4
-    DelayTime,                // 5
-    DelayRate,                // 6
-    Duration,                 // 7
+    Attack, // 0
+    AttackType,
+    Decay, // 1
+    DecayType,
+    DelayDampeningFrequency, // 2
+    DelayFeedback,           // 3
+    DelayMix,                // 4
+    DelayTime,               // 5
+    DelayRate,               // 6
+    Duration,                // 7
+    OuterEnvelope,
     PitchFrequency,           // 8
     PitchNote,                // 9
     HighpassCutoffFrequency,  // 10
@@ -90,20 +99,22 @@ pub enum SynthParameterLabel {
     PlaybackStart,            // 24
     PlaybackLoop,             // 25
     Release,                  // 26
-    ReverbDampening,          // 27
-    ReverbMix,                // 28
-    ReverbRoomsize,           // 29
-    SampleBufferNumber,       // 30
-    Samplerate,               // 31
-    ChannelPosition,          // 32
-    AmbisonicAzimuth,         // 33
-    AmbisonicElevation,       // 34
-    Sustain,                  // 35
-    Wavetable,                // 36
-    Wavematrix,               // 37
-    WavematrixTableIndex,     // 38
+    ReleaseType,
+    ReverbDampening,      // 27
+    ReverbMix,            // 28
+    ReverbRoomsize,       // 29
+    SampleBufferNumber,   // 30
+    Samplerate,           // 31
+    ChannelPosition,      // 32
+    AmbisonicAzimuth,     // 33
+    AmbisonicElevation,   // 34
+    Sustain,              // 35
+    Wavetable,            // 36
+    Wavematrix,           // 37
+    WavematrixTableIndex, // 38
 }
 
+/// the value operation is defined on parameters
 #[derive(Clone, Copy)]
 pub enum ValOp {
     Replace,
@@ -113,6 +124,7 @@ pub enum ValOp {
     Divide,
 }
 
+/// in an envelope, each segment can have a certain curve shape
 #[derive(Clone, Copy)]
 pub enum EnvelopeSegmentType {
     Lin,
@@ -121,12 +133,25 @@ pub enum EnvelopeSegmentType {
     Constant,
 }
 
+/// defines an envelope segment
 #[derive(Clone, Copy)]
 pub struct EnvelopeSegmentInfo {
     pub from: f32,
     pub to: f32,
     pub time: f32,
     pub segment_type: EnvelopeSegmentType,
+}
+
+/// common envelope types
+/// exp_perc isn't used here so far ...
+/// segment characteristics can be defined per segment
+/// using the structs above
+#[derive(Clone, Copy)]
+pub enum EnvelopeType {
+    ADSR,
+    ASR,
+    ExpPerc, // still a separate class so far ..
+    Custom,  // multi-point
 }
 
 // from an outside perspective, there can be modulator-valued parameters (like, an lfo-valued parameter)
@@ -137,7 +162,7 @@ pub enum SynthParameterValue {
     ScalarU32(u32),
     ScalarUsize(usize),
     VecF32(Vec<f32>),
-    FilterType(FilterType), // these aren't really treated as parameters so far, but as a pragmatic solition that's ok for now ...
+    FilterType(FilterType), // these aren't really treated as parameters so far, but as a pragmatic solition that's ok for now ...    
     MatrixF32((usize, usize), Vec<Vec<f32>>), // dimension, content
     // lfo param order - init val, freq, phase, amp, add, operation (mul, add, sub, div, replace)
     Lfo(f32, Box<SynthParameterValue>, f32, Box<SynthParameterValue>, f32, ValOp), // sine lfo

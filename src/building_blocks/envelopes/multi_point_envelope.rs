@@ -47,6 +47,8 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for MultiPointEffectEnvelope<BUFS
     }
 
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
+        // TODO: recalc envelope segments from attack, decay, sustain, release etc ...
+
         self.inner_env.set_parameter(par, value);
     }
 
