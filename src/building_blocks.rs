@@ -136,9 +136,9 @@ pub enum EnvelopeSegmentType {
 /// defines an envelope segment
 #[derive(Clone, Copy)]
 pub struct EnvelopeSegmentInfo {
-    pub from: f32,
-    pub to: f32,
-    pub time: f32,
+    pub from: f32, // level
+    pub to: f32, // level
+    pub time: f32, // transition time 
     pub segment_type: EnvelopeSegmentType,
 }
 
@@ -162,7 +162,7 @@ pub enum SynthParameterValue {
     ScalarU32(u32),
     ScalarUsize(usize),
     VecF32(Vec<f32>),
-    FilterType(FilterType), // these aren't really treated as parameters so far, but as a pragmatic solition that's ok for now ...    
+    FilterType(FilterType), // these aren't really treated as parameters so far, but as a pragmatic solution that's ok for now ...    
     MatrixF32((usize, usize), Vec<Vec<f32>>), // dimension, content
     // lfo param order - init val, freq, phase, amp, add, operation (mul, add, sub, div, replace)
     Lfo(f32, Box<SynthParameterValue>, f32, Box<SynthParameterValue>, f32, ValOp), // sine lfo
