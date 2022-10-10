@@ -308,6 +308,7 @@ pub struct MultiPointEnvelope<const BUFSIZE: usize> {
     sample_count: usize,
     loop_env: bool,
     state: SynthState,
+    samplerate: f32,
 }
 
 impl<const BUFSIZE: usize> MultiPointEnvelope<BUFSIZE> {
@@ -338,6 +339,19 @@ impl<const BUFSIZE: usize> MultiPointEnvelope<BUFSIZE> {
             sample_count: 0,
             loop_env,
             state: SynthState::Fresh,
+            samplerate,
+        }
+    }
+
+    pub fn empty(samplerate: f32) -> Self {
+        MultiPointEnvelope {
+            segments: Vec::new(),
+            segment_samples: Vec::new(),
+            segment_idx: 0,
+            sample_count: 0,
+            loop_env: false,
+            state: SynthState::Fresh,
+            samplerate,
         }
     }
 }
@@ -372,7 +386,38 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for MultiPointEnvelope<BUFSIZE> {
 
     fn set_modulator(&mut self, _: SynthParameterLabel, _: f32, _: Modulator<BUFSIZE>) {}
 
-    fn set_parameter(&mut self, _: SynthParameterLabel, _: &SynthParameterValue) {}
+    fn set_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {
+        // TODO: recalc envelope segments from attack, decay, sustain, release etc ...
+        if let SynthParameterLabel::Envelope = par {
+            if let SynthParameterValue::MultiPointEnvelope(segment_infos, loop_env, _) = val {
+                let mut segments: Vec<Box<dyn MonoSource<BUFSIZE> + Sync + Send>> = Vec::new();
+                let mut segment_samples = Vec::new();
+
+                for info in segment_infos.iter() {
+                    segment_samples.push((info.time * self.samplerate).round() as usize);
+                    segments.push(match info.segment_type {
+                        EnvelopeSegmentType::Lin => Box::new(LinearRamp::new(
+                            info.from,
+                            info.to,
+                            info.time,
+                            self.samplerate,
+                        )),
+                        EnvelopeSegmentType::Log => {
+                            Box::new(LogRamp::new(info.from, info.to, info.time, self.samplerate))
+                        }
+                        EnvelopeSegmentType::Exp => {
+                            Box::new(ExpRamp::new(info.from, info.to, info.time, self.samplerate))
+                        }
+                        EnvelopeSegmentType::Constant => Box::new(ConstantMod::new(info.to)),
+                    });
+                }
+
+                self.segments = segments;
+                self.segment_samples = segment_samples;
+                self.loop_env = *loop_env;
+            }
+        }
+    }
 
     fn get_next_block(&mut self, start_sample: usize, bufs: &[Vec<f32>]) -> [f32; BUFSIZE] {
         // this should also avoid problems with "empty" multi-point envelopes ...

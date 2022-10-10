@@ -15,6 +15,11 @@ impl<const BUFSIZE: usize> MultiPointEffectEnvelope<BUFSIZE> {
             inner_env: MultiPointEnvelope::new(segment_infos, loop_env, samplerate),
         }
     }
+    pub fn empty(samplerate: f32) -> Self {
+        MultiPointEffectEnvelope {
+            inner_env: MultiPointEnvelope::empty(samplerate),
+        }
+    }
 }
 
 impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for MultiPointEffectEnvelope<BUFSIZE> {
@@ -46,9 +51,9 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for MultiPointEffectEnvelope<BUFS
         self.inner_env.set_modulator(label, init, modulator);
     }
 
+    /// multi-point envelopes can only be set as a whole,
+    /// the parameter is just passed on to the inner envelope ...
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
-        // TODO: recalc envelope segments from attack, decay, sustain, release etc ...
-
         self.inner_env.set_parameter(par, value);
     }
 

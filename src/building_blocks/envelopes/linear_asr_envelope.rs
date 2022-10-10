@@ -68,30 +68,58 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for LinearASREnvelope<BUFSIZE> {
 
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
         let mut update_internals = false;
-        if let SynthParameterValue::ScalarF32(val) = value {
-            match par {
-                SynthParameterLabel::Attack => {
-                    self.atk = *val;
-                    update_internals = true;
+
+        match value {
+            SynthParameterValue::ScalarF32(val) => {
+                match par {
+                    // leave those here for legacy reasons ...
+                    SynthParameterLabel::Attack => {
+                        self.atk = *val;
+                        update_internals = true;
+                    }
+                    SynthParameterLabel::Sustain => {
+                        self.sus = *val;
+                        update_internals = true;
+                    }
+                    SynthParameterLabel::Release => {
+                        self.rel = *val;
+                        update_internals = true;
+                    }
+                    SynthParameterLabel::EnvelopeLevel => {
+                        self.max_lvl = *val;
+                        update_internals = true;
+                    }
+                    SynthParameterLabel::Samplerate => {
+                        self.samplerate = *val;
+                        update_internals = true;
+                    }
+
+                    _ => (),
                 }
-                SynthParameterLabel::Sustain => {
-                    self.sus = *val;
-                    update_internals = true;
-                }
-                SynthParameterLabel::Release => {
-                    self.rel = *val;
-                    update_internals = true;
-                }
-                SynthParameterLabel::EnvelopeLevel => {
-                    self.max_lvl = *val;
-                    update_internals = true;
-                }
-                SynthParameterLabel::Samplerate => {
-                    self.samplerate = *val;
-                    update_internals = true;
-                }
-                _ => (),
             }
+
+            // this is the one that should be used ...
+            SynthParameterValue::MultiPointEnvelope(segments, _, _) => {
+                println!("segments {}", segments.len());
+                if segments.len() == 3 {
+                    // ASR
+                    self.atk = segments[0].time;
+                    self.sus = segments[1].time;
+                    self.rel = segments[2].time;
+                    self.max_lvl = segments[1].from;
+                    update_internals = true;
+                } else if segments.len() == 4 {
+                    // ADSR, ignore D
+                    self.atk = segments[0].time;
+                    self.sus = segments[2].time;
+                    self.rel = segments[3].time;
+                    self.max_lvl = segments[2].from;
+                    update_internals = true;
+                } else {
+                    // ignore ?
+                }
+            }
+            _ => (),
         }
 
         if update_internals {

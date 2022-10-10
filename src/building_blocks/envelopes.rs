@@ -11,7 +11,10 @@ pub use crate::building_blocks::envelopes::multi_point_envelope::MultiPointEffec
 mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
-    use crate::building_blocks::{MonoEffect, SynthParameterLabel, SynthParameterValue};
+    use crate::building_blocks::{
+        EnvelopeSegmentInfo, EnvelopeSegmentType, MonoEffect, SynthParameterLabel,
+        SynthParameterValue,
+    };
 
     /// test the general workings of the ASREnvelope
     #[test]
@@ -213,6 +216,52 @@ mod tests {
         for sample in out.iter() {
             assert!(*sample >= 0.0);
             assert!(*sample <= 1.0);
+        }
+    }
+
+    #[test]
+    fn test_multi_point_effect_env() {
+        let segments = vec![
+            EnvelopeSegmentInfo {
+                from: 0.0,
+                to: 0.7,
+                time: 0.01,
+                segment_type: EnvelopeSegmentType::Lin,
+            },
+            EnvelopeSegmentInfo {
+                from: 0.7,
+                to: 0.7,
+                time: 0.48,
+                segment_type: EnvelopeSegmentType::Constant,
+            },
+            EnvelopeSegmentInfo {
+                from: 100.0,
+                to: 0.0,
+                time: 0.01,
+                segment_type: EnvelopeSegmentType::Lin,
+            },
+        ];
+
+        let mut mpenv = MultiPointEffectEnvelope::<512>::empty(44100.0);
+        mpenv.set_parameter(
+            SynthParameterLabel::Envelope,
+            &SynthParameterValue::MultiPointEnvelope(
+                segments,
+                false,
+                crate::building_blocks::ValOp::Replace,
+            ),
+        );
+
+        let in_block = vec![1.0; 512];
+        let num_blocks = (2.0 * 44100.0 / 512.0) as usize;
+
+        for _ in 0..num_blocks {
+            //mpenvc
+            //let block = mpenv.get_next_block(0, &Vec::new());
+            //or i in 0..512 {
+            //    let a = block[i];
+            //    debug_plotter::plot!(a where caption = "MultiPointTest");
+            //
         }
     }
 }

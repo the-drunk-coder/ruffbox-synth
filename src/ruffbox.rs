@@ -144,7 +144,7 @@ pub fn init_ruffbox<const BUFSIZE: usize, const NCHAN: usize>(
 mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
-    use crate::building_blocks::FilterType;
+    use crate::building_blocks::{FilterType, OscillatorType};
     use crate::synths::SynthType;
     use std::f32::consts::PI;
 
@@ -227,7 +227,11 @@ mod tests {
         let (ctrl, mut ruff) =
             init_ruffbox::<128, 2>(0, 2.0, &ReverbMode::FreeVerb, 44100.0, 3000, 10);
 
-        if let Some(mut inst) = ctrl.prepare_instance(SynthType::SineSynth, 0.0, 0) {
+        if let Some(mut inst) = ctrl.prepare_instance(
+            SynthType::SingleOscillator(OscillatorType::Sine, FilterType::Dummy, FilterType::Dummy),
+            0.0,
+            0,
+        ) {
             inst.set_instance_parameter(
                 SynthParameterLabel::PitchFrequency,
                 &SynthParameterValue::ScalarF32(440.0),
@@ -287,7 +291,12 @@ mod tests {
         ruff.process(0.0, true);
 
         if let Some(mut inst_1) = ctrl.prepare_instance(
-            SynthType::Sampler(FilterType::BiquadHpf12dB, FilterType::Lpf18),
+            SynthType::Sampler(
+                FilterType::BiquadHpf12dB,
+                FilterType::Dummy,
+                FilterType::Dummy,
+                FilterType::Lpf18,
+            ),
             0.0,
             bnum1,
         ) {
@@ -323,7 +332,12 @@ mod tests {
             ctrl.trigger(inst_1);
         }
         if let Some(mut inst_2) = ctrl.prepare_instance(
-            SynthType::Sampler(FilterType::BiquadHpf12dB, FilterType::Lpf18),
+            SynthType::Sampler(
+                FilterType::BiquadHpf12dB,
+                FilterType::Dummy,
+                FilterType::Dummy,
+                FilterType::Lpf18,
+            ),
             0.0,
             bnum2,
         ) {
@@ -382,7 +396,12 @@ mod tests {
         ruff.process(0.0, true);
 
         if let Some(mut inst_1) = ctrl.prepare_instance(
-            SynthType::Sampler(FilterType::BiquadHpf12dB, FilterType::Lpf18),
+            SynthType::Sampler(
+                FilterType::BiquadHpf12dB,
+                FilterType::Dummy,
+                FilterType::Dummy,
+                FilterType::Lpf18,
+            ),
             0.0,
             bnum1,
         ) {
@@ -446,7 +465,12 @@ mod tests {
         let bnum2 = ctrl.load_sample(&mut sample2, false, 44100.0);
 
         if let Some(mut inst_1) = ctrl.prepare_instance(
-            SynthType::Sampler(FilterType::BiquadHpf12dB, FilterType::Lpf18),
+            SynthType::Sampler(
+                FilterType::BiquadHpf12dB,
+                FilterType::Dummy,
+                FilterType::Dummy,
+                FilterType::Lpf18,
+            ),
             0.291,
             bnum1,
         ) {
@@ -483,7 +507,12 @@ mod tests {
         }
 
         if let Some(mut inst_2) = ctrl.prepare_instance(
-            SynthType::Sampler(FilterType::BiquadHpf12dB, FilterType::Lpf18),
+            SynthType::Sampler(
+                FilterType::BiquadHpf12dB,
+                FilterType::Dummy,
+                FilterType::Dummy,
+                FilterType::Lpf18,
+            ),
             0.291,
             bnum2,
         ) {
@@ -552,7 +581,12 @@ mod tests {
         let bnum2 = ctrl.load_sample(&mut sample2, false, 44100.0);
 
         if let Some(mut inst_1) = ctrl.prepare_instance(
-            SynthType::Sampler(FilterType::BiquadHpf12dB, FilterType::Lpf18),
+            SynthType::Sampler(
+                FilterType::BiquadHpf12dB,
+                FilterType::Dummy,
+                FilterType::Dummy,
+                FilterType::Lpf18,
+            ),
             0.291,
             bnum1,
         ) {
@@ -589,7 +623,12 @@ mod tests {
         }
 
         if let Some(mut inst_2) = ctrl.prepare_instance(
-            SynthType::Sampler(FilterType::BiquadHpf12dB, FilterType::Lpf18),
+            SynthType::Sampler(
+                FilterType::BiquadHpf12dB,
+                FilterType::Dummy,
+                FilterType::Dummy,
+                FilterType::Lpf18,
+            ),
             0.291 + (4.0 * sec_per_sample),
             bnum2,
         ) {
@@ -673,7 +712,12 @@ mod tests {
         let second_sample_timestamp = 0.291 + (10.0 * block_duration);
 
         if let Some(mut inst_1) = ctrl.prepare_instance(
-            SynthType::Sampler(FilterType::BiquadHpf12dB, FilterType::Lpf18),
+            SynthType::Sampler(
+                FilterType::BiquadHpf12dB,
+                FilterType::Dummy,
+                FilterType::Dummy,
+                FilterType::Lpf18,
+            ),
             0.291,
             bnum1,
         ) {
@@ -709,7 +753,12 @@ mod tests {
             ctrl.trigger(inst_1);
         }
         if let Some(mut inst_2) = ctrl.prepare_instance(
-            SynthType::Sampler(FilterType::BiquadHpf12dB, FilterType::Lpf18),
+            SynthType::Sampler(
+                FilterType::BiquadHpf12dB,
+                FilterType::Dummy,
+                FilterType::Dummy,
+                FilterType::Lpf18,
+            ),
             second_sample_timestamp,
             bnum2,
         ) {
@@ -784,7 +833,12 @@ mod tests {
         ruff.process(0.0, false);
 
         if let Some(mut inst_1) = ctrl.prepare_instance(
-            SynthType::Sampler(FilterType::BiquadHpf12dB, FilterType::Lpf18),
+            SynthType::Sampler(
+                FilterType::BiquadHpf12dB,
+                FilterType::Dummy,
+                FilterType::Dummy,
+                FilterType::Lpf18,
+            ),
             0.1,
             bnum1,
         ) {

@@ -3,8 +3,8 @@ use crate::building_blocks::filters::*;
 use crate::building_blocks::routing::PanChan;
 use crate::building_blocks::sampler::Sampler;
 use crate::building_blocks::{
-    FilterType, Modulator, MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
-    ValueOrModulator,
+    EnvelopeSegmentInfo, EnvelopeSegmentType, FilterType, Modulator, MonoEffect, MonoSource, Synth,
+    SynthParameterLabel, SynthParameterValue, ValueOrModulator,
 };
 
 /// a sampler with envelope etc.
@@ -32,9 +32,33 @@ impl<const BUFSIZE: usize, const NCHAN: usize> NChannelSampler<BUFSIZE, NCHAN> {
     ) -> NChannelSampler<BUFSIZE, NCHAN> {
         let dur = (buflen as f32 / sr) - 0.0002;
 
+        // assemble ASR envelope
+
+        let env_segments = vec![
+            EnvelopeSegmentInfo {
+                from: 0.0,
+                to: 1.0,
+                time: 0.001,
+                segment_type: EnvelopeSegmentType::Lin,
+            },
+            EnvelopeSegmentInfo {
+                from: 1.0,
+                to: 1.0,
+                time: dur,
+                segment_type: EnvelopeSegmentType::Constant,
+            },
+            EnvelopeSegmentInfo {
+                from: 1.0,
+                to: 0.0,
+                time: 0.001,
+                segment_type: EnvelopeSegmentType::Lin,
+            },
+        ];
+        let env = MultiPointEffectEnvelope::new(env_segments, false, sr);
+
         NChannelSampler {
             sampler: Sampler::with_bufnum_len(bufnum, buflen, true),
-            envelope: Box::new(LinearASREnvelope::new(1.0, 0.0001, dur, 0.0001, sr)),
+            envelope: Box::new(env),
             hpf: match hpf_type {
                 FilterType::BiquadHpf12dB => Box::new(BiquadHpf12dB::new(20.0, 0.3, sr)),
                 FilterType::BiquadHpf24dB => Box::new(BiquadHpf24dB::new(20.0, 0.3, sr)),

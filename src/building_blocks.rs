@@ -15,7 +15,7 @@ pub use crate::building_blocks::modulator::Modulator;
 
 /// currently available oscillator types
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum OscillatorType {
     Sine,
     LFTri,
@@ -34,7 +34,7 @@ pub enum OscillatorType {
 /// the available filter types.
 /// dummy filter just passes the block through unprocessed.
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum FilterType {
     Dummy,
     Lpf18,
@@ -63,6 +63,7 @@ pub enum SynthState {
 pub enum SynthParameterLabel {
     Attack, // 0
     AttackType,
+    AttackPeakLevel,
     Decay, // 1
     DecayType,
     DelayDampeningFrequency, // 2
@@ -71,7 +72,7 @@ pub enum SynthParameterLabel {
     DelayTime,               // 5
     DelayRate,               // 6
     Duration,                // 7
-    OuterEnvelope,
+    Envelope,
     PitchFrequency,           // 8
     PitchNote,                // 9
     HighpassCutoffFrequency,  // 10
@@ -115,7 +116,7 @@ pub enum SynthParameterLabel {
 }
 
 /// the value operation is defined on parameters
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum ValOp {
     Replace,
     Add,
@@ -125,7 +126,7 @@ pub enum ValOp {
 }
 
 /// in an envelope, each segment can have a certain curve shape
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum EnvelopeSegmentType {
     Lin,
     Log,
@@ -134,28 +135,16 @@ pub enum EnvelopeSegmentType {
 }
 
 /// defines an envelope segment
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct EnvelopeSegmentInfo {
     pub from: f32, // level
-    pub to: f32, // level
-    pub time: f32, // transition time 
+    pub to: f32,   // level
+    pub time: f32, // transition time
     pub segment_type: EnvelopeSegmentType,
 }
 
-/// common envelope types
-/// exp_perc isn't used here so far ...
-/// segment characteristics can be defined per segment
-/// using the structs above
-#[derive(Clone, Copy)]
-pub enum EnvelopeType {
-    ADSR,
-    ASR,
-    ExpPerc, // still a separate class so far ..
-    Custom,  // multi-point
-}
-
 // from an outside perspective, there can be modulator-valued parameters (like, an lfo-valued parameter)
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[rustfmt::skip]
 pub enum SynthParameterValue {
     ScalarF32(f32),
@@ -172,7 +161,8 @@ pub enum SynthParameterValue {
     LFSquare(f32, Box<SynthParameterValue>, f32, Box<SynthParameterValue>, f32, ValOp), // squarewave lfo
     LinRamp(f32, f32, f32, ValOp), // linear ramp - from, to, time
     LogRamp(f32, f32, f32, ValOp), // logarithmic ramp - from, to, time
-    ExpRamp(f32, f32, f32, ValOp), // exponential ramp - from, to, time
+    ExpRamp(f32, f32, f32, ValOp), // exponential ramp - from, to, time,
+    EnvelopeSegmentType(EnvelopeSegmentType),
     MultiPointEnvelope(Vec<EnvelopeSegmentInfo>, bool, ValOp), // segments, loop ...
 }
 
@@ -508,15 +498,25 @@ pub fn resolve_parameter_value<const BUFSIZE: usize>(
             Modulator::exp_ramp(*op, *from, *to, *time, samplerate),
         ),
         SynthParameterValue::MultiPointEnvelope(segments, loop_env, op) => {
-            let init = if let Some(seg) = segments.first() {
-                seg.from
+            // if this is the master envelope, don't pass as a modulator
+            // which makes sense only on modulateable parameters
+            if let SynthParameterLabel::Envelope = par {
+                ValueOrModulator::Val(SynthParameterValue::MultiPointEnvelope(
+                    segments.to_vec(),
+                    *loop_env,
+                    *op,
+                ))
             } else {
-                0.0
-            };
-            ValueOrModulator::Mod(
-                init,
-                Modulator::multi_point_envelope(*op, segments.to_vec(), *loop_env, samplerate),
-            )
+                let init = if let Some(seg) = segments.first() {
+                    seg.from
+                } else {
+                    0.0
+                };
+                ValueOrModulator::Mod(
+                    init,
+                    Modulator::multi_point_envelope(*op, segments.to_vec(), *loop_env, samplerate),
+                )
+            }
         }
         _ => ValueOrModulator::Val(val.clone()),
     }
