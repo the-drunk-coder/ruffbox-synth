@@ -226,7 +226,7 @@ mod tests {
                 from: 0.0,
                 to: 0.7,
                 time: 0.01,
-                segment_type: EnvelopeSegmentType::Lin,
+                segment_type: EnvelopeSegmentType::Log,
             },
             EnvelopeSegmentInfo {
                 from: 0.7,
@@ -235,10 +235,10 @@ mod tests {
                 segment_type: EnvelopeSegmentType::Constant,
             },
             EnvelopeSegmentInfo {
-                from: 100.0,
+                from: 0.7,
                 to: 0.0,
                 time: 0.01,
-                segment_type: EnvelopeSegmentType::Lin,
+                segment_type: EnvelopeSegmentType::Log,
             },
         ];
 
@@ -252,16 +252,16 @@ mod tests {
             ),
         );
 
-        let in_block = vec![1.0; 512];
-        let num_blocks = (2.0 * 44100.0 / 512.0) as usize;
+        let in_block = [1.0; 512];
+        let num_blocks = (1.3 * 44100.0 / 512.0) as usize;
 
         for _ in 0..num_blocks {
-            //mpenvc
+            let _ = mpenv.process_block(in_block, 0, &Vec::new());
             //let block = mpenv.get_next_block(0, &Vec::new());
-            //or i in 0..512 {
-            //    let a = block[i];
+            //for i in 0..512 {
+            //    let a = out_block[i];
             //    debug_plotter::plot!(a where caption = "MultiPointTest");
-            //
+            //}
         }
     }
 }

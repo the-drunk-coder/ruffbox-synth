@@ -305,7 +305,7 @@ pub struct MultiPointEnvelope<const BUFSIZE: usize> {
     segments: Vec<Box<dyn MonoSource<BUFSIZE> + Sync + Send>>,
     segment_samples: Vec<usize>,
     segment_idx: usize,
-    sample_count: usize,
+    sample_count: usize, // re-set on every segment switch
     loop_env: bool,
     state: SynthState,
     samplerate: f32,
@@ -446,12 +446,17 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for MultiPointEnvelope<BUFSIZE> {
             let mut left_from_current_segment =
                 self.segment_samples[self.segment_idx] - self.sample_count;
 
+            // do i need to increment sample count here ?
+            // no ! it'll be overwritten in any branch of the subsequent
+            // branches ... but for clarity, we might re-set it to 0 because
+            // we finished a current segment ...
+
             // handle leftover from current segment
             out[start_sample..left_from_current_segment]
                 .copy_from_slice(&out_last[start_sample..left_from_current_segment]);
 
             samples_to_fill_rest -= left_from_current_segment;
-
+            //println!("seg idx {} {:?}", self.segment_idx, self.segment_samples);
             // we need some handling in case multiple segments fall into one block ...
             while samples_to_fill_rest > 0 {
                 if let Some(next_segment) = self.segments.get_mut(self.segment_idx + 1) {
@@ -464,7 +469,8 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for MultiPointEnvelope<BUFSIZE> {
                             &out_next[left_from_current_segment..samples_to_fill_total],
                         );
 
-                        self.sample_count = samples_to_fill_rest - left_from_current_segment;
+                        //println!("{} {} {}", self.sample_count, samples_to_fill_rest, left_from_current_segment);
+                        self.sample_count = samples_to_fill_total - left_from_current_segment;
                         samples_to_fill_rest = 0;
                     } else {
                         let out_next = next_segment.get_next_block(left_from_current_segment, bufs);
