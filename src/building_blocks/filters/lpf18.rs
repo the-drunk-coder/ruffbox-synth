@@ -146,6 +146,7 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for Lpf18<BUFSIZE> {
                 }
                 SynthParameterLabel::LowpassQFactor => {
                     self.res = *val;
+                    update = true;
                 }
                 SynthParameterLabel::LowpassFilterDistortion => {
                     self.dist = *val;
