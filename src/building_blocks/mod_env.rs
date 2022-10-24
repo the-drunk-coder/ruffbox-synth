@@ -444,13 +444,14 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for MultiPointEnvelope<BUFSIZE> {
         let block_samples_to_fill_total = BUFSIZE - start_sample;
 
         // now, let's see how many samples we have left in the current segment ...
-        let samples_left_in_segment = self.segment_samples[self.segment_idx] - self.sample_count;
 
         // if we have more samples to fill in current segment than we need for current
         // block, great, that's the easiest case ...
-        if block_samples_to_fill_total < samples_left_in_segment {
+        if block_samples_to_fill_total < self.segment_samples[self.segment_idx] - self.sample_count
+        {
             self.sample_count += block_samples_to_fill_total;
-            // ... because we just need to return whatever the current segment gives us ...
+            // ... because we just need to return whatever the current segment gives us,
+            // and don't need to create a temp out buffer ...
             self.segments[self.segment_idx].get_next_block(start_sample, bufs)
         } else {
             // otherwise, we need to check how many samples we need to fill
@@ -460,68 +461,47 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for MultiPointEnvelope<BUFSIZE> {
             // countdown ...
             let mut block_samples_to_fill_rest = block_samples_to_fill_total;
 
-            // leftovers from the segment we were currently handling ...
-            let mut out_current =
-                self.segments[self.segment_idx].get_next_block(start_sample, bufs);
-            let left_from_current_segment =
-                self.segment_samples[self.segment_idx] - self.sample_count;
-
-            // the first piece of the block ...
-            out[start_sample..start_sample + left_from_current_segment].copy_from_slice(
-                &out_current[start_sample..start_sample + left_from_current_segment],
-            );
-
-            // re-set sample count as the current segment
-            // has been handled completely ...
-            self.sample_count = 0;
-
-            // is there anything more to fill ??
-            block_samples_to_fill_rest -= left_from_current_segment;
-
             // how far are we advanced in the current block ?
-            let mut start_index = start_sample + left_from_current_segment;
+            let mut start_index = start_sample;
 
             // we need some handling in case multiple segments fall into one block,
             // so we count down on the samples that are left to fill ...
             while block_samples_to_fill_rest > 0 {
                 // if there is a next segment ...
-                if let Some(next_segment) = self.segments.get_mut(self.segment_idx + 1) {
-                    // .. let's see how long it is ...
-                    let next_segment_samples = self.segment_samples[self.segment_idx + 1];
+                if let Some(current_segment) = self.segments.get_mut(self.segment_idx) {
+                    let samples_left_in_segment =
+                        self.segment_samples[self.segment_idx] - self.sample_count;
 
-                    out_current = next_segment.get_next_block(start_index, bufs);
+                    let out_current = current_segment.get_next_block(start_index, bufs);
 
                     // again, more than we need ?
-                    if next_segment_samples >= block_samples_to_fill_rest {
+                    if samples_left_in_segment >= block_samples_to_fill_rest {
                         // copy samples
                         out[start_index..block_samples_to_fill_total].copy_from_slice(
                             &out_current[start_index..block_samples_to_fill_total],
                         );
 
-                        self.sample_count = block_samples_to_fill_total - start_index;
-                        self.segment_idx += 1; // we're in the next segment now ...
+                        self.sample_count += block_samples_to_fill_total - start_index;
                         break; // jump out
                     } else {
                         // copy samples
-                        out[start_index..(start_index + next_segment_samples)].copy_from_slice(
-                            &out_current[start_index..(start_index + next_segment_samples)],
-                        );
+                        let end_index = start_index + samples_left_in_segment;
+                        out[start_index..end_index]
+                            .copy_from_slice(&out_current[start_index..end_index]);
 
-                        block_samples_to_fill_rest -= next_segment_samples;
-                        start_index += next_segment_samples;
+                        block_samples_to_fill_rest -= samples_left_in_segment;
+                        start_index = end_index;
                         self.segment_idx += 1; // we're in the next segment now ...
                         self.sample_count = 0; // re-set sample count as we finished a segment ...
                     }
                 } else if self.loop_env {
+                    // there's still samples to fill and we have a looping envelope
                     // continue filling the block after resetting the segment counter
                     // and the individual segments
                     self.reset();
                     continue;
                 } else {
-                    // there is no next segment, but still something to fill ...
-                    // copy samples from whatever was left over from last block ...
-                    out[start_index..block_samples_to_fill_total]
-                        .copy_from_slice(&out_current[start_index..block_samples_to_fill_total]);
+                    // nothing left to do ...
                     self.sample_count = 0;
                     self.segment_idx += 1; // we're in the next segment now ...
                     break; // jump out
