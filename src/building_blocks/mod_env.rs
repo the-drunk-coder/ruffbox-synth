@@ -494,8 +494,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for MultiPointEnvelope<BUFSIZE> {
                     // continue filling the block after resetting the segment counter
                     // and the individual segments
                     // IS THERE A CHANCE THAT THIS FALLS RIGHT ON A BLOCK BOUNDARY ?
-                    self.reset();
-                    continue;
+                    self.reset(); // loop will continue ...
                 } else {
                     // no current segment to handle anymore ...
                     break; // jump out
