@@ -13,7 +13,7 @@ mod tests {
     use super::*;
     use crate::building_blocks::{
         EnvelopeSegmentInfo, EnvelopeSegmentType, MonoEffect, SynthParameterLabel,
-        SynthParameterValue,
+        SynthParameterValue, ValOp,
     };
 
     /// test the general workings of the ASREnvelope
@@ -262,6 +262,58 @@ mod tests {
             //    let a = out_block[i];
             //    debug_plotter::plot!(a where caption = "MultiPointTest");
             //}
+        }
+    }
+
+    #[test]
+    fn test_compare_lin_asr_multipoint() {
+        let test_block: [f32; 512] = [1.0; 512];
+
+        // half a block attack, one block sustain, half a block release ... 2 blocks total .
+        let mut env1 = LinearASREnvelope::<512>::new(1.0, 0.0, 1.0, 0.0, 44100.0);
+        let mut env2 = multi_point_envelope::MultiPointEffectEnvelope::<512>::empty(44100.0);
+
+        env2.set_parameter(
+            SynthParameterLabel::Envelope,
+            &SynthParameterValue::MultiPointEnvelope(
+                vec![
+                    EnvelopeSegmentInfo {
+                        from: 0.0,
+                        to: 1.0,
+                        time: 0.000025,
+                        segment_type: EnvelopeSegmentType::Lin,
+                    },
+                    EnvelopeSegmentInfo {
+                        from: 1.0,
+                        to: 1.0,
+                        time: 1.0,
+                        segment_type: EnvelopeSegmentType::Constant,
+                    },
+                    EnvelopeSegmentInfo {
+                        from: 1.0,
+                        to: 0.0,
+                        time: 0.0,
+                        segment_type: EnvelopeSegmentType::Lin,
+                    },
+                ],
+                false,
+                ValOp::Replace,
+            ),
+        );
+
+        let num_blocks = 44100 / 512 + 1;
+
+        for i in 0..num_blocks {
+            let out1 = env1.process_block(test_block, 0, &Vec::new());
+            let out2 = env2.process_block(test_block, 0, &Vec::new());
+
+            if i == num_blocks - 1 {
+                for i in 60..80 {
+                    let a = out1[i];
+                    let b = out2[i];
+                    debug_plotter::plot!(a, b where caption = "MultiPointCompare");
+                }
+            }
         }
     }
 }

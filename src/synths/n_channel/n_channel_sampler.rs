@@ -30,25 +30,24 @@ impl<const BUFSIZE: usize, const NCHAN: usize> NChannelSampler<BUFSIZE, NCHAN> {
         lpf_type: FilterType,
         sr: f32,
     ) -> NChannelSampler<BUFSIZE, NCHAN> {
-        let dur = (buflen as f32 / sr) - 0.0002;
+        let dur = (buflen as f32 / sr) - 0.002;
 
-        // assemble ASR envelope
-
+        // assemble a default ASR envelope ...
         let env_segments = vec![
             EnvelopeSegmentInfo {
                 from: 0.0,
-                to: 1.0,
+                to: 0.6,
                 time: 0.001,
                 segment_type: EnvelopeSegmentType::Lin,
             },
             EnvelopeSegmentInfo {
-                from: 1.0,
-                to: 1.0,
+                from: 0.6,
+                to: 0.6,
                 time: dur,
                 segment_type: EnvelopeSegmentType::Constant,
             },
             EnvelopeSegmentInfo {
-                from: 1.0,
+                from: 0.6,
                 to: 0.0,
                 time: 0.001,
                 segment_type: EnvelopeSegmentType::Lin,

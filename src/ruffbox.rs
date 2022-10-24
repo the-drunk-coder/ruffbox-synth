@@ -144,7 +144,9 @@ pub fn init_ruffbox<const BUFSIZE: usize, const NCHAN: usize>(
 mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
-    use crate::building_blocks::{FilterType, OscillatorType};
+    use crate::building_blocks::{
+        EnvelopeSegmentInfo, EnvelopeSegmentType, FilterType, OscillatorType, ValOp,
+    };
     use crate::synths::SynthType;
     use std::f32::consts::PI;
 
@@ -240,21 +242,34 @@ mod tests {
                 SynthParameterLabel::ChannelPosition,
                 &SynthParameterValue::ScalarF32(0.0),
             );
+
+            // this envelope mimics the old lin_asr sample by sample ...
             inst.set_instance_parameter(
-                SynthParameterLabel::EnvelopeLevel,
-                &SynthParameterValue::ScalarF32(1.0),
-            );
-            inst.set_instance_parameter(
-                SynthParameterLabel::Attack,
-                &SynthParameterValue::ScalarF32(0.0),
-            );
-            inst.set_instance_parameter(
-                SynthParameterLabel::Sustain,
-                &SynthParameterValue::ScalarF32(1.0),
-            );
-            inst.set_instance_parameter(
-                SynthParameterLabel::Release,
-                &SynthParameterValue::ScalarF32(0.0),
+                SynthParameterLabel::Envelope,
+                &SynthParameterValue::MultiPointEnvelope(
+                    vec![
+                        EnvelopeSegmentInfo {
+                            from: 0.0,
+                            to: 1.0,
+                            time: 0.000025,
+                            segment_type: EnvelopeSegmentType::Lin,
+                        },
+                        EnvelopeSegmentInfo {
+                            from: 1.0,
+                            to: 1.0,
+                            time: 1.0 - 0.000025,
+                            segment_type: EnvelopeSegmentType::Constant,
+                        },
+                        EnvelopeSegmentInfo {
+                            from: 1.0,
+                            to: 0.0,
+                            time: 0.000025,
+                            segment_type: EnvelopeSegmentType::Lin,
+                        },
+                    ],
+                    false,
+                    ValOp::Replace,
+                ),
             );
 
             ctrl.trigger(inst);
@@ -317,17 +332,33 @@ mod tests {
                 SynthParameterLabel::LowpassQFactor,
                 &SynthParameterValue::ScalarF32(0.0),
             );
+            // this envelope mimics the old lin_asr sample by sample ...
             inst_1.set_instance_parameter(
-                SynthParameterLabel::Attack,
-                &SynthParameterValue::ScalarF32(0.0),
-            );
-            inst_1.set_instance_parameter(
-                SynthParameterLabel::Release,
-                &SynthParameterValue::ScalarF32(0.0),
-            );
-            inst_1.set_instance_parameter(
-                SynthParameterLabel::Sustain,
-                &SynthParameterValue::ScalarF32(9.0 / 44100.0),
+                SynthParameterLabel::Envelope,
+                &SynthParameterValue::MultiPointEnvelope(
+                    vec![
+                        EnvelopeSegmentInfo {
+                            from: 0.0,
+                            to: 1.0,
+                            time: 0.000025,
+                            segment_type: EnvelopeSegmentType::Lin,
+                        },
+                        EnvelopeSegmentInfo {
+                            from: 1.0,
+                            to: 1.0,
+                            time: 1.0 - 0.000025,
+                            segment_type: EnvelopeSegmentType::Constant,
+                        },
+                        EnvelopeSegmentInfo {
+                            from: 1.0,
+                            to: 0.0,
+                            time: 0.000025,
+                            segment_type: EnvelopeSegmentType::Lin,
+                        },
+                    ],
+                    false,
+                    ValOp::Replace,
+                ),
             );
             ctrl.trigger(inst_1);
         }
@@ -357,17 +388,33 @@ mod tests {
                 SynthParameterLabel::LowpassQFactor,
                 &SynthParameterValue::ScalarF32(0.0),
             );
+            // this envelope mimics the old lin_asr sample by sample ...
             inst_2.set_instance_parameter(
-                SynthParameterLabel::Attack,
-                &SynthParameterValue::ScalarF32(0.0),
-            );
-            inst_2.set_instance_parameter(
-                SynthParameterLabel::Release,
-                &SynthParameterValue::ScalarF32(0.0),
-            );
-            inst_2.set_instance_parameter(
-                SynthParameterLabel::Sustain,
-                &SynthParameterValue::ScalarF32(9.0 / 44100.0),
+                SynthParameterLabel::Envelope,
+                &SynthParameterValue::MultiPointEnvelope(
+                    vec![
+                        EnvelopeSegmentInfo {
+                            from: 0.0,
+                            to: 1.0,
+                            time: 0.000025,
+                            segment_type: EnvelopeSegmentType::Lin,
+                        },
+                        EnvelopeSegmentInfo {
+                            from: 1.0,
+                            to: 1.0,
+                            time: 1.0 - 0.000025,
+                            segment_type: EnvelopeSegmentType::Constant,
+                        },
+                        EnvelopeSegmentInfo {
+                            from: 1.0,
+                            to: 0.0,
+                            time: 0.000025,
+                            segment_type: EnvelopeSegmentType::Lin,
+                        },
+                    ],
+                    false,
+                    ValOp::Replace,
+                ),
             );
             ctrl.trigger(inst_2);
         }
@@ -426,17 +473,33 @@ mod tests {
                 SynthParameterLabel::LowpassQFactor,
                 &SynthParameterValue::ScalarF32(0.0),
             );
+            // this envelope mimics the old lin_asr sample by sample ...
             inst_1.set_instance_parameter(
-                SynthParameterLabel::Attack,
-                &SynthParameterValue::ScalarF32(0.0),
-            );
-            inst_1.set_instance_parameter(
-                SynthParameterLabel::Release,
-                &SynthParameterValue::ScalarF32(0.0),
-            );
-            inst_1.set_instance_parameter(
-                SynthParameterLabel::Sustain,
-                &SynthParameterValue::ScalarF32(9.0 / 44100.0),
+                SynthParameterLabel::Envelope,
+                &SynthParameterValue::MultiPointEnvelope(
+                    vec![
+                        EnvelopeSegmentInfo {
+                            from: 0.0,
+                            to: 1.0,
+                            time: 0.000025,
+                            segment_type: EnvelopeSegmentType::Lin,
+                        },
+                        EnvelopeSegmentInfo {
+                            from: 1.0,
+                            to: 1.0,
+                            time: 1.0 - 0.000025,
+                            segment_type: EnvelopeSegmentType::Constant,
+                        },
+                        EnvelopeSegmentInfo {
+                            from: 1.0,
+                            to: 0.0,
+                            time: 0.000025,
+                            segment_type: EnvelopeSegmentType::Lin,
+                        },
+                    ],
+                    false,
+                    ValOp::Replace,
+                ),
             );
 
             ctrl.trigger(inst_1);
@@ -491,17 +554,20 @@ mod tests {
                 SynthParameterLabel::LowpassQFactor,
                 &SynthParameterValue::ScalarF32(0.0),
             );
+
+            // this envelope mimics the old lin_asr sample by sample ...
             inst_1.set_instance_parameter(
-                SynthParameterLabel::Attack,
-                &SynthParameterValue::ScalarF32(0.0),
-            );
-            inst_1.set_instance_parameter(
-                SynthParameterLabel::Release,
-                &SynthParameterValue::ScalarF32(0.0),
-            );
-            inst_1.set_instance_parameter(
-                SynthParameterLabel::Sustain,
-                &SynthParameterValue::ScalarF32(9.0 / 44100.0),
+                SynthParameterLabel::Envelope,
+                &SynthParameterValue::MultiPointEnvelope(
+                    vec![EnvelopeSegmentInfo {
+                        from: 1.0,
+                        to: 1.0,
+                        time: 9.0 / 44100.0,
+                        segment_type: EnvelopeSegmentType::Constant,
+                    }],
+                    false,
+                    ValOp::Replace,
+                ),
             );
             ctrl.trigger(inst_1);
         }
@@ -532,17 +598,19 @@ mod tests {
                 SynthParameterLabel::LowpassQFactor,
                 &SynthParameterValue::ScalarF32(0.0),
             );
+            // this envelope mimics the old lin_asr sample by sample ...
             inst_2.set_instance_parameter(
-                SynthParameterLabel::Attack,
-                &SynthParameterValue::ScalarF32(0.0),
-            );
-            inst_2.set_instance_parameter(
-                SynthParameterLabel::Release,
-                &SynthParameterValue::ScalarF32(0.0),
-            );
-            inst_2.set_instance_parameter(
-                SynthParameterLabel::Sustain,
-                &SynthParameterValue::ScalarF32(9.0 / 44100.0),
+                SynthParameterLabel::Envelope,
+                &SynthParameterValue::MultiPointEnvelope(
+                    vec![EnvelopeSegmentInfo {
+                        from: 1.0,
+                        to: 1.0,
+                        time: 9.0 / 44100.0,
+                        segment_type: EnvelopeSegmentType::Constant,
+                    }],
+                    false,
+                    ValOp::Replace,
+                ),
             );
             ctrl.trigger(inst_2);
         }
@@ -607,17 +675,19 @@ mod tests {
                 SynthParameterLabel::LowpassQFactor,
                 &SynthParameterValue::ScalarF32(0.0),
             );
+            // this envelope mimics the old lin_asr sample by sample ...
             inst_1.set_instance_parameter(
-                SynthParameterLabel::Attack,
-                &SynthParameterValue::ScalarF32(0.0),
-            );
-            inst_1.set_instance_parameter(
-                SynthParameterLabel::Release,
-                &SynthParameterValue::ScalarF32(0.0),
-            );
-            inst_1.set_instance_parameter(
-                SynthParameterLabel::Sustain,
-                &SynthParameterValue::ScalarF32(9.0 / 44100.0),
+                SynthParameterLabel::Envelope,
+                &SynthParameterValue::MultiPointEnvelope(
+                    vec![EnvelopeSegmentInfo {
+                        from: 1.0,
+                        to: 1.0,
+                        time: 9.0 / 44100.0,
+                        segment_type: EnvelopeSegmentType::Constant,
+                    }],
+                    false,
+                    ValOp::Replace,
+                ),
             );
             ctrl.trigger(inst_1);
         }
@@ -648,17 +718,19 @@ mod tests {
                 SynthParameterLabel::LowpassQFactor,
                 &SynthParameterValue::ScalarF32(0.0),
             );
+            // this envelope mimics the old lin_asr sample by sample ...
             inst_2.set_instance_parameter(
-                SynthParameterLabel::Attack,
-                &SynthParameterValue::ScalarF32(0.0),
-            );
-            inst_2.set_instance_parameter(
-                SynthParameterLabel::Release,
-                &SynthParameterValue::ScalarF32(0.0),
-            );
-            inst_2.set_instance_parameter(
-                SynthParameterLabel::Sustain,
-                &SynthParameterValue::ScalarF32(9.0 / 44100.0),
+                SynthParameterLabel::Envelope,
+                &SynthParameterValue::MultiPointEnvelope(
+                    vec![EnvelopeSegmentInfo {
+                        from: 1.0,
+                        to: 1.0,
+                        time: 9.0 / 44100.0,
+                        segment_type: EnvelopeSegmentType::Constant,
+                    }],
+                    false,
+                    ValOp::Replace,
+                ),
             );
             ctrl.trigger(inst_2);
         }
@@ -738,17 +810,19 @@ mod tests {
                 SynthParameterLabel::LowpassQFactor,
                 &SynthParameterValue::ScalarF32(0.0),
             );
+            // this envelope mimics the old lin_asr sample by sample ...
             inst_1.set_instance_parameter(
-                SynthParameterLabel::Attack,
-                &SynthParameterValue::ScalarF32(0.0),
-            );
-            inst_1.set_instance_parameter(
-                SynthParameterLabel::Release,
-                &SynthParameterValue::ScalarF32(0.0),
-            );
-            inst_1.set_instance_parameter(
-                SynthParameterLabel::Sustain,
-                &SynthParameterValue::ScalarF32(9.0 / 44100.0),
+                SynthParameterLabel::Envelope,
+                &SynthParameterValue::MultiPointEnvelope(
+                    vec![EnvelopeSegmentInfo {
+                        from: 1.0,
+                        to: 1.0,
+                        time: 9.0 / 44100.0,
+                        segment_type: EnvelopeSegmentType::Constant,
+                    }],
+                    false,
+                    ValOp::Replace,
+                ),
             );
             ctrl.trigger(inst_1);
         }
@@ -778,17 +852,19 @@ mod tests {
                 SynthParameterLabel::LowpassQFactor,
                 &SynthParameterValue::ScalarF32(0.0),
             );
+            // this envelope mimics the old lin_asr sample by sample ...
             inst_2.set_instance_parameter(
-                SynthParameterLabel::Attack,
-                &SynthParameterValue::ScalarF32(0.0),
-            );
-            inst_2.set_instance_parameter(
-                SynthParameterLabel::Release,
-                &SynthParameterValue::ScalarF32(0.0),
-            );
-            inst_2.set_instance_parameter(
-                SynthParameterLabel::Sustain,
-                &SynthParameterValue::ScalarF32(9.0 / 44100.0),
+                SynthParameterLabel::Envelope,
+                &SynthParameterValue::MultiPointEnvelope(
+                    vec![EnvelopeSegmentInfo {
+                        from: 1.0,
+                        to: 1.0,
+                        time: 9.0 / 44100.0,
+                        segment_type: EnvelopeSegmentType::Constant,
+                    }],
+                    false,
+                    ValOp::Replace,
+                ),
             );
             ctrl.trigger(inst_2);
         }
@@ -859,17 +935,19 @@ mod tests {
                 SynthParameterLabel::LowpassQFactor,
                 &SynthParameterValue::ScalarF32(0.0),
             );
+            // this envelope mimics the old lin_asr sample by sample ...
             inst_1.set_instance_parameter(
-                SynthParameterLabel::Attack,
-                &SynthParameterValue::ScalarF32(0.0),
-            );
-            inst_1.set_instance_parameter(
-                SynthParameterLabel::Release,
-                &SynthParameterValue::ScalarF32(0.0),
-            );
-            inst_1.set_instance_parameter(
-                SynthParameterLabel::Sustain,
-                &SynthParameterValue::ScalarF32(9.0 / 44100.0),
+                SynthParameterLabel::Envelope,
+                &SynthParameterValue::MultiPointEnvelope(
+                    vec![EnvelopeSegmentInfo {
+                        from: 1.0,
+                        to: 1.0,
+                        time: 9.0 / 44100.0,
+                        segment_type: EnvelopeSegmentType::Constant,
+                    }],
+                    false,
+                    ValOp::Replace,
+                ),
             );
 
             ctrl.trigger(inst_1);
