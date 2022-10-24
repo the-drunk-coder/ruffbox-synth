@@ -428,12 +428,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for MultiPointEnvelope<BUFSIZE> {
         // this should also avoid problems with "empty" multi-point envelopes ...
         if self.segment_idx >= self.segments.len() {
             if let Some(last_seg) = self.segments.last_mut() {
-                // only loop a
-                if self.loop_env && last_seg.is_finished() {
-                    self.reset();
-                } else {
-                    return last_seg.get_next_block(start_sample, bufs);
-                }
+                return last_seg.get_next_block(start_sample, bufs);
             } else {
                 // this means this in an empty envelope ...
                 return [0.0; BUFSIZE]; // last value ?
@@ -498,12 +493,11 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for MultiPointEnvelope<BUFSIZE> {
                     // there's still samples to fill and we have a looping envelope
                     // continue filling the block after resetting the segment counter
                     // and the individual segments
+                    // IS THERE A CHANCE THAT THIS FALLS RIGHT ON A BLOCK BOUNDARY ?
                     self.reset();
                     continue;
                 } else {
-                    // nothing left to do ...
-                    self.sample_count = 0;
-                    self.segment_idx += 1; // we're in the next segment now ...
+                    // no current segment to handle anymore ...
                     break; // jump out
                 }
             }
