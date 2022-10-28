@@ -1,6 +1,4 @@
-use crate::building_blocks::{
-    Modulator, MonoEffect, SynthParameterLabel, SynthParameterValue,
-};
+use crate::building_blocks::{Modulator, MonoEffect, SynthParameterLabel, SynthParameterValue};
 
 /**
  * Three-pole, 18dB/octave filter with tanh distortion
@@ -95,7 +93,6 @@ impl<const BUFSIZE: usize> Lpf18<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for Lpf18<BUFSIZE> {
-
     fn set_modulator(
         &mut self,
         par: SynthParameterLabel,

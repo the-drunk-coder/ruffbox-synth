@@ -1,6 +1,4 @@
-use crate::building_blocks::{
-    Modulator, MonoEffect, SynthParameterLabel, SynthParameterValue,
-};
+use crate::building_blocks::{Modulator, MonoEffect, SynthParameterLabel, SynthParameterValue};
 
 use crate::building_blocks::filters::sos::*;
 use crate::building_blocks::filters::BiquadHpf12dB;
@@ -234,7 +232,6 @@ impl<const BUFSIZE: usize> ButterworthHpf<BUFSIZE> {
 
 #[allow(clippy::single_match)]
 impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for ButterworthHpf<BUFSIZE> {
-    
     fn set_modulator(
         &mut self,
         par: SynthParameterLabel,

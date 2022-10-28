@@ -30,7 +30,7 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for MultiPointEffectEnvelope<BUFS
     fn is_finished(&self) -> bool {
         self.inner_env.is_finished()
     }
-     
+
     fn set_modulator(
         &mut self,
         label: SynthParameterLabel,

@@ -52,7 +52,7 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for LinearASREnvelope<BUFSIZE> {
     fn is_finished(&self) -> bool {
         matches!(self.state, SynthState::Finished)
     }
-   
+
     fn set_modulator(&mut self, _: SynthParameterLabel, _: f32, _: Modulator<BUFSIZE>) {}
 
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {

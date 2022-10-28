@@ -42,7 +42,6 @@ impl<const BUFSIZE: usize> MonoDelay<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for MonoDelay<BUFSIZE> {
-    
     fn set_modulator(
         &mut self,
         par: SynthParameterLabel,

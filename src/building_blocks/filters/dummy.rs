@@ -1,6 +1,4 @@
-use crate::building_blocks::{
-    Modulator, MonoEffect, SynthParameterLabel, SynthParameterValue,
-};
+use crate::building_blocks::{Modulator, MonoEffect, SynthParameterLabel, SynthParameterValue};
 
 /**
  * dummy filter ... so unnecessary filters aren't in the way ...
@@ -20,7 +18,6 @@ impl<const BUFSIZE: usize> Default for DummyFilter<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for DummyFilter<BUFSIZE> {
-    
     fn set_modulator(&mut self, _: SynthParameterLabel, _: f32, _: Modulator<BUFSIZE>) {}
 
     fn set_parameter(&mut self, _: SynthParameterLabel, _: &SynthParameterValue) {}

@@ -1,7 +1,5 @@
 use crate::building_blocks::convolver::uniform_partitioned_convolution::UniformPartitionedConvolution;
-use crate::building_blocks::{
-    MultichannelReverb, SynthParameterLabel, SynthParameterValue,
-};
+use crate::building_blocks::{MultichannelReverb, SynthParameterLabel, SynthParameterValue};
 
 pub struct MultichannelConvolutionReverb<const BUFSIZE: usize, const NCHAN: usize> {
     channel_convolvers: Vec<UniformPartitionedConvolution<BUFSIZE>>,
@@ -23,7 +21,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> MultichannelReverb<BUFSIZE, NCHAN
     fn set_parameter(&mut self, _par: SynthParameterLabel, _val: &SynthParameterValue) {
         // nothing to do here ...
     }
-    
+
     /**
      * Main processing routine.
      * Takes a mono block, as this would be downmixed anyway.

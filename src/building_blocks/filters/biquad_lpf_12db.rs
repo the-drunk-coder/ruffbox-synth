@@ -1,6 +1,4 @@
-use crate::building_blocks::{
-    Modulator, MonoEffect, SynthParameterLabel, SynthParameterValue,
-};
+use crate::building_blocks::{Modulator, MonoEffect, SynthParameterLabel, SynthParameterValue};
 
 use crate::building_blocks::filters::sos::*;
 
@@ -50,8 +48,7 @@ impl<const BUFSIZE: usize> BiquadLpf12dB<BUFSIZE> {
     }
 }
 
-impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for BiquadLpf12dB<BUFSIZE> {    
-
+impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for BiquadLpf12dB<BUFSIZE> {
     fn set_modulator(
         &mut self,
         par: SynthParameterLabel,

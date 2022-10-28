@@ -1,6 +1,4 @@
-use crate::building_blocks::{
-    MultichannelReverb, SynthParameterLabel, SynthParameterValue,
-};
+use crate::building_blocks::{MultichannelReverb, SynthParameterLabel, SynthParameterValue};
 
 struct FreeverbDefaultTuning;
 

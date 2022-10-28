@@ -1,6 +1,4 @@
-use crate::building_blocks::{
-    Modulator, MonoEffect, SynthParameterLabel, SynthParameterValue,
-};
+use crate::building_blocks::{Modulator, MonoEffect, SynthParameterLabel, SynthParameterValue};
 
 /**
  * Peak/Eq Filter
@@ -75,7 +73,6 @@ impl<const BUFSIZE: usize> PeakEq<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for PeakEq<BUFSIZE> {
-    
     fn set_modulator(
         &mut self,
         par: SynthParameterLabel,
