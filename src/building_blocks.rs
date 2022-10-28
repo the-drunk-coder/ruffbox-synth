@@ -526,11 +526,19 @@ pub fn resolve_parameter_value<const BUFSIZE: usize>(
 pub trait MonoSource<const BUFSIZE: usize>: MonoSourceClone<BUFSIZE> {
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue);
     fn set_modulator(&mut self, par: SynthParameterLabel, init: f32, modulator: Modulator<BUFSIZE>);
+
+    /// default impl so we have a common interface ...
     fn set_param_or_modulator(
         &mut self,
         par: SynthParameterLabel,
         val_or_mod: ValueOrModulator<BUFSIZE>,
-    );
+    ) {
+        match val_or_mod {
+            ValueOrModulator::Val(val) => self.set_parameter(par, &val),
+            ValueOrModulator::Mod(init, modulator) => self.set_modulator(par, init, modulator),
+        }
+    }
+
     fn finish(&mut self);
     fn reset(&mut self);
     fn is_finished(&self) -> bool;
@@ -562,11 +570,19 @@ pub trait MonoEffect<const BUFSIZE: usize> {
     fn is_finished(&self) -> bool;
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue);
     fn set_modulator(&mut self, par: SynthParameterLabel, init: f32, modulator: Modulator<BUFSIZE>);
+
+    /// default impl so we have a common interface ...
     fn set_param_or_modulator(
         &mut self,
         par: SynthParameterLabel,
         val_or_mod: ValueOrModulator<BUFSIZE>,
-    );
+    ) {
+        match val_or_mod {
+            ValueOrModulator::Val(val) => self.set_parameter(par, &val),
+            ValueOrModulator::Mod(init, modulator) => self.set_modulator(par, init, modulator),
+        }
+    }
+
     fn process_block(
         &mut self,
         block: [f32; BUFSIZE],
@@ -590,11 +606,19 @@ pub trait MultichannelReverb<const BUFSIZE: usize, const NCHAN: usize> {
 pub trait Synth<const BUFSIZE: usize, const NCHAN: usize> {
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue);
     fn set_modulator(&mut self, par: SynthParameterLabel, init: f32, modulator: Modulator<BUFSIZE>);
+
+    /// default impl so we have a common interface ...
     fn set_param_or_modulator(
         &mut self,
         par: SynthParameterLabel,
         val_or_mod: ValueOrModulator<BUFSIZE>,
-    );
+    ) {
+        match val_or_mod {
+            ValueOrModulator::Val(val) => self.set_parameter(par, &val),
+            ValueOrModulator::Mod(init, modulator) => self.set_modulator(par, init, modulator),
+        }
+    }
+
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
     fn get_next_block(
