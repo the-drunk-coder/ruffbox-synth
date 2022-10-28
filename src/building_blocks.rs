@@ -4,13 +4,14 @@ pub mod delay;
 pub mod envelopes;
 pub mod filters;
 pub mod interpolation;
-pub mod mod_env;
+
 pub mod modulator;
 pub mod oscillators;
 pub mod reverb;
 pub mod routing;
 pub mod sampler;
 
+pub use crate::building_blocks::envelopes::source_env::*;
 pub use crate::building_blocks::modulator::Modulator;
 
 /// currently available oscillator types

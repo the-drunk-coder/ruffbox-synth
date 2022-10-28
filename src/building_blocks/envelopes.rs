@@ -1,3 +1,5 @@
+pub mod source_env;
+
 pub mod exp_perc_envelope;
 pub mod linear_asr_envelope;
 pub mod multi_point_envelope;

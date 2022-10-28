@@ -66,7 +66,6 @@ impl<const BUFSIZE: usize> SingleOscillatorSynthO1<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for SingleOscillatorSynthO1<BUFSIZE> {
-    
     fn set_modulator(
         &mut self,
         par: SynthParameterLabel,

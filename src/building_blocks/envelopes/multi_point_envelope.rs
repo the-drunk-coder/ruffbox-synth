@@ -1,6 +1,6 @@
 use crate::building_blocks::{
-    mod_env::MultiPointEnvelope, EnvelopeSegmentInfo, Modulator, MonoEffect, MonoSource,
-    SynthParameterLabel, SynthParameterValue,
+    envelopes::source_env::MultiPointEnvelope, EnvelopeSegmentInfo, Modulator, MonoEffect,
+    MonoSource, SynthParameterLabel, SynthParameterValue,
 };
 
 /// more complex, configurable envelope
