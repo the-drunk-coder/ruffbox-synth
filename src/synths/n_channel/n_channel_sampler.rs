@@ -4,7 +4,7 @@ use crate::building_blocks::routing::PanChan;
 use crate::building_blocks::sampler::Sampler;
 use crate::building_blocks::{
     EnvelopeSegmentInfo, EnvelopeSegmentType, FilterType, Modulator, MonoEffect, MonoSource, Synth,
-    SynthParameterLabel, SynthParameterValue, ValueOrModulator,
+    SynthParameterLabel, SynthParameterValue,
 };
 
 /// a sampler with envelope etc.

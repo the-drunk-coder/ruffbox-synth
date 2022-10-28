@@ -1,5 +1,5 @@
 use crate::building_blocks::{
-    Modulator, MonoSource, SynthParameterLabel, SynthParameterValue, ValueOrModulator,
+    Modulator, MonoSource, SynthParameterLabel, SynthParameterValue,
 };
 
 use std::f32::consts::PI;
