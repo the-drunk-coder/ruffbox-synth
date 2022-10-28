@@ -52,17 +52,7 @@ impl<const BUFSIZE: usize> BiquadHpf12dB<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for BiquadHpf12dB<BUFSIZE> {
-    fn set_param_or_modulator(
-        &mut self,
-        par: SynthParameterLabel,
-        val_or_mod: ValueOrModulator<BUFSIZE>,
-    ) {
-        match val_or_mod {
-            ValueOrModulator::Val(val) => self.set_parameter(par, &val),
-            ValueOrModulator::Mod(init, modulator) => self.set_modulator(par, init, modulator),
-        }
-    }
-
+    
     fn set_modulator(
         &mut self,
         par: SynthParameterLabel,

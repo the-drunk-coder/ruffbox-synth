@@ -23,18 +23,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> MultichannelReverb<BUFSIZE, NCHAN
     fn set_parameter(&mut self, _par: SynthParameterLabel, _val: &SynthParameterValue) {
         // nothing to do here ...
     }
-
-    fn set_param_or_modulator(
-        &mut self,
-        par: SynthParameterLabel,
-        val_or_mod: ValueOrModulator<BUFSIZE>,
-    ) {
-        match val_or_mod {
-            ValueOrModulator::Val(val) => self.set_parameter(par, &val),
-            ValueOrModulator::Mod(_, _) => {} // no modulators possible so far
-        }
-    }
-
+    
     /**
      * Main processing routine.
      * Takes a mono block, as this would be downmixed anyway.

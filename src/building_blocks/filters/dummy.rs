@@ -20,8 +20,7 @@ impl<const BUFSIZE: usize> Default for DummyFilter<BUFSIZE> {
 }
 
 impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for DummyFilter<BUFSIZE> {
-    fn set_param_or_modulator(&mut self, _: SynthParameterLabel, _: ValueOrModulator<BUFSIZE>) {}
-
+    
     fn set_modulator(&mut self, _: SynthParameterLabel, _: f32, _: Modulator<BUFSIZE>) {}
 
     fn set_parameter(&mut self, _: SynthParameterLabel, _: &SynthParameterValue) {}
