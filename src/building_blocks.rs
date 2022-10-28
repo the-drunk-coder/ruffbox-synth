@@ -598,7 +598,12 @@ pub trait MultichannelReverb<const BUFSIZE: usize, const NCHAN: usize> {
         &mut self,
         par: SynthParameterLabel,
         val_or_mod: ValueOrModulator<BUFSIZE>,
-    );
+    ) {
+        match val_or_mod {
+            ValueOrModulator::Val(val) => self.set_parameter(par, &val),
+            ValueOrModulator::Mod(_, _) => {} // no modulators possible so far
+        }
+    }
     fn process(&mut self, block: [[f32; BUFSIZE]; NCHAN]) -> [[f32; BUFSIZE]; NCHAN];
 }
 
