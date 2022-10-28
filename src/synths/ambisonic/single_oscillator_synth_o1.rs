@@ -4,7 +4,7 @@ use crate::building_blocks::filters::*;
 use crate::building_blocks::oscillators::*;
 use crate::building_blocks::{
     FilterType, Modulator, MonoEffect, MonoSource, OscillatorType, Synth, SynthParameterLabel,
-    SynthParameterValue, ValueOrModulator,
+    SynthParameterValue,
 };
 
 /// a triangle synth with envelope etc.
