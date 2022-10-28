@@ -55,7 +55,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LinearRamp<BUFSIZE> {
     }
 
     fn is_finished(&self) -> bool {
-        false
+        matches!(self.state, SynthState::Finished)
     }
 
     fn set_modulator(&mut self, _: SynthParameterLabel, _: f32, _: Modulator<BUFSIZE>) {}
@@ -72,6 +72,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LinearRamp<BUFSIZE> {
                 self.cur_lvl += self.inc_dec;
             } else {
                 self.cur_lvl = self.to;
+                self.finish();
             }
 
             self.sample_count += 1;
@@ -138,7 +139,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LogRamp<BUFSIZE> {
     }
 
     fn is_finished(&self) -> bool {
-        false
+        matches!(self.state, SynthState::Finished)
     }
 
     fn set_modulator(&mut self, _: SynthParameterLabel, _: f32, _: Modulator<BUFSIZE>) {}
@@ -153,6 +154,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LogRamp<BUFSIZE> {
             self.cur_lvl = if self.sample_count < self.ramp_samples {
                 ((self.curve * self.time_count).exp() - 1.0) / (self.curve.exp() - 1.0)
             } else {
+                self.finish();
                 1.0
             };
 
@@ -211,7 +213,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for ExpRamp<BUFSIZE> {
     }
 
     fn is_finished(&self) -> bool {
-        false
+        matches!(self.state, SynthState::Finished)
     }
 
     fn set_param_or_modulator(
@@ -237,6 +239,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for ExpRamp<BUFSIZE> {
             self.cur_lvl = if self.sample_count < self.ramp_samples {
                 ((self.curve * self.time_count).exp() - 1.0) / (self.curve.exp() - 1.0)
             } else {
+                self.finish();
                 1.0
             };
 
@@ -253,13 +256,17 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for ExpRamp<BUFSIZE> {
  */
 #[derive(Clone, Copy)]
 pub struct ConstantMod<const BUFSIZE: usize> {
+    time_samples: usize,
+    sample_count: usize,
     value: f32,
     state: SynthState,
 }
 
 impl<const BUFSIZE: usize> ConstantMod<BUFSIZE> {
-    pub fn new(value: f32) -> Self {
+    pub fn new(time: f32, value: f32, samplerate: f32) -> Self {
         ConstantMod {
+            time_samples: (samplerate * time) as usize,
+            sample_count: 0,
             value,
             state: SynthState::Fresh,
         }
@@ -274,7 +281,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for ConstantMod<BUFSIZE> {
     }
 
     fn is_finished(&self) -> bool {
-        false
+        matches!(self.state, SynthState::Finished)
     }
 
     fn set_param_or_modulator(
@@ -292,8 +299,19 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for ConstantMod<BUFSIZE> {
 
     fn set_parameter(&mut self, _: SynthParameterLabel, _: &SynthParameterValue) {}
 
-    fn get_next_block(&mut self, _: usize, _: &[Vec<f32>]) -> [f32; BUFSIZE] {
-        [self.value; BUFSIZE]
+    fn get_next_block(&mut self, start_sample: usize, _: &[Vec<f32>]) -> [f32; BUFSIZE] {
+        self.sample_count += BUFSIZE - start_sample;
+
+        if self.sample_count > self.time_samples {
+            self.finish();
+        }
+
+        let mut out = [0.0; BUFSIZE];
+
+        for sample in out.iter_mut().take(BUFSIZE).skip(start_sample) {
+            *sample = self.value;
+        }
+        out
     }
 }
 
@@ -328,7 +346,9 @@ impl<const BUFSIZE: usize> MultiPointEnvelope<BUFSIZE> {
                 EnvelopeSegmentType::Exp => {
                     Box::new(ExpRamp::new(info.from, info.to, info.time, samplerate))
                 }
-                EnvelopeSegmentType::Constant => Box::new(ConstantMod::new(info.to)),
+                EnvelopeSegmentType::Constant => {
+                    Box::new(ConstantMod::new(info.time, info.to, samplerate))
+                }
             });
         }
 
@@ -413,7 +433,9 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for MultiPointEnvelope<BUFSIZE> {
                         EnvelopeSegmentType::Exp => {
                             Box::new(ExpRamp::new(info.from, info.to, info.time, self.samplerate))
                         }
-                        EnvelopeSegmentType::Constant => Box::new(ConstantMod::new(info.to)),
+                        EnvelopeSegmentType::Constant => {
+                            Box::new(ConstantMod::new(info.time, info.to, self.samplerate))
+                        }
                     });
                 }
 
@@ -437,8 +459,6 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for MultiPointEnvelope<BUFSIZE> {
 
         // first, let's see how many samples we have to fill
         let block_samples_to_fill_total = BUFSIZE - start_sample;
-
-        // now, let's see how many samples we have left in the current segment ...
 
         // if we have more samples to fill in current segment than we need for current
         // block, great, that's the easiest case ...

@@ -785,10 +785,10 @@ mod tests {
 
         if let Some(mut inst_1) = ctrl.prepare_instance(
             SynthType::Sampler(
-                FilterType::BiquadHpf12dB,
                 FilterType::Dummy,
                 FilterType::Dummy,
-                FilterType::Lpf18,
+                FilterType::Dummy,
+                FilterType::Dummy,
             ),
             0.291,
             bnum1,
@@ -798,18 +798,7 @@ mod tests {
                 SynthParameterLabel::ChannelPosition,
                 &SynthParameterValue::ScalarF32(0.0),
             );
-            inst_1.set_instance_parameter(
-                SynthParameterLabel::LowpassCutoffFrequency,
-                &SynthParameterValue::ScalarF32(22050.0),
-            );
-            inst_1.set_instance_parameter(
-                SynthParameterLabel::LowpassFilterDistortion,
-                &SynthParameterValue::ScalarF32(0.0),
-            );
-            inst_1.set_instance_parameter(
-                SynthParameterLabel::LowpassQFactor,
-                &SynthParameterValue::ScalarF32(0.0),
-            );
+
             // this envelope mimics the old lin_asr sample by sample ...
             inst_1.set_instance_parameter(
                 SynthParameterLabel::Envelope,
@@ -828,10 +817,10 @@ mod tests {
         }
         if let Some(mut inst_2) = ctrl.prepare_instance(
             SynthType::Sampler(
-                FilterType::BiquadHpf12dB,
                 FilterType::Dummy,
                 FilterType::Dummy,
-                FilterType::Lpf18,
+                FilterType::Dummy,
+                FilterType::Dummy,
             ),
             second_sample_timestamp,
             bnum2,
@@ -840,18 +829,7 @@ mod tests {
                 SynthParameterLabel::ChannelPosition,
                 &SynthParameterValue::ScalarF32(0.0),
             );
-            inst_2.set_instance_parameter(
-                SynthParameterLabel::LowpassCutoffFrequency,
-                &SynthParameterValue::ScalarF32(22050.0),
-            );
-            inst_2.set_instance_parameter(
-                SynthParameterLabel::LowpassFilterDistortion,
-                &SynthParameterValue::ScalarF32(0.0),
-            );
-            inst_2.set_instance_parameter(
-                SynthParameterLabel::LowpassQFactor,
-                &SynthParameterValue::ScalarF32(0.0),
-            );
+
             // this envelope mimics the old lin_asr sample by sample ...
             inst_2.set_instance_parameter(
                 SynthParameterLabel::Envelope,
@@ -880,6 +858,8 @@ mod tests {
         let out_buf = ruff.process(stream_time, false);
         stream_time += block_duration;
 
+        println!("pre {:?}", out_buf);
+
         for i in 0..9 {
             assert_approx_eq::assert_approx_eq!(out_buf[0][33 + i], sample1[i + 1], 0.03);
         }
@@ -891,7 +871,7 @@ mod tests {
         }
 
         let out_buf = ruff.process(stream_time, false);
-
+        println!("{:?}", out_buf);
         for i in 0..9 {
             assert_approx_eq::assert_approx_eq!(out_buf[0][33 + i], sample2[i + 1], 0.03);
         }
