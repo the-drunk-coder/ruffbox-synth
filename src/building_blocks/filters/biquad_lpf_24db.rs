@@ -1,5 +1,5 @@
 use crate::building_blocks::{
-    Modulator, MonoEffect, SynthParameterLabel, SynthParameterValue, ValueOrModulator,
+    Modulator, MonoEffect, SynthParameterLabel, SynthParameterValue,
 };
 
 use crate::building_blocks::filters::sos::*;

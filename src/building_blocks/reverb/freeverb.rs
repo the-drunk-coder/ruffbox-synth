@@ -1,5 +1,5 @@
 use crate::building_blocks::{
-    MultichannelReverb, SynthParameterLabel, SynthParameterValue, ValueOrModulator,
+    MultichannelReverb, SynthParameterLabel, SynthParameterValue,
 };
 
 struct FreeverbDefaultTuning;

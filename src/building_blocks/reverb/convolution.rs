@@ -1,6 +1,6 @@
 use crate::building_blocks::convolver::uniform_partitioned_convolution::UniformPartitionedConvolution;
 use crate::building_blocks::{
-    MultichannelReverb, SynthParameterLabel, SynthParameterValue, ValueOrModulator,
+    MultichannelReverb, SynthParameterLabel, SynthParameterValue,
 };
 
 pub struct MultichannelConvolutionReverb<const BUFSIZE: usize, const NCHAN: usize> {
