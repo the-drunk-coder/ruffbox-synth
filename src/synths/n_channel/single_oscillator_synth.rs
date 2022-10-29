@@ -3,8 +3,8 @@ use crate::building_blocks::filters::*;
 use crate::building_blocks::oscillators::*;
 use crate::building_blocks::routing::PanChan;
 use crate::building_blocks::{
-    FilterType, Modulator, MonoEffect, MonoSource, OscillatorType, Synth, SynthParameterLabel,
-    SynthParameterValue,
+    EnvelopeSegmentInfo, EnvelopeSegmentType, FilterType, Modulator, MonoEffect, MonoSource,
+    OscillatorType, Synth, SynthParameterLabel, SynthParameterValue,
 };
 
 /// a triangle synth with envelope etc.
@@ -12,7 +12,7 @@ pub struct SingleOscillatorSynth<const BUFSIZE: usize, const NCHAN: usize> {
     oscillator: Box<dyn MonoSource<BUFSIZE> + Sync + Send>,
     lp_filter: Box<dyn MonoEffect<BUFSIZE> + Sync + Send>,
     hp_filter: Box<dyn MonoEffect<BUFSIZE> + Sync + Send>,
-    envelope: LinearASREnvelope<BUFSIZE>,
+    envelope: MultiPointEffectEnvelope<BUFSIZE>,
     balance: PanChan<BUFSIZE, NCHAN>,
     reverb: f32,
     delay: f32,
@@ -25,6 +25,30 @@ impl<const BUFSIZE: usize, const NCHAN: usize> SingleOscillatorSynth<BUFSIZE, NC
         hpf_type: FilterType,
         sr: f32,
     ) -> Self {
+        // assemble a default ASR envelope ...
+        let env_segments = vec![
+            EnvelopeSegmentInfo {
+                from: 0.0,
+                to: 0.6,
+                time: 0.007,
+                segment_type: EnvelopeSegmentType::Lin,
+            },
+            EnvelopeSegmentInfo {
+                from: 0.6,
+                to: 0.6,
+                time: 0.1,
+                segment_type: EnvelopeSegmentType::Constant,
+            },
+            EnvelopeSegmentInfo {
+                from: 0.6,
+                to: 0.0,
+                time: 0.001,
+                segment_type: EnvelopeSegmentType::Lin,
+            },
+        ];
+
+        let envelope = MultiPointEffectEnvelope::new(env_segments, false, sr);
+
         SingleOscillatorSynth {
             oscillator: match osc_type {
                 OscillatorType::Sine => Box::new(SineOsc::new(440.0, 0.5, sr)),
@@ -59,7 +83,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> SingleOscillatorSynth<BUFSIZE, NC
                 FilterType::PeakEQ => Box::new(PeakEq::new(500.0, 100.0, 0.0, sr)),
                 _ => Box::new(BiquadHpf12dB::new(1500.0, 0.5, sr)),
             },
-            envelope: LinearASREnvelope::new(0.3, 0.05, 0.1, 0.05, sr),
+            envelope,
             balance: PanChan::new(),
             reverb: 0.0,
             delay: 0.0,
