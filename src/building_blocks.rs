@@ -132,6 +132,8 @@ pub enum EnvelopeSegmentType {
     Lin,
     Log,
     Exp,
+    Sin,
+    Cos,
     Constant,
 }
 

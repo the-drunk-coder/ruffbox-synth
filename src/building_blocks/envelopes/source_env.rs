@@ -219,6 +219,150 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for ExpRamp<BUFSIZE> {
 }
 
 /**
+ * Sinusoidal Ramp
+ */
+#[derive(Clone, Copy)]
+pub struct SineRamp<const BUFSIZE: usize> {
+    ramp_samples: usize,
+    sample_count: usize,
+    time_inc: f32,
+    time_count: f32,
+    cur_lvl: f32,
+    mul: f32,
+    from: f32,
+    state: SynthState,
+}
+
+impl<const BUFSIZE: usize> SineRamp<BUFSIZE> {
+    pub fn new(from: f32, to: f32, ramp_time: f32, samplerate: f32) -> Self {
+        let ramp_samples = (samplerate * ramp_time).round();
+        let time_inc = 1.0 / ramp_samples;
+        let mul = to - from;
+
+        SineRamp {
+            ramp_samples: ramp_samples as usize,
+            sample_count: 0,
+            cur_lvl: 0.0,
+            time_inc,
+            time_count: 0.0,
+            mul,
+            from,
+            state: SynthState::Fresh,
+        }
+    }
+}
+
+impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineRamp<BUFSIZE> {
+    fn reset(&mut self) {
+        self.sample_count = 0;
+        self.cur_lvl = self.from;
+    }
+
+    fn finish(&mut self) {
+        self.state = SynthState::Finished;
+    }
+
+    fn is_finished(&self) -> bool {
+        matches!(self.state, SynthState::Finished)
+    }
+
+    fn set_modulator(&mut self, _: SynthParameterLabel, _: f32, _: Modulator<BUFSIZE>) {}
+
+    fn set_parameter(&mut self, _: SynthParameterLabel, _: &SynthParameterValue) {}
+
+    fn get_next_block(&mut self, start_sample: usize, _: &[Vec<f32>]) -> [f32; BUFSIZE] {
+        let mut out: [f32; BUFSIZE] = [0.0; BUFSIZE];
+
+        for current_sample in out.iter_mut().take(BUFSIZE).skip(start_sample) {
+            *current_sample = self.from + self.cur_lvl * self.mul;
+            self.cur_lvl = if self.sample_count < self.ramp_samples {
+                (std::f32::consts::PI / 2.0 * self.time_count).sin()
+            } else {
+                self.finish();
+                1.0
+            };
+
+            self.time_count += self.time_inc;
+
+            self.sample_count += 1;
+        }
+        out
+    }
+}
+
+/**
+ * Sinusoidal Ramp
+ */
+#[derive(Clone, Copy)]
+pub struct CosRamp<const BUFSIZE: usize> {
+    ramp_samples: usize,
+    sample_count: usize,
+    time_inc: f32,
+    time_count: f32,
+    cur_lvl: f32,
+    mul: f32,
+    from: f32,
+    state: SynthState,
+}
+
+impl<const BUFSIZE: usize> CosRamp<BUFSIZE> {
+    pub fn new(from: f32, to: f32, ramp_time: f32, samplerate: f32) -> Self {
+        let ramp_samples = (samplerate * ramp_time).round();
+        let time_inc = 1.0 / ramp_samples;
+        let mul = to - from;
+
+        CosRamp {
+            ramp_samples: ramp_samples as usize,
+            sample_count: 0,
+            cur_lvl: 0.0,
+            time_inc,
+            time_count: 0.0,
+            mul,
+            from,
+            state: SynthState::Fresh,
+        }
+    }
+}
+
+impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for CosRamp<BUFSIZE> {
+    fn reset(&mut self) {
+        self.sample_count = 0;
+        self.cur_lvl = self.from;
+    }
+
+    fn finish(&mut self) {
+        self.state = SynthState::Finished;
+    }
+
+    fn is_finished(&self) -> bool {
+        matches!(self.state, SynthState::Finished)
+    }
+
+    fn set_modulator(&mut self, _: SynthParameterLabel, _: f32, _: Modulator<BUFSIZE>) {}
+
+    fn set_parameter(&mut self, _: SynthParameterLabel, _: &SynthParameterValue) {}
+
+    fn get_next_block(&mut self, start_sample: usize, _: &[Vec<f32>]) -> [f32; BUFSIZE] {
+        let mut out: [f32; BUFSIZE] = [0.0; BUFSIZE];
+
+        for current_sample in out.iter_mut().take(BUFSIZE).skip(start_sample) {
+            *current_sample = self.from + self.cur_lvl * self.mul;
+            self.cur_lvl = if self.sample_count < self.ramp_samples {
+                1.0 - (std::f32::consts::PI / 2.0 * self.time_count).cos()
+            } else {
+                self.finish();
+                1.0
+            };
+
+            self.time_count += self.time_inc;
+
+            self.sample_count += 1;
+        }
+        out
+    }
+}
+
+/**
  * Constant (needed for envelope)
  */
 #[derive(Clone, Copy)]
@@ -302,6 +446,12 @@ impl<const BUFSIZE: usize> MultiPointEnvelope<BUFSIZE> {
                 EnvelopeSegmentType::Exp => {
                     Box::new(ExpRamp::new(info.from, info.to, info.time, samplerate))
                 }
+                EnvelopeSegmentType::Sin => {
+                    Box::new(ExpRamp::new(info.from, info.to, info.time, samplerate))
+                }
+                EnvelopeSegmentType::Cos => {
+                    Box::new(ExpRamp::new(info.from, info.to, info.time, samplerate))
+                }
                 EnvelopeSegmentType::Constant => {
                     Box::new(ConstantMod::new(info.time, info.to, samplerate))
                 }
@@ -377,6 +527,15 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for MultiPointEnvelope<BUFSIZE> {
                         }
                         EnvelopeSegmentType::Exp => {
                             Box::new(ExpRamp::new(info.from, info.to, info.time, self.samplerate))
+                        }
+                        EnvelopeSegmentType::Sin => Box::new(SineRamp::new(
+                            info.from,
+                            info.to,
+                            info.time,
+                            self.samplerate,
+                        )),
+                        EnvelopeSegmentType::Cos => {
+                            Box::new(CosRamp::new(info.from, info.to, info.time, self.samplerate))
                         }
                         EnvelopeSegmentType::Constant => {
                             Box::new(ConstantMod::new(info.time, info.to, self.samplerate))
@@ -523,6 +682,36 @@ mod tests {
             for i in 0..512 {
                 let a = block[i];
                 debug_plotter::plot!(a  where caption = "ExpRampTest");
+            }
+        }
+    }
+
+    #[test]
+    fn test_sine_ramp() {
+        let mut sineramp = SineRamp::<512>::new(0.0, 1.0, 1.0, 44100.0);
+
+        let num_blocks = (88200.0 / 512.0) as usize + 30;
+
+        for _ in 0..num_blocks {
+            let block = sineramp.get_next_block(0, &Vec::new());
+            for i in 0..512 {
+                let a = block[i];
+                debug_plotter::plot!(a  where caption = "SineRampTest");
+            }
+        }
+    }
+
+    #[test]
+    fn test_cos_ramp() {
+        let mut cosramp = CosRamp::<512>::new(1.0, 0.0, 1.0, 44100.0);
+
+        let num_blocks = (88200.0 / 512.0) as usize + 30;
+
+        for _ in 0..num_blocks {
+            let block = cosramp.get_next_block(0, &Vec::new());
+            for i in 0..512 {
+                let a = block[i];
+                debug_plotter::plot!(a  where caption = "CosRampTest");
             }
         }
     }
