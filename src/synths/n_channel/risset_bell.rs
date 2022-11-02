@@ -138,6 +138,27 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
                 };
                 update_internals = true;
             }
+            SynthParameterLabel::Envelope => {
+                if let SynthParameterValue::MultiPointEnvelope(segments, _, _) = val {
+                    if segments.len() == 3 {
+                        // ASR
+                        self.atk = segments[0].time;
+                        self.sus = segments[1].time;
+                        self.rel = segments[2].time;
+                        self.main_level = segments[1].from;
+                    } else if segments.len() == 4 {
+                        // ADSR, ignore D
+                        self.atk = segments[0].time;
+                        self.sus = segments[2].time;
+                        self.rel = segments[3].time;
+                        self.main_level = segments[2].from;
+                    } else {
+                        // ignore ?
+                    }
+
+                    update_internals = true;
+                }
+            }
             _ => (),
         };
 

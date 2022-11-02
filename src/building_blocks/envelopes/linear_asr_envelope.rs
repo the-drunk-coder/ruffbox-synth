@@ -89,7 +89,6 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for LinearASREnvelope<BUFSIZE> {
 
             // this is the one that should be used ...
             SynthParameterValue::MultiPointEnvelope(segments, _, _) => {
-                println!("segments {}", segments.len());
                 if segments.len() == 3 {
                     // ASR
                     self.atk = segments[0].time;

@@ -437,9 +437,8 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for MultiPointEnvelope<BUFSIZE> {
                     // again, more than we need ?
                     if samples_left_in_segment >= block_samples_to_fill_rest {
                         // copy samples
-                        out[start_index..BUFSIZE].copy_from_slice(
-                            &out_current[start_index..BUFSIZE],
-                        );
+                        out[start_index..BUFSIZE]
+                            .copy_from_slice(&out_current[start_index..BUFSIZE]);
 
                         self.sample_count += BUFSIZE - start_index;
                         break; // jump out
