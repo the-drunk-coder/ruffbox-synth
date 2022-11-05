@@ -223,47 +223,116 @@ mod tests {
 
     #[test]
     fn test_multi_point_effect_env() {
-        let segments = vec![
+        let segments_lin = vec![
             EnvelopeSegmentInfo {
                 from: 0.0,
-                to: 0.7,
-                time: 0.01,
-                segment_type: EnvelopeSegmentType::Log,
+                to: 100.0,
+                time: 0.1,
+                segment_type: EnvelopeSegmentType::Lin,
             },
             EnvelopeSegmentInfo {
-                from: 0.7,
-                to: 0.7,
-                time: 0.48,
+                from: 100.0,
+                to: 100.0,
+                time: 0.3,
                 segment_type: EnvelopeSegmentType::Constant,
             },
             EnvelopeSegmentInfo {
-                from: 0.7,
+                from: 100.0,
                 to: 0.0,
-                time: 0.01,
+                time: 0.1,
+                segment_type: EnvelopeSegmentType::Lin,
+            },
+        ];
+
+        let mut mpenv_lin = MultiPointEffectEnvelope::<512>::empty(44100.0);
+
+        let segments_log = vec![
+            EnvelopeSegmentInfo {
+                from: 0.0,
+                to: 100.0,
+                time: 0.1,
+                segment_type: EnvelopeSegmentType::Log,
+            },
+            EnvelopeSegmentInfo {
+                from: 100.0,
+                to: 100.0,
+                time: 0.3,
+                segment_type: EnvelopeSegmentType::Constant,
+            },
+            EnvelopeSegmentInfo {
+                from: 100.0,
+                to: 0.0,
+                time: 0.1,
                 segment_type: EnvelopeSegmentType::Log,
             },
         ];
 
-        let mut mpenv = MultiPointEffectEnvelope::<512>::empty(44100.0);
-        mpenv.set_parameter(
+        let mut mpenv_log = MultiPointEffectEnvelope::<512>::empty(44100.0);
+
+        let segments_sin = vec![
+            EnvelopeSegmentInfo {
+                from: 0.0,
+                to: 100.0,
+                time: 0.1,
+                segment_type: EnvelopeSegmentType::Sin,
+            },
+            EnvelopeSegmentInfo {
+                from: 100.0,
+                to: 100.0,
+                time: 0.3,
+                segment_type: EnvelopeSegmentType::Constant,
+            },
+            EnvelopeSegmentInfo {
+                from: 100.0,
+                to: 0.0,
+                time: 0.1,
+                segment_type: EnvelopeSegmentType::Cos,
+            },
+        ];
+
+        let mut mpenv_sin = MultiPointEffectEnvelope::<512>::empty(44100.0);
+
+        mpenv_lin.set_parameter(
             SynthParameterLabel::Envelope,
             &SynthParameterValue::MultiPointEnvelope(
-                segments,
+                segments_lin,
+                false,
+                crate::building_blocks::ValOp::Replace,
+            ),
+        );
+
+        mpenv_log.set_parameter(
+            SynthParameterLabel::Envelope,
+            &SynthParameterValue::MultiPointEnvelope(
+                segments_log,
+                false,
+                crate::building_blocks::ValOp::Replace,
+            ),
+        );
+
+        mpenv_sin.set_parameter(
+            SynthParameterLabel::Envelope,
+            &SynthParameterValue::MultiPointEnvelope(
+                segments_sin,
                 false,
                 crate::building_blocks::ValOp::Replace,
             ),
         );
 
         let in_block = [1.0; 512];
-        let num_blocks = (1.3 * 44100.0 / 512.0) as usize;
+        let num_blocks = (0.6 * 44100.0 / 512.0) as usize;
 
         for _ in 0..num_blocks {
-            let _ = mpenv.process_block(in_block, 0, &Vec::new());
+            let block_lin = mpenv_lin.process_block(in_block, 0, &Vec::new());
+            let block_log = mpenv_log.process_block(in_block, 0, &Vec::new());
+            let block_sin = mpenv_sin.process_block(in_block, 0, &Vec::new());
             //let block = mpenv.get_next_block(0, &Vec::new());
-            //for i in 0..512 {
-            //    let a = out_block[i];
-            //    debug_plotter::plot!(a where caption = "MultiPointTest");
-            //}
+            for i in 0..512 {
+                let a = block_lin[i];
+                let b = block_log[i];
+                let c = block_sin[i];
+                debug_plotter::plot!(a,b,c where caption = "MultiPointTestComp");
+            }
         }
     }
 
