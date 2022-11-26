@@ -11,6 +11,7 @@ pub mod lf_tri;
 pub mod sine_osc;
 pub mod wavematrix;
 pub mod wavetable;
+pub mod white_noise;
 pub mod wt_saw;
 
 pub use crate::building_blocks::oscillators::lf_cub::LFCub;
@@ -21,6 +22,7 @@ pub use crate::building_blocks::oscillators::lf_tri::LFTri;
 pub use crate::building_blocks::oscillators::sine_osc::SineOsc;
 pub use crate::building_blocks::oscillators::wavematrix::Wavematrix;
 pub use crate::building_blocks::oscillators::wavetable::Wavetable;
+pub use crate::building_blocks::oscillators::white_noise::WhiteNoise;
 
 pub use crate::building_blocks::oscillators::fm_saw::FMSaw;
 pub use crate::building_blocks::oscillators::fm_square::FMSquare;

@@ -17,6 +17,7 @@ num-complex = "0.4"
 chfft = "0.3.4"
 rubato = "0.10.0"
 dashmap = "5.2"
+fastrand = "1.8.0"
 
 [dev-dependencies]
 assert_approx_eq = "1.1.0"
