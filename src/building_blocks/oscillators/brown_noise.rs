@@ -2,6 +2,7 @@ use crate::building_blocks::{Modulator, MonoSource, SynthParameterLabel, SynthPa
 
 /**
  * A brown noise generator based on wyrand (through fastrand)
+ * Based on https://github.com/porres/pd-else/blob/master/Classes/Source/brown%7E.c
  */
 #[derive(Clone)]
 pub struct BrownNoise<const BUFSIZE: usize> {
@@ -63,32 +64,26 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for BrownNoise<BUFSIZE> {
                 .take(BUFSIZE)
                 .skip(start_sample)
             {
-                if fastrand::bool() {
-                    self.cur += self.step;
-                } else {
-                    self.cur -= self.step;
-                }
+                let noise = fastrand::i32(-100..100) as f32 / 100.0;
+                self.cur += noise * self.step;
 
-                if self.cur >= 1.0 {
-                    self.cur -= 2.0;
-                } else if self.cur <= -1.0 {
-                    self.cur += 2.0;
+                if self.cur > 1.0 {
+                    self.cur = 2.0 - self.cur;
+                } else if self.cur < -1.0 {
+                    self.cur = -2.0 - self.cur;
                 }
 
                 *current_sample = self.cur * amp_buf[idx];
             }
         } else {
             for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
-                if fastrand::bool() {
-                    self.cur += self.step;
-                } else {
-                    self.cur -= self.step;
-                }
+                let noise = fastrand::i32(-100..100) as f32 / 100.0;
+                self.cur += noise * self.step;
 
-                if self.cur >= 1.0 {
-                    self.cur -= 2.0;
-                } else if self.cur <= -1.0 {
-                    self.cur += 2.0;
+                if self.cur > 1.0 {
+                    self.cur = 2.0 - self.cur;
+                } else if self.cur < -1.0 {
+                    self.cur = -2.0 - self.cur;
                 }
 
                 *current_sample = self.cur * self.amp;
