@@ -1,3 +1,4 @@
+pub mod brown_noise;
 /// A collection of oscillators, some of which are modeled
 /// after scsynth, csound, etc ...
 pub mod fm_saw;
@@ -14,6 +15,7 @@ pub mod wavetable;
 pub mod white_noise;
 pub mod wt_saw;
 
+pub use crate::building_blocks::oscillators::brown_noise::BrownNoise;
 pub use crate::building_blocks::oscillators::lf_cub::LFCub;
 pub use crate::building_blocks::oscillators::lf_rsaw::LFRSaw;
 pub use crate::building_blocks::oscillators::lf_saw::LFSaw;

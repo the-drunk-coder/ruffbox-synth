@@ -1,21 +1,28 @@
 use crate::building_blocks::{Modulator, MonoSource, SynthParameterLabel, SynthParameterValue};
 
 /**
- * a white noise generator based on wyrand (through fastrand)
+ * A brown noise generator based on wyrand (through fastrand)
  */
 #[derive(Clone)]
-pub struct WhiteNoise<const BUFSIZE: usize> {
+pub struct BrownNoise<const BUFSIZE: usize> {
+    step: f32,
     amp: f32,
+    cur: f32,
     amp_mod: Option<Modulator<BUFSIZE>>, // and level
 }
 
-impl<const BUFSIZE: usize> WhiteNoise<BUFSIZE> {
-    pub fn new(amp: f32) -> Self {
-        WhiteNoise { amp, amp_mod: None }
+impl<const BUFSIZE: usize> BrownNoise<BUFSIZE> {
+    pub fn new(amp: f32, step: f32) -> Self {
+        BrownNoise {
+            step,
+            amp,
+            cur: 0.0,
+            amp_mod: None,
+        }
     }
 }
 
-impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for WhiteNoise<BUFSIZE> {
+impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for BrownNoise<BUFSIZE> {
     fn reset(&mut self) {}
 
     fn set_modulator(
@@ -56,13 +63,35 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for WhiteNoise<BUFSIZE> {
                 .take(BUFSIZE)
                 .skip(start_sample)
             {
-                let raw = fastrand::i32(-100..100);
-                *current_sample = (raw as f32 / 100.0) * amp_buf[idx];
+                if fastrand::bool() {
+                    self.cur += self.step;
+                } else {
+                    self.cur -= self.step;
+                }
+
+                if self.cur >= 1.0 {
+                    self.cur -= 2.0;
+                } else if self.cur <= -1.0 {
+                    self.cur += 2.0;
+                }
+
+                *current_sample = self.cur * amp_buf[idx];
             }
         } else {
             for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
-                let raw = fastrand::i32(-100..100);
-                *current_sample = (raw as f32 / 100.0) * self.amp;
+                if fastrand::bool() {
+                    self.cur += self.step;
+                } else {
+                    self.cur -= self.step;
+                }
+
+                if self.cur >= 1.0 {
+                    self.cur -= 2.0;
+                } else if self.cur <= -1.0 {
+                    self.cur += 2.0;
+                }
+
+                *current_sample = self.cur * self.amp;
             }
         }
 
