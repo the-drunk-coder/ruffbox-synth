@@ -39,6 +39,8 @@ impl<const BUFSIZE: usize> SingleOscillatorSynthO1<BUFSIZE> {
                 OscillatorType::WTSaw => Box::new(WTSaw::new(440.0, 0.5, sr)),
                 OscillatorType::Wavetable => Box::new(Wavetable::new(sr)),
                 OscillatorType::Wavematrix => Box::new(Wavematrix::new(sr)),
+                OscillatorType::WhiteNoise => Box::new(WhiteNoise::new(0.2)),
+                OscillatorType::BrownNoise => Box::new(BrownNoise::new(0.2, 0.125)),
             },
             lp_filter: match lpf_type {
                 FilterType::Dummy => Box::new(DummyFilter::new()),

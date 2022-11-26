@@ -30,6 +30,8 @@ pub enum OscillatorType {
     WTSaw,
     Wavetable,
     Wavematrix,
+    WhiteNoise,
+    BrownNoise,
 }
 
 /// the available filter types.
