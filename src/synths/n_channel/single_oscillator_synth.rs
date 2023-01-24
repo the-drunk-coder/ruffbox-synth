@@ -5,7 +5,7 @@ use crate::building_blocks::routing::PanChan;
 use crate::building_blocks::SampleBuffer;
 use crate::building_blocks::{
     EnvelopeSegmentInfo, EnvelopeSegmentType, FilterType, Modulator, MonoEffect, MonoSource,
-    OscillatorType, Synth, SynthParameterLabel, SynthParameterValue,
+    OscillatorType, SampleBuffer, Synth, SynthParameterLabel, SynthParameterValue,
 };
 
 /// a triangle synth with envelope etc.

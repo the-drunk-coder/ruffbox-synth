@@ -1,6 +1,6 @@
 use crate::building_blocks::{
-    EnvelopeSegmentInfo, EnvelopeSegmentType, Modulator, MonoSource, SynthParameterLabel,
-    SynthParameterValue, SynthState,
+    EnvelopeSegmentInfo, EnvelopeSegmentType, Modulator, MonoSource, SampleBuffer,
+    SynthParameterLabel, SynthParameterValue, SynthState,
 };
 
 /**

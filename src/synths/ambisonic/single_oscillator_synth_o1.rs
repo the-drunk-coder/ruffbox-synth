@@ -3,8 +3,8 @@ use crate::building_blocks::envelopes::*;
 use crate::building_blocks::filters::*;
 use crate::building_blocks::oscillators::*;
 use crate::building_blocks::{
-    FilterType, Modulator, MonoEffect, MonoSource, OscillatorType, Synth, SynthParameterLabel,
-    SynthParameterValue,
+    FilterType, Modulator, MonoEffect, MonoSource, OscillatorType, SampleBuffer, Synth,
+    SynthParameterLabel, SynthParameterValue,
 };
 
 /// a triangle synth with envelope etc.

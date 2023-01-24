@@ -1,7 +1,7 @@
 use crate::building_blocks::filters::*;
 use crate::building_blocks::interpolation::*;
 use crate::building_blocks::{
-    Modulator, MonoEffect, SynthParameterLabel, SynthParameterValue, ValueOrModulator,
+    Modulator, MonoEffect, SampleBuffer, SynthParameterLabel, SynthParameterValue, ValueOrModulator,
 };
 
 pub struct MonoDelay<const BUFSIZE: usize> {

@@ -1,6 +1,7 @@
 // parent imports
 use crate::building_blocks::{
-    interpolation::*, Modulator, MonoSource, SynthParameterLabel, SynthParameterValue, SynthState,
+    interpolation::*, Modulator, MonoSource, SampleBuffer, SynthParameterLabel,
+    SynthParameterValue, SynthState,
 };
 
 /**
@@ -109,48 +110,51 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
     ) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
-        let rate_buf = if let Some(m) = self.rate_mod.as_mut() {
-            m.process(self.playback_rate, start_sample, sample_buffers)
-        } else {
-            [self.playback_rate; BUFSIZE]
-        };
-
-        let amp_buf = if let Some(m) = self.amp_mod.as_mut() {
-            m.process(self.amp, start_sample, sample_buffers)
-        } else {
-            [self.amp; BUFSIZE]
-        };
-
-        for (sample_idx, current_sample) in out_buf
-            .iter_mut()
-            .enumerate()
-            .take(BUFSIZE)
-            .skip(start_sample)
-        {
-            self.frac_index_increment = 1.0 * rate_buf[sample_idx];
-
-            // get sample:
-            let idx = self.frac_index.floor();
-            let frac = self.frac_index - idx;
-            let idx_u = idx as usize;
-
-            // 4-point, 3rd-order Hermite
-            *current_sample = interpolate(
-                frac,
-                sample_buffers[self.bufnum][idx_u - 1],
-                sample_buffers[self.bufnum][idx_u],
-                sample_buffers[self.bufnum][idx_u + 1],
-                sample_buffers[self.bufnum][idx_u + 2],
-                amp_buf[sample_idx],
-            );
-
-            if ((self.frac_index + self.frac_index_increment) as usize) < self.buflen {
-                self.frac_index += self.frac_index_increment;
-            } else if self.repeat {
-                self.frac_index = 1.0;
-                self.index = 1;
+	// this is a mono-only sampler
+        if let SampleBuffer::Mono(buf) = sample_buffers[self.bufnum] {
+            let rate_buf = if let Some(m) = self.rate_mod.as_mut() {
+                m.process(self.playback_rate, start_sample, sample_buffers)
             } else {
-                self.finish();
+                [self.playback_rate; BUFSIZE]
+            };
+
+            let amp_buf = if let Some(m) = self.amp_mod.as_mut() {
+                m.process(self.amp, start_sample, sample_buffers)
+            } else {
+                [self.amp; BUFSIZE]
+            };
+
+            for (sample_idx, current_sample) in out_buf
+                .iter_mut()
+                .enumerate()
+                .take(BUFSIZE)
+                .skip(start_sample)
+            {
+                self.frac_index_increment = 1.0 * rate_buf[sample_idx];
+
+                // get sample:
+                let idx = self.frac_index.floor();
+                let frac = self.frac_index - idx;
+                let idx_u = idx as usize;
+
+                // 4-point, 3rd-order Hermite
+                *current_sample = interpolate(
+                    frac,
+                    buf[idx_u - 1],
+                    buf[self.bufnum][idx_u],
+                    buf[self.bufnum][idx_u + 1],
+                    buf[self.bufnum][idx_u + 2],
+                    amp_buf[sample_idx],
+                );
+
+                if ((self.frac_index + self.frac_index_increment) as usize) < self.buflen {
+                    self.frac_index += self.frac_index_increment;
+                } else if self.repeat {
+                    self.frac_index = 1.0;
+                    self.index = 1;
+                } else {
+                    self.finish();
+                }
             }
         }
 

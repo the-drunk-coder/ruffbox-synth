@@ -1,5 +1,5 @@
 use crate::building_blocks::{
-    Modulator, MonoEffect, SynthParameterLabel, SynthParameterValue, SynthState,
+    Modulator, MonoEffect, SampleBuffer, SynthParameterLabel, SynthParameterValue, SynthState,
 };
 
 /// Exponential/Linear Percussion Envelope (currently with fixed curve value)

@@ -4,7 +4,8 @@ use crate::building_blocks::filters::*;
 use crate::building_blocks::sampler::Sampler;
 use crate::building_blocks::SampleBuffer;
 use crate::building_blocks::{
-    FilterType, Modulator, MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
+    FilterType, Modulator, MonoEffect, MonoSource, SampleBuffer, Synth, SynthParameterLabel,
+    SynthParameterValue,
 };
 
 /// a sampler with envelope etc.

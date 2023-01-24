@@ -8,7 +8,7 @@ use std::sync::Arc;
 use crate::building_blocks::delay::MultichannelDelay;
 use crate::building_blocks::reverb::convolution::MultichannelConvolutionReverb;
 use crate::building_blocks::reverb::freeverb::MultichannelFreeverb;
-use crate::building_blocks::{MultichannelReverb, Synth};
+use crate::building_blocks::{MultichannelReverb, SampleBuffer, Synth};
 
 use crate::ruffbox::{ControlMessage, ReverbMode, ScheduledEvent};
 
