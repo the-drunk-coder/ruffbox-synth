@@ -1,4 +1,6 @@
-use crate::building_blocks::{Modulator, MonoSource, SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{
+    Modulator, MonoSource, SampleBuffer, SynthParameterLabel, SynthParameterValue,
+};
 
 /**
  * A non-band-limited sawtooth oscillator, but reversed

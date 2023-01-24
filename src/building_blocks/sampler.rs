@@ -50,17 +50,18 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
         sample_buffers: &[SampleBuffer],
     ) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
+        if let SampleBuffer::Mono(buf) = sample_buffers[self.bufnum] {
+            for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
+                *current_sample = buf[self.index] * self.amp;
 
-        for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
-            *current_sample = sample_buffers[self.bufnum][self.index] * self.amp;
-
-            if self.index < self.buflen {
-                self.index += 1;
-            } else if self.repeat {
-                self.frac_index = 1.0;
-                self.index = 1;
-            } else {
-                self.finish();
+                if self.index < self.buflen {
+                    self.index += 1;
+                } else if self.repeat {
+                    self.frac_index = 1.0;
+                    self.index = 1;
+                } else {
+                    self.finish();
+                }
             }
         }
 
@@ -73,33 +74,33 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
         sample_buffers: &[SampleBuffer],
     ) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
+        if let SampleBuffer::Mono(buf) = sample_buffers[self.bufnum] {
+            for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
+                // get sample:
+                let idx = self.frac_index.floor();
+                let frac = self.frac_index - idx;
+                let idx_u = idx as usize;
 
-        for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
-            // get sample:
-            let idx = self.frac_index.floor();
-            let frac = self.frac_index - idx;
-            let idx_u = idx as usize;
+                // 4-point, 3rd-order Hermite
+                *current_sample = interpolate(
+                    frac,
+                    buf[idx_u - 1],
+                    buf[idx_u],
+                    buf[idx_u + 1],
+                    buf[idx_u + 2],
+                    self.amp,
+                );
 
-            // 4-point, 3rd-order Hermite
-            *current_sample = interpolate(
-                frac,
-                sample_buffers[self.bufnum][idx_u - 1],
-                sample_buffers[self.bufnum][idx_u],
-                sample_buffers[self.bufnum][idx_u + 1],
-                sample_buffers[self.bufnum][idx_u + 2],
-                self.amp,
-            );
-
-            if ((self.frac_index + self.frac_index_increment) as usize) < self.buflen {
-                self.frac_index += self.frac_index_increment;
-            } else if self.repeat {
-                self.frac_index = 1.0;
-                self.index = 1;
-            } else {
-                self.finish();
+                if ((self.frac_index + self.frac_index_increment) as usize) < self.buflen {
+                    self.frac_index += self.frac_index_increment;
+                } else if self.repeat {
+                    self.frac_index = 1.0;
+                    self.index = 1;
+                } else {
+                    self.finish();
+                }
             }
         }
-
         out_buf
     }
 
@@ -110,7 +111,7 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
     ) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
-	// this is a mono-only sampler
+        // this is a mono-only sampler
         if let SampleBuffer::Mono(buf) = sample_buffers[self.bufnum] {
             let rate_buf = if let Some(m) = self.rate_mod.as_mut() {
                 m.process(self.playback_rate, start_sample, sample_buffers)
@@ -141,9 +142,9 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
                 *current_sample = interpolate(
                     frac,
                     buf[idx_u - 1],
-                    buf[self.bufnum][idx_u],
-                    buf[self.bufnum][idx_u + 1],
-                    buf[self.bufnum][idx_u + 2],
+                    buf[idx_u],
+                    buf[idx_u + 1],
+                    buf[idx_u + 2],
                     amp_buf[sample_idx],
                 );
 

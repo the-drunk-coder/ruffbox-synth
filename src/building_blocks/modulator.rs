@@ -1,7 +1,7 @@
 use crate::building_blocks::envelopes::source_env::*;
 use crate::building_blocks::oscillators::*;
 use crate::building_blocks::{
-    EnvelopeSegmentInfo, MonoSource, SynthParameterLabel, SynthParameterValue, ValOp,
+    EnvelopeSegmentInfo, MonoSource, SampleBuffer, SynthParameterLabel, SynthParameterValue, ValOp,
     ValueOrModulator,
 };
 

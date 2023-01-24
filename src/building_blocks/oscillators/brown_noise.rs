@@ -1,4 +1,6 @@
-use crate::building_blocks::{Modulator, MonoSource, SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{
+    Modulator, MonoSource, SampleBuffer, SynthParameterLabel, SynthParameterValue,
+};
 
 /**
  * A brown noise generator based on wyrand (through fastrand)

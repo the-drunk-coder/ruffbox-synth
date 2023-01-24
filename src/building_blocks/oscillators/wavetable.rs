@@ -1,5 +1,5 @@
 use crate::building_blocks::{
-    Modulator, MonoSource, SynthParameterLabel, SynthParameterValue, SynthState,
+    Modulator, MonoSource, SampleBuffer, SynthParameterLabel, SynthParameterValue, SynthState,
 };
 
 /**

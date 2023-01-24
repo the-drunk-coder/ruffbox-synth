@@ -1,5 +1,6 @@
 use crate::building_blocks::{
-    oscillators::Wavetable, Modulator, MonoSource, SynthParameterLabel, SynthParameterValue,
+    oscillators::Wavetable, Modulator, MonoSource, SampleBuffer, SynthParameterLabel,
+    SynthParameterValue,
 };
 
 /**

@@ -2,7 +2,6 @@ use crate::building_blocks::ambisonics::encoder_o1::EncoderO1;
 use crate::building_blocks::envelopes::*;
 use crate::building_blocks::filters::*;
 use crate::building_blocks::sampler::Sampler;
-use crate::building_blocks::SampleBuffer;
 use crate::building_blocks::{
     FilterType, Modulator, MonoEffect, MonoSource, SampleBuffer, Synth, SynthParameterLabel,
     SynthParameterValue,

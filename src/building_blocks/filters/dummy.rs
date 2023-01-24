@@ -1,4 +1,6 @@
-use crate::building_blocks::{Modulator, MonoEffect, SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{
+    Modulator, MonoEffect, SampleBuffer, SynthParameterLabel, SynthParameterValue,
+};
 
 /**
  * dummy filter ... so unnecessary filters aren't in the way ...

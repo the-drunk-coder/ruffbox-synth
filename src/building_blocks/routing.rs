@@ -1,4 +1,4 @@
-use crate::building_blocks::{Modulator, SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{Modulator, SampleBuffer, SynthParameterLabel, SynthParameterValue};
 
 use std::f32::consts::PI;
 
