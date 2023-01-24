@@ -158,7 +158,7 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for Lpf18<BUFSIZE> {
         &mut self,
         block: [f32; BUFSIZE],
         start_sample: usize,
-        in_buffers: &[Vec<f32>],
+        in_buffers: &[SampleBuffer],
     ) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 

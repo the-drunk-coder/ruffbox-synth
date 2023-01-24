@@ -51,7 +51,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LinearRamp<BUFSIZE> {
 
     fn set_parameter(&mut self, _: SynthParameterLabel, _: &SynthParameterValue) {}
 
-    fn get_next_block(&mut self, start_sample: usize, _: &[Vec<f32>]) -> [f32; BUFSIZE] {
+    fn get_next_block(&mut self, start_sample: usize, _: &[SampleBuffer]) -> [f32; BUFSIZE] {
         let mut out: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
         for current_sample in out.iter_mut().take(BUFSIZE).skip(start_sample) {
@@ -124,7 +124,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for LogRamp<BUFSIZE> {
 
     fn set_parameter(&mut self, _: SynthParameterLabel, _: &SynthParameterValue) {}
 
-    fn get_next_block(&mut self, start_sample: usize, _: &[Vec<f32>]) -> [f32; BUFSIZE] {
+    fn get_next_block(&mut self, start_sample: usize, _: &[SampleBuffer]) -> [f32; BUFSIZE] {
         let mut out: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
         for current_sample in out.iter_mut().take(BUFSIZE).skip(start_sample) {
@@ -198,7 +198,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for ExpRamp<BUFSIZE> {
 
     fn set_parameter(&mut self, _: SynthParameterLabel, _: &SynthParameterValue) {}
 
-    fn get_next_block(&mut self, start_sample: usize, _: &[Vec<f32>]) -> [f32; BUFSIZE] {
+    fn get_next_block(&mut self, start_sample: usize, _: &[SampleBuffer]) -> [f32; BUFSIZE] {
         let mut out: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
         for current_sample in out.iter_mut().take(BUFSIZE).skip(start_sample) {
@@ -270,7 +270,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for SineRamp<BUFSIZE> {
 
     fn set_parameter(&mut self, _: SynthParameterLabel, _: &SynthParameterValue) {}
 
-    fn get_next_block(&mut self, start_sample: usize, _: &[Vec<f32>]) -> [f32; BUFSIZE] {
+    fn get_next_block(&mut self, start_sample: usize, _: &[SampleBuffer]) -> [f32; BUFSIZE] {
         let mut out: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
         for current_sample in out.iter_mut().take(BUFSIZE).skip(start_sample) {
@@ -342,7 +342,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for CosRamp<BUFSIZE> {
 
     fn set_parameter(&mut self, _: SynthParameterLabel, _: &SynthParameterValue) {}
 
-    fn get_next_block(&mut self, start_sample: usize, _: &[Vec<f32>]) -> [f32; BUFSIZE] {
+    fn get_next_block(&mut self, start_sample: usize, _: &[SampleBuffer]) -> [f32; BUFSIZE] {
         let mut out: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
         for current_sample in out.iter_mut().take(BUFSIZE).skip(start_sample) {
@@ -399,7 +399,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for ConstantMod<BUFSIZE> {
 
     fn set_parameter(&mut self, _: SynthParameterLabel, _: &SynthParameterValue) {}
 
-    fn get_next_block(&mut self, start_sample: usize, _: &[Vec<f32>]) -> [f32; BUFSIZE] {
+    fn get_next_block(&mut self, start_sample: usize, _: &[SampleBuffer]) -> [f32; BUFSIZE] {
         self.sample_count += BUFSIZE - start_sample;
 
         if self.sample_count > self.time_samples {
@@ -550,7 +550,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for MultiPointEnvelope<BUFSIZE> {
         }
     }
 
-    fn get_next_block(&mut self, start_sample: usize, bufs: &[Vec<f32>]) -> [f32; BUFSIZE] {
+    fn get_next_block(&mut self, start_sample: usize, bufs: &[SampleBuffer]) -> [f32; BUFSIZE] {
         // this should also avoid problems with "empty" multi-point envelopes ...
         if self.segment_idx >= self.segments.len() {
             if let Some(last_seg) = self.segments.last_mut() {

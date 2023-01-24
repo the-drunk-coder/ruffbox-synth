@@ -113,7 +113,7 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for SingleOscillatorSynthO1<BUFSIZE
     fn get_next_block(
         &mut self,
         start_sample: usize,
-        sample_buffers: &[Vec<f32>],
+        sample_buffers: &[SampleBuffer],
     ) -> [[f32; BUFSIZE]; 4] {
         let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample, sample_buffers);
         out = self

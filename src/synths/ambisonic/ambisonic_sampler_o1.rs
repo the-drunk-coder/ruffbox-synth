@@ -2,6 +2,7 @@ use crate::building_blocks::ambisonics::encoder_o1::EncoderO1;
 use crate::building_blocks::envelopes::*;
 use crate::building_blocks::filters::*;
 use crate::building_blocks::sampler::Sampler;
+use crate::building_blocks::SampleBuffer;
 use crate::building_blocks::{
     FilterType, Modulator, MonoEffect, MonoSource, Synth, SynthParameterLabel, SynthParameterValue,
 };
@@ -113,7 +114,7 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for AmbisonicSamplerO1<BUFSIZE> {
     fn get_next_block(
         &mut self,
         start_sample: usize,
-        sample_buffers: &[Vec<f32>],
+        sample_buffers: &[SampleBuffer],
     ) -> [[f32; BUFSIZE]; 4] {
         let mut out: [f32; BUFSIZE] = self.sampler.get_next_block(start_sample, sample_buffers);
         out = self.hpf.process_block(out, start_sample, sample_buffers);

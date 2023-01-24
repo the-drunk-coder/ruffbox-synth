@@ -207,7 +207,7 @@ impl<const BUFSIZE: usize> Modulator<BUFSIZE> {
         &mut self,
         original_value: f32,
         start_sample: usize,
-        in_buffers: &[Vec<f32>],
+        in_buffers: &[SampleBuffer],
     ) -> [f32; BUFSIZE] {
         if self.positive {
             match self.op {

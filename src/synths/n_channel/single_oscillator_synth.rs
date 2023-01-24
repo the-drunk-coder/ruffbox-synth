@@ -2,6 +2,7 @@ use crate::building_blocks::envelopes::*;
 use crate::building_blocks::filters::*;
 use crate::building_blocks::oscillators::*;
 use crate::building_blocks::routing::PanChan;
+use crate::building_blocks::SampleBuffer;
 use crate::building_blocks::{
     EnvelopeSegmentInfo, EnvelopeSegmentType, FilterType, Modulator, MonoEffect, MonoSource,
     OscillatorType, Synth, SynthParameterLabel, SynthParameterValue,
@@ -141,7 +142,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
     fn get_next_block(
         &mut self,
         start_sample: usize,
-        sample_buffers: &[Vec<f32>],
+        sample_buffers: &[SampleBuffer],
     ) -> [[f32; BUFSIZE]; NCHAN] {
         let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample, sample_buffers);
         out = self

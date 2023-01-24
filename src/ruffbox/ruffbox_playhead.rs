@@ -25,7 +25,7 @@ pub(crate) struct LiveBufferMetadata {
 pub struct RuffboxPlayhead<const BUFSIZE: usize, const NCHAN: usize> {
     running_instances: Vec<Box<dyn Synth<BUFSIZE, NCHAN> + Send + Sync>>,
     pending_events: Vec<ScheduledEvent<BUFSIZE, NCHAN>>,
-    pub(crate) buffers: Vec<Vec<f32>>,     // crate public for test
+    pub(crate) buffers: Vec<SampleBuffer>, // crate public for test
     pub(crate) buffer_lengths: Vec<usize>, // crate public for test
     max_buffers: usize,
     non_stitch_size: usize,
@@ -90,8 +90,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
         };
 
         // init buffer memory
-        let mut buffers = vec![vec![0.0]; max_buffers];
-        // init buffer lengths
+        let mut buffers = Vec::new(); //vec![vec![0.0]; max_buffers];
+                                      // init buffer lengths
         let mut buffer_lengths = vec![0; max_buffers];
 
         //println!("max num buffers {} {}", buffers.len(), max_buffers);

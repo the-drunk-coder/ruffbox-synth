@@ -64,7 +64,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> PanChan<BUFSIZE, NCHAN> {
         &mut self,
         block: [f32; BUFSIZE],
         start_sample: usize,
-        sample_buffers: &[Vec<f32>],
+        sample_buffers: &[SampleBuffer],
     ) -> [[f32; BUFSIZE]; NCHAN] {
         if self.pos_mod.is_some() {
             self.levels = [[0.0; BUFSIZE]; NCHAN];

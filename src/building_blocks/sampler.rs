@@ -46,7 +46,7 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
     fn get_next_block_plain(
         &mut self,
         start_sample: usize,
-        sample_buffers: &[Vec<f32>],
+        sample_buffers: &[SampleBuffer],
     ) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
@@ -69,7 +69,7 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
     fn get_next_block_interpolated(
         &mut self,
         start_sample: usize,
-        sample_buffers: &[Vec<f32>],
+        sample_buffers: &[SampleBuffer],
     ) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
@@ -105,7 +105,7 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
     fn get_next_block_modulated(
         &mut self,
         start_sample: usize,
-        sample_buffers: &[Vec<f32>],
+        sample_buffers: &[SampleBuffer],
     ) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
@@ -224,7 +224,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for Sampler<BUFSIZE> {
     fn get_next_block(
         &mut self,
         start_sample: usize,
-        sample_buffers: &[Vec<f32>],
+        sample_buffers: &[SampleBuffer],
     ) -> [f32; BUFSIZE] {
         if self.rate_mod.is_some() || self.rate_mod.is_some() {
             self.get_next_block_modulated(start_sample, sample_buffers)

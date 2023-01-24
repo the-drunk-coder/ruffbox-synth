@@ -44,7 +44,11 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for WhiteNoise<BUFSIZE> {
         false
     }
 
-    fn get_next_block(&mut self, start_sample: usize, in_buffers: &[Vec<f32>]) -> [f32; BUFSIZE] {
+    fn get_next_block(
+        &mut self,
+        start_sample: usize,
+        in_buffers: &[SampleBuffer],
+    ) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
         if let Some(m) = self.amp_mod.as_mut() {

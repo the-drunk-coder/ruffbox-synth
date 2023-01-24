@@ -139,6 +139,11 @@ pub enum EnvelopeSegmentType {
     Constant,
 }
 
+pub enum SampleBuffer {
+    Mono(Vec<f32>),
+    Stereo(Vec<f32>),
+}
+
 /// defines an envelope segment
 #[derive(Clone, Copy, Debug)]
 pub struct EnvelopeSegmentInfo {
@@ -547,7 +552,11 @@ pub trait MonoSource<const BUFSIZE: usize>: MonoSourceClone<BUFSIZE> {
     fn finish(&mut self);
     fn reset(&mut self);
     fn is_finished(&self) -> bool;
-    fn get_next_block(&mut self, start_sample: usize, in_buffers: &[Vec<f32>]) -> [f32; BUFSIZE];
+    fn get_next_block(
+        &mut self,
+        start_sample: usize,
+        in_buffers: &[SampleBuffer],
+    ) -> [f32; BUFSIZE];
 }
 
 pub trait MonoSourceClone<const BUFSIZE: usize> {
@@ -592,7 +601,7 @@ pub trait MonoEffect<const BUFSIZE: usize> {
         &mut self,
         block: [f32; BUFSIZE],
         start_sample: usize,
-        in_buffers: &[Vec<f32>],
+        in_buffers: &[SampleBuffer],
     ) -> [f32; BUFSIZE];
 }
 
@@ -634,7 +643,7 @@ pub trait Synth<const BUFSIZE: usize, const NCHAN: usize> {
     fn get_next_block(
         &mut self,
         start_sample: usize,
-        in_buffers: &[Vec<f32>],
+        in_buffers: &[SampleBuffer],
     ) -> [[f32; BUFSIZE]; NCHAN];
     fn reverb_level(&self) -> f32;
     fn delay_level(&self) -> f32;

@@ -50,7 +50,7 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for MultiPointEffectEnvelope<BUFS
         &mut self,
         block: [f32; BUFSIZE],
         start_sample: usize,
-        bufs: &[Vec<f32>],
+        bufs: &[SampleBuffer],
     ) -> [f32; BUFSIZE] {
         let mut out: [f32; BUFSIZE] = [0.0; BUFSIZE];
         let env = self.inner_env.get_next_block(start_sample, bufs);

@@ -99,7 +99,7 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for MonoDelay<BUFSIZE> {
         &mut self,
         block: [f32; BUFSIZE],
         start_sample: usize,
-        in_buffers: &[Vec<f32>],
+        in_buffers: &[SampleBuffer],
     ) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
@@ -233,7 +233,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> MultichannelDelay<BUFSIZE, NCHAN>
     pub fn process(
         &mut self,
         block: [[f32; BUFSIZE]; NCHAN],
-        sample_buffers: &[Vec<f32>],
+        sample_buffers: &[SampleBuffer],
     ) -> [[f32; BUFSIZE]; NCHAN] {
         let mut out_buf = [[0.0; BUFSIZE]; NCHAN];
 

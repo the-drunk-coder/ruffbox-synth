@@ -63,7 +63,11 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for WTSaw<BUFSIZE> {
         self.wt.is_finished()
     }
 
-    fn get_next_block(&mut self, start_sample: usize, in_buffers: &[Vec<f32>]) -> [f32; BUFSIZE] {
+    fn get_next_block(
+        &mut self,
+        start_sample: usize,
+        in_buffers: &[SampleBuffer],
+    ) -> [f32; BUFSIZE] {
         self.wt.get_next_block(start_sample, in_buffers)
     }
 }

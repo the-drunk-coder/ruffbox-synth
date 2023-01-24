@@ -27,7 +27,12 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for DummyFilter<BUFSIZE> {
     } // it's never finished ..
 
     // start sample isn't really needed either ...
-    fn process_block(&mut self, block: [f32; BUFSIZE], _: usize, _: &[Vec<f32>]) -> [f32; BUFSIZE] {
+    fn process_block(
+        &mut self,
+        block: [f32; BUFSIZE],
+        _: usize,
+        _: &[SampleBuffer],
+    ) -> [f32; BUFSIZE] {
         block
     }
 }

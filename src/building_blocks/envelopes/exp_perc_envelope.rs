@@ -104,7 +104,7 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for ExpPercEnvelope<BUFSIZE> {
         &mut self,
         block: [f32; BUFSIZE],
         start_sample: usize,
-        _: &[Vec<f32>],
+        _: &[SampleBuffer],
     ) -> [f32; BUFSIZE] {
         let mut out: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
