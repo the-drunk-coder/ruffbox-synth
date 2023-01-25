@@ -90,8 +90,11 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
         };
 
         // init buffer memory
-        let mut buffers = Vec::new(); //vec![vec![0.0]; max_buffers];
-                                      // init buffer lengths
+        let mut buffers = Vec::new();
+        for _ in 0..max_buffers {
+            buffers.push(SampleBuffer::Placeholder);
+        }
+        // init buffer lengths
         let mut buffer_lengths = vec![0; max_buffers];
 
         //println!("max num buffers {} {}", buffers.len(), max_buffers);

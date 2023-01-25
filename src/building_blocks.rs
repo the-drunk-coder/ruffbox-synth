@@ -141,7 +141,8 @@ pub enum EnvelopeSegmentType {
 
 pub enum SampleBuffer {
     Mono(Vec<f32>),
-    Stereo(Vec<f32>),
+    Stereo(Vec<f32>, Vec<f32>),
+    Placeholder,
 }
 
 /// defines an envelope segment

@@ -169,59 +169,62 @@ mod tests {
                 0.0002
             );
         }
-        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][1], 1.0, 0.0002);
-        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][513], 0.0, 0.0002);
-        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][385], 1.0, 0.0002);
+
+        {
+            let SampleBuffer::Mono(buf) = &ruff.buffers[0] else {panic!()};
+            assert_approx_eq::assert_approx_eq!(buf[1], 1.0, 0.0002);
+            assert_approx_eq::assert_approx_eq!(buf[513], 0.0, 0.0002);
+            assert_approx_eq::assert_approx_eq!(buf[385], 1.0, 0.0002);
+        }
 
         for _ in 0..512 {
             ruff.write_sample_to_live_buffer(0, 1.0);
         }
 
-        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][513], 1.0, 0.0002);
-        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][385], 1.0, 0.0002);
-        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][1024], 0.0, 0.0002);
-        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][896], 1.0, 0.0002);
-
+        {
+            let SampleBuffer::Mono(buf) = &ruff.buffers[0] else {panic!()};
+            assert_approx_eq::assert_approx_eq!(buf[513], 1.0, 0.0002);
+            assert_approx_eq::assert_approx_eq!(buf[385], 1.0, 0.0002);
+            assert_approx_eq::assert_approx_eq!(buf[1024], 0.0, 0.0002);
+            assert_approx_eq::assert_approx_eq!(buf[896], 1.0, 0.0002);
+        }
         // write some seconds
         for _ in 0..2000 {
             for _ in 0..512 {
                 ruff.write_sample_to_live_buffer(0, 1.0);
             }
         }
-
-        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][0], 0.0, 0.0002);
-        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][1], 1.0, 0.0002);
-        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][44100], 1.0, 0.0002);
-        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][ruff.buffer_lengths[0]], 1.0, 0.0002);
-        assert_approx_eq::assert_approx_eq!(
-            ruff.buffers[0][ruff.buffer_lengths[0] + 1],
-            0.0,
-            0.0002
-        );
-        assert_approx_eq::assert_approx_eq!(
-            ruff.buffers[0][ruff.buffer_lengths[0] + 2],
-            0.0,
-            0.0002
-        );
+        {
+            let SampleBuffer::Mono(buf) = &ruff.buffers[0] else {panic!()};
+            assert_approx_eq::assert_approx_eq!(buf[0], 0.0, 0.0002);
+            assert_approx_eq::assert_approx_eq!(buf[1], 1.0, 0.0002);
+            assert_approx_eq::assert_approx_eq!(buf[44100], 1.0, 0.0002);
+            assert_approx_eq::assert_approx_eq!(buf[ruff.buffer_lengths[0]], 1.0, 0.0002);
+            assert_approx_eq::assert_approx_eq!(buf[ruff.buffer_lengths[0] + 1], 0.0, 0.0002);
+            assert_approx_eq::assert_approx_eq!(buf[ruff.buffer_lengths[0] + 2], 0.0, 0.0002);
+        }
     }
 
     #[test]
-    fn test_load_sample() {
+    fn test_load_mono_sample() {
         let (ctrl, mut ruff) =
             init_ruffbox::<512, 2>(0, 2.0, &ReverbMode::FreeVerb, 44100.0, 3000, 10);
 
         let mut sample = vec![1.0_f32; 500];
 
-        ctrl.load_sample(&mut sample, false, 44100.0);
+        ctrl.load_mono_sample(&mut sample, false, 44100.0);
         ruff.process(0.0, true);
 
-        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][0], 0.0, 0.0002);
-        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][1], 1.0, 0.0002);
-        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][2], 1.0, 0.0002);
-        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][3], 1.0, 0.0002);
-        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][500], 1.0, 0.0002);
-        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][501], 0.0, 0.0002);
-        assert_approx_eq::assert_approx_eq!(ruff.buffers[0][502], 0.0, 0.0002);
+        {
+            let SampleBuffer::Mono(buf) = &ruff.buffers[0] else {panic!()};
+            assert_approx_eq::assert_approx_eq!(buf[0], 0.0, 0.0002);
+            assert_approx_eq::assert_approx_eq!(buf[1], 1.0, 0.0002);
+            assert_approx_eq::assert_approx_eq!(buf[2], 1.0, 0.0002);
+            assert_approx_eq::assert_approx_eq!(buf[3], 1.0, 0.0002);
+            assert_approx_eq::assert_approx_eq!(buf[500], 1.0, 0.0002);
+            assert_approx_eq::assert_approx_eq!(buf[501], 0.0, 0.0002);
+            assert_approx_eq::assert_approx_eq!(buf[502], 0.0, 0.0002);
+        }
     }
 
     #[test]
@@ -300,8 +303,8 @@ mod tests {
         let mut sample1 = vec![0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
         let mut sample2 = vec![0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0];
 
-        let bnum1 = ctrl.load_sample(&mut sample1, false, 44100.0);
-        let bnum2 = ctrl.load_sample(&mut sample2, false, 44100.0);
+        let bnum1 = ctrl.load_mono_sample(&mut sample1, false, 44100.0);
+        let bnum2 = ctrl.load_mono_sample(&mut sample2, false, 44100.0);
 
         ruff.process(0.0, true);
 
@@ -438,7 +441,7 @@ mod tests {
 
         let mut sample1 = vec![0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
 
-        let bnum1 = ctrl.load_sample(&mut sample1, false, 44100.0);
+        let bnum1 = ctrl.load_mono_sample(&mut sample1, false, 44100.0);
 
         ruff.process(0.0, true);
 
@@ -524,8 +527,8 @@ mod tests {
         let mut sample1 = vec![0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
         let mut sample2 = vec![0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0];
 
-        let bnum1 = ctrl.load_sample(&mut sample1, false, 44100.0);
-        let bnum2 = ctrl.load_sample(&mut sample2, false, 44100.0);
+        let bnum1 = ctrl.load_mono_sample(&mut sample1, false, 44100.0);
+        let bnum2 = ctrl.load_mono_sample(&mut sample2, false, 44100.0);
 
         if let Some(mut inst_1) = ctrl.prepare_instance(
             SynthType::Sampler(
@@ -645,8 +648,8 @@ mod tests {
         let mut sample1 = vec![0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
         let mut sample2 = vec![0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0];
 
-        let bnum1 = ctrl.load_sample(&mut sample1, false, 44100.0);
-        let bnum2 = ctrl.load_sample(&mut sample2, false, 44100.0);
+        let bnum1 = ctrl.load_mono_sample(&mut sample1, false, 44100.0);
+        let bnum2 = ctrl.load_mono_sample(&mut sample2, false, 44100.0);
 
         if let Some(mut inst_1) = ctrl.prepare_instance(
             SynthType::Sampler(
@@ -774,8 +777,8 @@ mod tests {
         let mut sample1 = vec![0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
         let mut sample2 = vec![0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0];
 
-        let bnum1 = ctrl.load_sample(&mut sample1, false, 44100.0);
-        let bnum2 = ctrl.load_sample(&mut sample2, false, 44100.0);
+        let bnum1 = ctrl.load_mono_sample(&mut sample1, false, 44100.0);
+        let bnum2 = ctrl.load_mono_sample(&mut sample2, false, 44100.0);
 
         // schedule two samples ahead, so they should  occur in different blocks
         // first sample should appear in block 100
@@ -884,7 +887,7 @@ mod tests {
 
         let mut sample1 = vec![0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
 
-        let bnum1 = ctrl.load_sample(&mut sample1, false, 44100.0);
+        let bnum1 = ctrl.load_mono_sample(&mut sample1, false, 44100.0);
 
         ruff.process(0.0, false);
 

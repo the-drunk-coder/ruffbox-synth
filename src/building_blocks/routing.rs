@@ -58,14 +58,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> PanChan<BUFSIZE, NCHAN> {
         }
     }
 
-    /// pan mono to stereo
-    #[allow(clippy::needless_range_loop)]
-    pub fn process_block(
-        &mut self,
-        block: [f32; BUFSIZE],
-        start_sample: usize,
-        sample_buffers: &[SampleBuffer],
-    ) -> [[f32; BUFSIZE]; NCHAN] {
+    fn recalc_levels(&mut self, start_sample: usize, sample_buffers: &[SampleBuffer]) {
         if self.pos_mod.is_some() {
             self.levels = [[0.0; BUFSIZE]; NCHAN];
             let pos_buf =
@@ -82,12 +75,43 @@ impl<const BUFSIZE: usize, const NCHAN: usize> PanChan<BUFSIZE, NCHAN> {
                 self.levels[upper as usize % (NCHAN as usize)][idx] = angle_rad.sin();
             }
         }
+    }
+
+    /// pan mono to stereo
+    #[allow(clippy::needless_range_loop)]
+    pub fn process_block(
+        &mut self,
+        block: [f32; BUFSIZE],
+        start_sample: usize,
+        sample_buffers: &[SampleBuffer],
+    ) -> [[f32; BUFSIZE]; NCHAN] {
+        self.recalc_levels(start_sample, sample_buffers);
 
         // I think the range loop is way more intuitive and easy to read here ...
         let mut out_buf = [[0.0; BUFSIZE]; NCHAN];
         for c in 0..NCHAN {
             for s in 0..BUFSIZE {
                 out_buf[c][s] = block[s] * self.levels[c][s];
+            }
+        }
+        out_buf
+    }
+
+    /// balance stereo to stereo
+    #[allow(clippy::needless_range_loop)]
+    pub fn process_stereo_block(
+        &mut self,
+        block: [[f32; BUFSIZE]; 2],
+        start_sample: usize,
+        sample_buffers: &[SampleBuffer],
+    ) -> [[f32; BUFSIZE]; NCHAN] {
+        self.recalc_levels(start_sample, sample_buffers);
+
+        // I think the range loop is way more intuitive and easy to read here ...
+        let mut out_buf = [[0.0; BUFSIZE]; NCHAN];
+        for c in 0..NCHAN {
+            for s in 0..BUFSIZE {
+                out_buf[c][s] = block[c][s] * self.levels[c][s];
             }
         }
         out_buf
