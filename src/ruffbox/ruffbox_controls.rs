@@ -6,7 +6,9 @@ use rubato::{FftFixedIn, Resampler};
 use crossbeam::atomic::AtomicCell;
 use dashmap::DashMap;
 
-use crate::building_blocks::{resolve_parameter_value, SynthParameterLabel, SynthParameterValue};
+use crate::building_blocks::{
+    resolve_parameter_value, SampleBuffer, SynthParameterLabel, SynthParameterValue,
+};
 use crate::ruffbox::{ControlMessage, ScheduledEvent};
 use crate::synths::*;
 
@@ -200,7 +202,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
     /// Resample to current samplerate if necessary and specified.
     /// The sample buffer is passed as mutable because the method adds
     /// interpolation samples without the need of a copy.
-    pub fn load_sample(&self, samples: &mut Vec<f32>, resample: bool, sr: f32) -> usize {
+    pub fn load_mono_sample(&self, samples: &mut Vec<f32>, resample: bool, sr: f32) -> usize {
         let buffer_id = self.buffer_counter.fetch_add(1);
 
         if buffer_id > self.max_buffers {
@@ -240,7 +242,11 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
 
         self.buffer_lengths.insert(buffer_id, buflen);
         self.control_q_send
-            .send(ControlMessage::LoadSample(buffer_id, buflen, buffer))
+            .send(ControlMessage::LoadSample(
+                buffer_id,
+                buflen,
+                SampleBuffer::Mono(buffer),
+            ))
             .unwrap();
         // return bufnum
         buffer_id

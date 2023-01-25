@@ -10,7 +10,7 @@ use std::cmp::Ordering;
 use std::sync::Arc;
 
 use crate::building_blocks::{
-    Modulator, Synth, SynthParameterLabel, SynthParameterValue, ValueOrModulator,
+    Modulator, SampleBuffer, Synth, SynthParameterLabel, SynthParameterValue, ValueOrModulator,
 };
 
 pub use crate::ruffbox::{ruffbox_controls::*, ruffbox_playhead::*};
@@ -90,7 +90,7 @@ pub enum ReverbMode {
 }
 
 pub(crate) enum ControlMessage<const BUFSIZE: usize, const NCHAN: usize> {
-    LoadSample(usize, usize, Vec<f32>), // num, len, samples
+    LoadSample(usize, usize, SampleBuffer), // num, len, samples
     SetGlobalParamOrModulator(SynthParameterLabel, ValueOrModulator<BUFSIZE>),
     ScheduleEvent(ScheduledEvent<BUFSIZE, NCHAN>),
     FreezeBuffer(usize, usize),

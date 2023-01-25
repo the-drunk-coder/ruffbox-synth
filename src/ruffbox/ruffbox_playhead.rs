@@ -124,7 +124,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
             }
             // create live buffers and freeze buffers
             for b in 0..live_buffers + freeze_buffers {
-                buffers[b] = vec![0.0; (samplerate * live_buffer_time) as usize + 3];
+                buffers[b] =
+                    SampleBuffer::Mono(vec![0.0; (samplerate * live_buffer_time) as usize + 3]);
                 buffer_lengths[b] = (samplerate * live_buffer_time) as usize;
             }
             println!("live buf time samples: {}", buffer_lengths[0]);
@@ -153,48 +154,50 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
     // there HAS to be a more elegant solution for this ...
     pub fn write_sample_to_live_buffer(&mut self, bufnum: usize, sample: f32) {
         // first, overwrite old stitch region if we're at the beginning of a new block
-        if self.live_buffer_metadata[bufnum].live_buffer_current_block == 0 {
-            let mut count_back_idx = self.live_buffer_metadata[bufnum].live_buffer_idx - 1;
-            for s in (0..self.live_buffer_metadata[bufnum].stitch_buffer.len()).rev() {
-                if count_back_idx < 1 {
-                    count_back_idx = self.buffer_lengths[bufnum]; // live buffer length
+        if let Some(SampleBuffer::Mono(buf)) = self.buffers.get_mut(bufnum) {
+            if self.live_buffer_metadata[bufnum].live_buffer_current_block == 0 {
+                let mut count_back_idx = self.live_buffer_metadata[bufnum].live_buffer_idx - 1;
+                for s in (0..self.live_buffer_metadata[bufnum].stitch_buffer.len()).rev() {
+                    if count_back_idx < 1 {
+                        count_back_idx = self.buffer_lengths[bufnum]; // live buffer length
+                    }
+                    buf[count_back_idx] = self.live_buffer_metadata[bufnum].stitch_buffer[s];
+                    count_back_idx -= 1;
                 }
-                self.buffers[bufnum][count_back_idx] =
-                    self.live_buffer_metadata[bufnum].stitch_buffer[s];
-                count_back_idx -= 1;
             }
-        }
 
-        if self.live_buffer_metadata[bufnum].live_buffer_current_block < self.non_stitch_size {
-            self.buffers[bufnum][self.live_buffer_metadata[bufnum].live_buffer_idx] = sample;
-        } else if self.live_buffer_metadata[bufnum].live_buffer_current_block < self.bufsize {
-            let fdi = self.live_buffer_metadata[bufnum].fade_stitch_idx;
-            self.live_buffer_metadata[bufnum].stitch_buffer[fdi] = sample;
+            if self.live_buffer_metadata[bufnum].live_buffer_current_block < self.non_stitch_size {
+                buf[self.live_buffer_metadata[bufnum].live_buffer_idx] = sample;
+            } else if self.live_buffer_metadata[bufnum].live_buffer_current_block < self.bufsize {
+                let fdi = self.live_buffer_metadata[bufnum].fade_stitch_idx;
+                self.live_buffer_metadata[bufnum].stitch_buffer[fdi] = sample;
 
-            // stitch by fading ...
-            self.buffers[bufnum][self.live_buffer_metadata[bufnum].live_buffer_idx] = self.buffers
-                [bufnum][self.live_buffer_metadata[bufnum].live_buffer_idx]
-                * self.fade_curve[self.live_buffer_metadata[bufnum].fade_stitch_idx]
-                + sample
-                    * (1.0 - self.fade_curve[self.live_buffer_metadata[bufnum].fade_stitch_idx]);
-            self.live_buffer_metadata[bufnum].fade_stitch_idx += 1;
-        }
+                // stitch by fading ...
+                buf[self.live_buffer_metadata[bufnum].live_buffer_idx] = buf
+                    [self.live_buffer_metadata[bufnum].live_buffer_idx]
+                    * self.fade_curve[self.live_buffer_metadata[bufnum].fade_stitch_idx]
+                    + sample
+                        * (1.0
+                            - self.fade_curve[self.live_buffer_metadata[bufnum].fade_stitch_idx]);
+                self.live_buffer_metadata[bufnum].fade_stitch_idx += 1;
+            }
 
-        self.live_buffer_metadata[bufnum].live_buffer_idx += 1;
-        self.live_buffer_metadata[bufnum].live_buffer_current_block += 1;
+            self.live_buffer_metadata[bufnum].live_buffer_idx += 1;
+            self.live_buffer_metadata[bufnum].live_buffer_current_block += 1;
 
-        if self.live_buffer_metadata[bufnum].live_buffer_idx >= self.buffer_lengths[bufnum] {
-            self.live_buffer_metadata[bufnum].live_buffer_idx = 1;
-        }
+            if self.live_buffer_metadata[bufnum].live_buffer_idx >= self.buffer_lengths[bufnum] {
+                self.live_buffer_metadata[bufnum].live_buffer_idx = 1;
+            }
 
-        if self.live_buffer_metadata[bufnum].live_buffer_current_block >= self.bufsize {
-            self.live_buffer_metadata[bufnum].live_buffer_current_block = 0;
-        }
+            if self.live_buffer_metadata[bufnum].live_buffer_current_block >= self.bufsize {
+                self.live_buffer_metadata[bufnum].live_buffer_current_block = 0;
+            }
 
-        if self.live_buffer_metadata[bufnum].fade_stitch_idx
-            >= self.live_buffer_metadata[bufnum].live_buffer_stitch_size
-        {
-            self.live_buffer_metadata[bufnum].fade_stitch_idx = 0;
+            if self.live_buffer_metadata[bufnum].fade_stitch_idx
+                >= self.live_buffer_metadata[bufnum].live_buffer_stitch_size
+            {
+                self.live_buffer_metadata[bufnum].fade_stitch_idx = 0;
+            }
         }
     }
 
@@ -248,10 +251,22 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
                     }
                 }
                 ControlMessage::FreezeBuffer(fb, ib) => {
-                    // start at one to account for interpolation
-                    // sample
-                    for i in 1..self.buffer_lengths[ib] + 1 {
-                        self.buffers[fb][i] = self.buffers[ib][i];
+                    // start at one to account for interpolation sample.
+                    // sometimes you can be a PITA, Rust ...
+                    if fb < ib {
+                        let (l, r) = self.buffers.split_at_mut(ib);
+                        let SampleBuffer::Mono(inbuf) = &r[0] else {unreachable!()};
+                        let SampleBuffer::Mono(freezbuf) = l.get_mut(fb).unwrap() else {unreachable!()};
+                        for i in 1..self.buffer_lengths[ib] + 1 {
+                            freezbuf[i] = inbuf[i];
+                        }
+                    } else if fb > ib {
+                        let (l, r) = self.buffers.split_at_mut(fb);
+                        let SampleBuffer::Mono(inbuf) = &l[ib] else {unreachable!()};
+                        let SampleBuffer::Mono(freezbuf) = r.get_mut(0).unwrap() else {unreachable!()};
+                        for i in 1..self.buffer_lengths[ib] + 1 {
+                            freezbuf[i] = inbuf[i];
+                        }
                     }
                 }
             }

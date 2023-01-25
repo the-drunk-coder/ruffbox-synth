@@ -50,7 +50,7 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
         sample_buffers: &[SampleBuffer],
     ) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
-        if let SampleBuffer::Mono(buf) = sample_buffers[self.bufnum] {
+        if let SampleBuffer::Mono(buf) = &sample_buffers[self.bufnum] {
             for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
                 *current_sample = buf[self.index] * self.amp;
 
@@ -74,7 +74,7 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
         sample_buffers: &[SampleBuffer],
     ) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
-        if let SampleBuffer::Mono(buf) = sample_buffers[self.bufnum] {
+        if let SampleBuffer::Mono(buf) = &sample_buffers[self.bufnum] {
             for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
                 // get sample:
                 let idx = self.frac_index.floor();
@@ -112,7 +112,7 @@ impl<const BUFSIZE: usize> Sampler<BUFSIZE> {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
         // this is a mono-only sampler
-        if let SampleBuffer::Mono(buf) = sample_buffers[self.bufnum] {
+        if let SampleBuffer::Mono(buf) = &sample_buffers[self.bufnum] {
             let rate_buf = if let Some(m) = self.rate_mod.as_mut() {
                 m.process(self.playback_rate, start_sample, sample_buffers)
             } else {
