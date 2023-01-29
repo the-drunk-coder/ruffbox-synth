@@ -10,7 +10,7 @@ mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
     use crate::building_blocks::{
-        Modulator, SampleBuffer, SynthParameterLabel, SynthParameterValue,
+        SynthParameterLabel, SynthParameterValue,
     };
     #[test]
     fn panchan_test_basic_pan() {
