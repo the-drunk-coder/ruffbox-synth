@@ -293,6 +293,10 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
             return buffer_id;
         }
 
+        if samples_right.len() < samples_left.len() {
+            samples_right.append(&mut vec![0.0; samples_left.len() - samples_right.len()]);
+        }
+
         let (buflen, buffer_left, buffer_right) = if resample && (self.samplerate != sr) {
             // zero-pad for resampling blocks
             if (samples_left.len() as f32 % 1024.0) > 0.0 {
