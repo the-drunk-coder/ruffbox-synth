@@ -25,10 +25,15 @@ impl<const BUFSIZE: usize, const NCHAN: usize> PreparedInstance<BUFSIZE, NCHAN> 
     }
 }
 
+enum BufferType {
+    Mono,
+    Stereo,
+}
+
 /// These are the controls, the part which you use in your control thread
 /// to control the Ruffbox, trigger playback, etc ...
 pub struct RuffboxControls<const BUFSIZE: usize, const NCHAN: usize> {
-    // Buffer lengths need to be known when initializing sampler instances,
+    // Buffer lengths and types need to be known when initializing sampler instances,
     // which is why unfortunately we need to mirror them here in the controls.
     // Thanks to the magic of DashMap, we can get around having to
     // use &mut self. Maybe one day I'll find out how to make the controls
@@ -36,6 +41,7 @@ pub struct RuffboxControls<const BUFSIZE: usize, const NCHAN: usize> {
     // comes in handy ...
     buffer_counter: AtomicCell<usize>,
     buffer_lengths: DashMap<usize, usize>,
+    buffer_types: DashMap<usize, BufferType>,
     freeze_buffer_offset: usize,
     num_live_buffers: usize,
     num_freeze_buffers: usize,
@@ -57,10 +63,12 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
     ) -> RuffboxControls<BUFSIZE, NCHAN> {
         // dash map is strange, mutable without mut ...
         let buffer_lengths = DashMap::new();
+        let buffer_types = DashMap::new();
         if live_buffers > 0 {
             // create buffer lenghts for live buffers and freeze buffers
             for b in 0..live_buffers + freeze_buffers {
                 buffer_lengths.insert(b, (samplerate * live_buffer_time) as usize);
+                buffer_types.insert(b, BufferType::Mono);
             }
         }
 
@@ -74,6 +82,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
             num_live_buffers: live_buffers,
             num_freeze_buffers: freeze_buffers,
             buffer_lengths,
+            buffer_types,
             max_buffers,
             control_q_send: tx,
             samplerate: samplerate as f32,
@@ -105,15 +114,27 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
                 }
                 SynthType::Sampler(hpf_type, pf1_type, pf2_type, lpf_type) => ScheduledEvent::new(
                     timestamp,
-                    Box::new(NChannelSampler::with_bufnum_len(
-                        sample_buf,
-                        *self.buffer_lengths.get(&sample_buf).unwrap(),
-                        hpf_type,
-                        pf1_type,
-                        pf2_type,
-                        lpf_type,
-                        self.samplerate,
-                    )),
+                    // insert the right sampler type
+                    match *self.buffer_types.get(&sample_buf).unwrap() {
+                        BufferType::Mono => Box::new(NChannelSampler::with_bufnum_len(
+                            sample_buf,
+                            *self.buffer_lengths.get(&sample_buf).unwrap(),
+                            hpf_type,
+                            pf1_type,
+                            pf2_type,
+                            lpf_type,
+                            self.samplerate,
+                        )),
+                        BufferType::Stereo => Box::new(NChannelStereoSampler::with_bufnum_len(
+                            sample_buf,
+                            *self.buffer_lengths.get(&sample_buf).unwrap(),
+                            hpf_type,
+                            pf1_type,
+                            pf2_type,
+                            lpf_type,
+                            self.samplerate,
+                        )),
+                    },
                 ),
                 SynthType::LiveSampler(hpf_type, pf1_type, pf2_type, lpf_type)
                     if self.num_live_buffers > 0 =>
@@ -206,7 +227,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
         let buffer_id = self.buffer_counter.fetch_add(1);
 
         if buffer_id > self.max_buffers {
-            println!("warning, this buffer won't be loaded !");
+            println!("warning, this buffer won't be loaded, as the maximum allowed number of buffers has been reached!");
             return buffer_id;
         }
 
@@ -241,11 +262,95 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
         };
 
         self.buffer_lengths.insert(buffer_id, buflen);
+        self.buffer_types.insert(buffer_id, BufferType::Mono);
         self.control_q_send
             .send(ControlMessage::LoadSample(
                 buffer_id,
                 buflen,
                 SampleBuffer::Mono(buffer),
+            ))
+            .unwrap();
+        // return bufnum
+        buffer_id
+    }
+
+    /// Loads a stereo sample and returns the assigned buffer number.
+    ///
+    /// Resample to current samplerate if necessary and specified.
+    /// The sample buffer is passed as mutable because the method adds
+    /// interpolation samples without the need of a copy.
+    pub fn load_stereo_sample(
+        &self,
+        samples_left: &mut Vec<f32>,
+        samples_right: &mut Vec<f32>,
+        resample: bool,
+        sr: f32,
+    ) -> usize {
+        let buffer_id = self.buffer_counter.fetch_add(1);
+
+        if buffer_id > self.max_buffers {
+            println!("warning, this buffer won't be loaded, as the maximum allowed number of buffers has been reached!");
+            return buffer_id;
+        }
+
+        let (buflen, buffer_left, buffer_right) = if resample && (self.samplerate != sr) {
+            // zero-pad for resampling blocks
+            if (samples_left.len() as f32 % 1024.0) > 0.0 {
+                let diff = 1024 - (samples_left.len() % 1024);
+                samples_left.append(&mut vec![0.0; diff]);
+            }
+
+            let mut samples_left_resampled: Vec<f32> = Vec::new();
+            let mut samples_right_resampled: Vec<f32> = Vec::new();
+            let mut resampler_left =
+                FftFixedIn::<f32>::new(sr as usize, self.samplerate as usize, 1024, 1, 1);
+            let mut resampler_right =
+                FftFixedIn::<f32>::new(sr as usize, self.samplerate as usize, 1024, 1, 1);
+
+            // interpolation samples
+            samples_left_resampled.push(0.0);
+            samples_right_resampled.push(0.0);
+
+            let num_chunks = samples_left.len() / 1024;
+
+            for chunk in 0..num_chunks {
+                let chunk_left = vec![samples_left[(1024 * chunk)..(1024 * (chunk + 1))].to_vec()];
+                let mut waves_out_left = resampler_left.process(&chunk_left).unwrap();
+                samples_left_resampled.append(&mut waves_out_left[0]);
+                let chunk_right = vec![samples_left[(1024 * chunk)..(1024 * (chunk + 1))].to_vec()];
+                let mut waves_out_right = resampler_right.process(&chunk_right).unwrap();
+                samples_right_resampled.append(&mut waves_out_right[0]);
+            }
+            // interpolation samples
+            samples_left_resampled.push(0.0);
+            samples_right_resampled.push(0.0);
+            (
+                samples_left_resampled.len() - 3,
+                samples_left_resampled,
+                samples_right_resampled,
+            )
+        } else {
+            // add interpolation samples
+            samples_left.insert(0, 0.0);
+            samples_right.insert(0, 0.0);
+            samples_left.push(0.0);
+            samples_left.push(0.0);
+            samples_right.push(0.0);
+            samples_right.push(0.0);
+            (
+                samples_left.len() - 3,
+                samples_left.to_vec(),
+                samples_right.to_vec(),
+            )
+        };
+
+        self.buffer_lengths.insert(buffer_id, buflen);
+        self.buffer_types.insert(buffer_id, BufferType::Stereo);
+        self.control_q_send
+            .send(ControlMessage::LoadSample(
+                buffer_id,
+                buflen,
+                SampleBuffer::Stereo(buffer_left, buffer_right),
             ))
             .unwrap();
         // return bufnum

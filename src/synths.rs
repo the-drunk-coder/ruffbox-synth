@@ -3,6 +3,7 @@ pub mod n_channel;
 
 // channel-based synths
 pub use crate::synths::n_channel::n_channel_sampler::NChannelSampler;
+pub use crate::synths::n_channel::n_channel_stereo_sampler::NChannelStereoSampler;
 pub use crate::synths::n_channel::risset_bell::RissetBell;
 pub use crate::synths::n_channel::single_oscillator_synth::SingleOscillatorSynth;
 
