@@ -1,4 +1,5 @@
 use crate::building_blocks::convolver::block_convolver::BlockConvolver;
+
 /**
  * a simple first-order convolution binauralizer
  */
@@ -21,7 +22,7 @@ impl<const BUFSIZE: usize> BinauralizerO1<BUFSIZE> {
         BinauralizerO1 { left, right }
     }
 
-    pub fn binauralize(&mut self, input: &[[f32; BUFSIZE]; 4]) -> [[f32; BUFSIZE]; 2] {
+    pub fn binauralize(&mut self, input: [[f32; BUFSIZE]; 4]) -> [[f32; BUFSIZE]; 2] {
         let mut bin_block = [[0.0; BUFSIZE]; 2];
 
         for (ach, i) in input.iter().enumerate().take(4) {

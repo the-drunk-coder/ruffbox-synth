@@ -15,6 +15,7 @@ use crate::building_blocks::{FilterType, OscillatorType};
 #[repr(C)]
 pub enum SynthType {
     Sampler(FilterType, FilterType, FilterType, FilterType),
+    AmbisonicSampler(FilterType, FilterType, FilterType, FilterType),
     LiveSampler(FilterType, FilterType, FilterType, FilterType),
     FrozenSampler(FilterType, FilterType, FilterType, FilterType),
     SingleOscillator(OscillatorType, FilterType, FilterType),

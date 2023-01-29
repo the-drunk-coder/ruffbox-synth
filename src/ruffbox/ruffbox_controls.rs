@@ -13,9 +13,15 @@ use crate::ruffbox::{ControlMessage, ScheduledEvent};
 use crate::synths::*;
 
 /// thin wrapper around a scheduled event instasnce
-pub struct PreparedInstance<const BUFSIZE: usize, const NCHAN: usize> {
-    ev: ScheduledEvent<BUFSIZE, NCHAN>,
-    sr: f32,
+pub enum PreparedInstance<const BUFSIZE: usize, const NCHAN: usize> {
+    Stereo {
+	ev: ScheduledEvent<BUFSIZE, NCHAN>,
+	sr: f32,
+    },
+    Ambisonic {
+	ev: ScheduledEvent<BUFSIZE, 4>,
+	sr: f32,
+    },
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> PreparedInstance<BUFSIZE, NCHAN> {
@@ -97,18 +103,28 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
         timestamp: f64,
         sample_buf: usize,
     ) -> Option<PreparedInstance<BUFSIZE, NCHAN>> {
-        Some(PreparedInstance {
-            sr: self.samplerate,
+	
+        Some(
+	    match src_type {
+		SynthType::SingleOscillator(osc_type, lp_type, hp_type) => {
+		    PreparedInstance::Stereo {
+			sr: self.samplerate,
+			ev: ScheduledEvent::new(
+			    timestamp,
+			    Box::new(SingleOscillatorSynth::new(
+				osc_type,
+				lp_type,
+				hp_type,
+				self.samplerate,
+			    )),
+			),
+		    }
+		}
+	    }
+	    PreparedInstance {
+            
             ev: match src_type {
-                SynthType::SingleOscillator(osc_type, lp_type, hp_type) => ScheduledEvent::new(
-                    timestamp,
-                    Box::new(SingleOscillatorSynth::new(
-                        osc_type,
-                        lp_type,
-                        hp_type,
-                        self.samplerate,
-                    )),
-                ),
+                 
                 SynthType::RissetBell => {
                     ScheduledEvent::new(timestamp, Box::new(RissetBell::new(self.samplerate)))
                 }
@@ -135,7 +151,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
                             self.samplerate,
                         )),
                     },
-                ),
+                ),		
                 SynthType::LiveSampler(hpf_type, pf1_type, pf2_type, lpf_type)
                     if self.num_live_buffers > 0 =>
                 {

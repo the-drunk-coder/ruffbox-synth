@@ -9,9 +9,7 @@ pub use pan_chan::PanChan;
 mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
-    use crate::building_blocks::{
-        SynthParameterLabel, SynthParameterValue,
-    };
+    use crate::building_blocks::{SynthParameterLabel, SynthParameterValue};
     #[test]
     fn panchan_test_basic_pan() {
         let mut pchan = PanChan::<128, 2>::new();

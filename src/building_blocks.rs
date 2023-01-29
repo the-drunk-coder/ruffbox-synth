@@ -687,11 +687,13 @@ pub trait Synth<const BUFSIZE: usize, const NCHAN: usize> {
 
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
+
     fn get_next_block(
         &mut self,
         start_sample: usize,
         in_buffers: &[SampleBuffer],
     ) -> [[f32; BUFSIZE]; NCHAN];
+
     fn reverb_level(&self) -> f32;
     fn delay_level(&self) -> f32;
 }
