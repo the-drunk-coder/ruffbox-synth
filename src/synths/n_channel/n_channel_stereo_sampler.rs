@@ -8,7 +8,8 @@ use crate::building_blocks::{
     Synth, SynthParameterLabel, SynthParameterValue,
 };
 
-/// a sampler with envelope etc.
+/// a stereo sampler with envelope etc.
+/// here we need everything twice ...
 pub struct NChannelStereoSampler<const BUFSIZE: usize, const NCHAN: usize> {
     sampler: StereoSampler<BUFSIZE>,
     envelope: (
