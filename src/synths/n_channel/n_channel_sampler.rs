@@ -1,7 +1,7 @@
 use crate::building_blocks::envelopes::*;
 use crate::building_blocks::filters::*;
 use crate::building_blocks::routing::PanChan;
-use crate::building_blocks::sampler::Sampler;
+use crate::building_blocks::sampler::MonoSampler;
 use crate::building_blocks::SampleBuffer;
 use crate::building_blocks::{
     EnvelopeSegmentInfo, EnvelopeSegmentType, FilterType, Modulator, MonoEffect, MonoSource, Synth,
@@ -10,7 +10,7 @@ use crate::building_blocks::{
 
 /// a sampler with envelope etc.
 pub struct NChannelSampler<const BUFSIZE: usize, const NCHAN: usize> {
-    sampler: Sampler<BUFSIZE>,
+    sampler: MonoSampler<BUFSIZE>,
     envelope: MultiPointEffectEnvelope<BUFSIZE>,
     hpf: Box<dyn MonoEffect<BUFSIZE> + Send + Sync>,
     peak_eq_1: Box<dyn MonoEffect<BUFSIZE> + Send + Sync>,
@@ -57,7 +57,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> NChannelSampler<BUFSIZE, NCHAN> {
         let env = MultiPointEffectEnvelope::new(env_segments, false, sr);
 
         NChannelSampler {
-            sampler: Sampler::with_bufnum_len(bufnum, buflen, true),
+            sampler: MonoSampler::with_bufnum_len(bufnum, buflen, true),
             envelope: env,
             hpf: match hpf_type {
                 FilterType::BiquadHpf12dB => Box::new(BiquadHpf12dB::new(20.0, 0.3, sr)),

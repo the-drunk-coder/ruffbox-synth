@@ -1,7 +1,7 @@
 use crate::building_blocks::ambisonics::encoder_o1::EncoderO1;
 use crate::building_blocks::envelopes::*;
 use crate::building_blocks::filters::*;
-use crate::building_blocks::sampler::Sampler;
+use crate::building_blocks::sampler::MonoSampler;
 use crate::building_blocks::{
     FilterType, Modulator, MonoEffect, MonoSource, SampleBuffer, Synth, SynthParameterLabel,
     SynthParameterValue,
@@ -9,7 +9,7 @@ use crate::building_blocks::{
 
 /// a sampler with envelope etc.
 pub struct AmbisonicSamplerO1<const BUFSIZE: usize> {
-    sampler: Sampler<BUFSIZE>,
+    sampler: MonoSampler<BUFSIZE>,
     envelope: LinearASREnvelope<BUFSIZE>,
     hpf: Box<dyn MonoEffect<BUFSIZE> + Send + Sync>,
     peak_eq_1: Box<dyn MonoEffect<BUFSIZE> + Send + Sync>,
@@ -33,7 +33,7 @@ impl<const BUFSIZE: usize> AmbisonicSamplerO1<BUFSIZE> {
         let dur = (buflen as f32 / sr) - 0.0002;
 
         AmbisonicSamplerO1 {
-            sampler: Sampler::with_bufnum_len(bufnum, buflen, true),
+            sampler: MonoSampler::with_bufnum_len(bufnum, buflen, true),
             envelope: LinearASREnvelope::new(1.0, 0.0001, dur, 0.0001, sr),
             hpf: match hpf_type {
                 FilterType::BiquadHpf12dB => Box::new(BiquadHpf12dB::new(20.0, 0.3, sr)),

@@ -579,6 +579,52 @@ impl<const BUFSIZE: usize> Clone for Box<dyn MonoSource<BUFSIZE> + Send + Sync> 
     }
 }
 
+/// so far only for stereo sampler
+pub trait StereoSource<const BUFSIZE: usize>: StereoSourceClone<BUFSIZE> {
+    fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue);
+    fn set_modulator(&mut self, par: SynthParameterLabel, init: f32, modulator: Modulator<BUFSIZE>);
+
+    /// default impl so we have a common interface ...
+    fn set_param_or_modulator(
+        &mut self,
+        par: SynthParameterLabel,
+        val_or_mod: ValueOrModulator<BUFSIZE>,
+    ) {
+        match val_or_mod {
+            ValueOrModulator::Val(val) => self.set_parameter(par, &val),
+            ValueOrModulator::Mod(init, modulator) => self.set_modulator(par, init, modulator),
+        }
+    }
+
+    fn finish(&mut self);
+    fn reset(&mut self);
+    fn is_finished(&self) -> bool;
+    fn get_next_block(
+        &mut self,
+        start_sample: usize,
+        in_buffers: &[SampleBuffer],
+    ) -> [[f32; BUFSIZE]; 2];
+}
+
+pub trait StereoSourceClone<const BUFSIZE: usize> {
+    fn clone_box(&self) -> Box<dyn StereoSource<BUFSIZE> + Send + Sync>;
+}
+
+impl<const BUFSIZE: usize, T> StereoSourceClone<BUFSIZE> for T
+where
+    T: 'static + StereoSource<BUFSIZE> + Clone + Send + Sync,
+{
+    fn clone_box(&self) -> Box<dyn StereoSource<BUFSIZE> + Send + Sync> {
+        Box::new(self.clone())
+    }
+}
+
+impl<const BUFSIZE: usize> Clone for Box<dyn StereoSource<BUFSIZE> + Send + Sync> {
+    fn clone(&self) -> Box<dyn StereoSource<BUFSIZE> + Send + Sync> {
+        self.clone_box()
+    }
+}
+
 /// filters etc are effects
 pub trait MonoEffect<const BUFSIZE: usize> {
     fn finish(&mut self);
