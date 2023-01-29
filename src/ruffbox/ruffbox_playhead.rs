@@ -255,18 +255,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
                 }
                 ControlMessage::FreezeBuffer(fb, ib) => {
                     // start at one to account for interpolation sample.
-                    // sometimes you can be a PITA, Rust ...
-                    if fb < ib {
-                        let (l, r) = self.buffers.split_at_mut(ib);
-                        let SampleBuffer::Mono(inbuf) = &r[0] else {unreachable!()};
-                        let SampleBuffer::Mono(freezbuf) = l.get_mut(fb).unwrap() else {unreachable!()};
-                        for i in 1..self.buffer_lengths[ib] + 1 {
-                            freezbuf[i] = inbuf[i];
-                        }
-                    } else if fb > ib {
-                        let (l, r) = self.buffers.split_at_mut(fb);
-                        let SampleBuffer::Mono(inbuf) = &l[ib] else {unreachable!()};
-                        let SampleBuffer::Mono(freezbuf) = r.get_mut(0).unwrap() else {unreachable!()};
+                    if let Ok([SampleBuffer::Mono(inbuf), SampleBuffer::Mono(freezbuf)]) =
+                        self.buffers.get_many_mut([ib, fb])
+                    {
                         for i in 1..self.buffer_lengths[ib] + 1 {
                             freezbuf[i] = inbuf[i];
                         }
