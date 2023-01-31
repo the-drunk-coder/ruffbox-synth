@@ -13,6 +13,8 @@ use crate::building_blocks::{MultichannelReverb, SampleBuffer, Synth};
 
 use crate::ruffbox::{ControlMessage, ReverbMode, ScheduledEvent};
 
+use crate::ruffbox::ScheduledSource;
+
 pub(crate) struct LiveBufferMetadata {
     live_buffer_idx: usize,
     live_buffer_current_block: usize,
@@ -22,18 +24,19 @@ pub(crate) struct LiveBufferMetadata {
 }
 
 /// ambisonic binaural module (order 1 for now)
-pub struct AmbisonicBinaural<const BUFSIZE: usize> {
+pub struct AmbisonicBinaural<const BUFSIZE: usize, const NCHAN: usize> {
     running_instances: Vec<Box<dyn Synth<BUFSIZE, 4> + Send + Sync>>, // first order ambisonic sources
-    pending_events: Vec<ScheduledEvent<BUFSIZE, 4>>,
+    // has to be n-channel unfotunately ..
+    pending_events: Vec<ScheduledEvent<BUFSIZE, NCHAN>>,
     binauralizer: BinauralizerO1<BUFSIZE>,
 }
 
 /// This is the "Playhead", that is, the part you use in the
 /// output callback funtion of your application
 pub struct RuffboxPlayhead<const BUFSIZE: usize, const NCHAN: usize> {
-    running_instances: Vec<Box<dyn Synth<BUFSIZE, NCHAN> + Send + Sync>>,        
+    running_instances: Vec<Box<dyn Synth<BUFSIZE, NCHAN> + Send + Sync>>,
     pending_events: Vec<ScheduledEvent<BUFSIZE, NCHAN>>,
-    ambisonic_binaural: Option<AmbisonicBinaural<BUFSIZE>>,
+    ambisonic_binaural: Option<AmbisonicBinaural<BUFSIZE, NCHAN>>,
     pub(crate) buffers: Vec<SampleBuffer>, // crate public for test
     pub(crate) buffer_lengths: Vec<usize>, // crate public for test
     max_buffers: usize,
@@ -101,6 +104,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
         // init buffer memory
         let mut buffers = Vec::new();
         for _ in 0..max_buffers {
+            // with placeholders ...
             buffers.push(SampleBuffer::Placeholder);
         }
         // init buffer lengths
@@ -145,7 +149,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
 
         RuffboxPlayhead {
             running_instances: Vec::with_capacity(600),
-            pending_events: Vec::with_capacity(600),            
+            pending_events: Vec::with_capacity(600),
             ambisonic_binaural: None,
             buffers,
             buffer_lengths,
@@ -190,8 +194,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
                     [self.live_buffer_metadata[bufnum].live_buffer_idx]
                     * self.fade_curve[self.live_buffer_metadata[bufnum].fade_stitch_idx]
                     + sample
-                    * (1.0
-                       - self.fade_curve[self.live_buffer_metadata[bufnum].fade_stitch_idx]);
+                        * (1.0
+                            - self.fade_curve[self.live_buffer_metadata[bufnum].fade_stitch_idx]);
                 self.live_buffer_metadata[bufnum].fade_stitch_idx += 1;
             }
 
@@ -237,7 +241,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
 
         // in case we have ambisonic mode enabled
         if let Some(ambi_module) = self.ambisonic_binaural.as_mut() {
-            ambi_module.running_instances.retain(|instance| !&instance.is_finished());
+            ambi_module
+                .running_instances
+                .retain(|instance| !&instance.is_finished());
         }
 
         for cm in self.control_q_rec.try_iter() {
@@ -249,39 +255,46 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
                 }
                 ControlMessage::ScheduleEvent(sched_event) => {
                     // add new instances
-		    match sched_event.source {
-			ScheduledSource::Channel(src) => {
-			    if sched_event.timestamp == 0.0 || sched_event.timestamp == now {
-				self.running_instances.push(src);
-				//println!("now");
-			    } else if sched_event.timestamp < now {
-				// late events
-				self.running_instances.push(src);
-				// how to send out a late message ??
-				// some lock-free message queue to a printer thread or something ....
-				println!("late");
-			    } else {
-				self.pending_events.push(sched_event);
-			    }
-			}
-			ScheduledSource::Ambi(src) => {
-			    if let Some(ambi_module) = self.ambisonic_binaural.as_mut() {
-				if sched_event.timestamp == 0.0 || sched_event.timestamp == now {
-				    ambi_module.running_instances.push(src);
-				//println!("now");
-				} else if new_event.timestamp < now {
-				    // late events
-				    ambi_module.running_instances.push(src);
-				    // how to send out a late message ??
-				    // some lock-free message queue to a printer thread or something ....
-				    println!("ambi late");
-				} else {
-				    ambi_module.pending_events.push(sched_event);
-				}
-			    }
-			}
-		    }		    
-		}		
+                    match sched_event.source {
+                        ScheduledSource::Channel(src) => {
+                            if sched_event.timestamp == 0.0 || sched_event.timestamp == now {
+                                self.running_instances.push(src);
+                            //println!("now");
+                            } else if sched_event.timestamp < now {
+                                // late events
+                                self.running_instances.push(src);
+                                // how to send out a late message ??
+                                // some lock-free message queue to a printer thread or something ....
+                                println!("late");
+                            } else {
+                                self.pending_events.push(ScheduledEvent {
+                                    timestamp: sched_event.timestamp,
+                                    source: ScheduledSource::Channel(src),
+                                });
+                            }
+                        }
+                        // handle ambisonic sources ...
+                        ScheduledSource::Ambi(src) => {
+                            if let Some(ambi_module) = self.ambisonic_binaural.as_mut() {
+                                if sched_event.timestamp == 0.0 || sched_event.timestamp == now {
+                                    ambi_module.running_instances.push(src);
+                                //println!("now");
+                                } else if sched_event.timestamp < now {
+                                    // late events
+                                    ambi_module.running_instances.push(src);
+                                    // how to send out a late message ??
+                                    // some lock-free message queue to a printer thread or something ....
+                                    println!("ambi late");
+                                } else {
+                                    ambi_module.pending_events.push(ScheduledEvent {
+                                        timestamp: sched_event.timestamp,
+                                        source: ScheduledSource::Ambi(src),
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
                 ControlMessage::LoadSample(id, len, content) => {
                     if id < self.max_buffers {
                         self.buffers[id] = content; // transfer to samples
@@ -315,7 +328,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
             }
         }
 
-        if let Some(ambi_module) = self.ambisonic_binaural.as_mut() {            
+        if let Some(ambi_module) = self.ambisonic_binaural.as_mut() {
             for running_inst in ambi_module.running_instances.iter_mut() {
                 let ambi_block = running_inst.get_next_block(0, &self.buffers);
                 let block = ambi_module.binauralizer.binauralize(ambi_block);
@@ -329,7 +342,6 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
                 }
             }
         }
-        
 
         // sort new events by timestamp, order of already sorted elements doesn't matter
         self.pending_events.sort_unstable_by(|a, b| b.cmp(a));
@@ -339,66 +351,64 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
         while !self.pending_events.is_empty()
             && self.pending_events.last().unwrap().timestamp < block_end
         {
-            let mut current_event = self.pending_events.pop().unwrap();
+            let current_event = self.pending_events.pop().unwrap();
             //println!("on time ts: {} st: {}", current_event.timestamp, self.now);
             // calculate precise timing
             let sample_offset = (current_event.timestamp - now) / self.sec_per_sample;
+            if let ScheduledSource::Channel(mut src) = current_event.source {
+                let block = src.get_next_block(sample_offset.round() as usize, &self.buffers);
 
-            let block = current_event
-                .source
-                .get_next_block(sample_offset.round() as usize, &self.buffers);
-
-            for c in 0..NCHAN {
-                for s in 0..BUFSIZE {
-                    out_buf[c][s] += block[c][s];
-                    master_reverb_in[c][s] += block[c][s] * current_event.source.reverb_level();
-                    master_delay_in[c][s] += block[c][s] * current_event.source.delay_level();
+                for c in 0..NCHAN {
+                    for s in 0..BUFSIZE {
+                        out_buf[c][s] += block[c][s];
+                        master_reverb_in[c][s] += block[c][s] * src.reverb_level();
+                        master_delay_in[c][s] += block[c][s] * src.delay_level();
+                    }
                 }
-            }
 
-            // if length of sample event is longer than the rest of the block,
-            // add to running instances
-            if !current_event.source.is_finished() {
-                self.running_instances.push(current_event.source);
+                // if length of sample event is longer than the rest of the block,
+                // add to running instances
+                if !src.is_finished() {
+                    self.running_instances.push(src);
+                }
             }
         }
 
-	if let Some(ambi_module) = self.ambisonic_binaural.as_mut() {
-	    // sort new events by timestamp, order of already sorted elements doesn't matter
+        if let Some(ambi_module) = self.ambisonic_binaural.as_mut() {
+            // sort new events by timestamp, order of already sorted elements doesn't matter
             ambi_module.pending_events.sort_unstable_by(|a, b| b.cmp(a));
             let block_end = now + self.block_duration;
-	    
+
             // fetch event if it belongs to this block, if any ...
             while !ambi_module.pending_events.is_empty()
-		&& ambi_module.pending_events.last().unwrap().timestamp < block_end
+                && ambi_module.pending_events.last().unwrap().timestamp < block_end
             {
-		let mut current_event = ambi_module.pending_events.pop().unwrap();
-		//println!("on time ts: {} st: {}", current_event.timestamp, self.now);
-		// calculate precise timing
-		let sample_offset = (current_event.timestamp - now) / self.sec_per_sample;
-		
-		let ambi_block = current_event
-                    .source
-                    .get_next_block(sample_offset.round() as usize, &self.buffers);
-		let block = ambi_module.binauralizer.binauralize(ambi_block);
-		
-		for c in 0..NCHAN {
-                    for s in 0..BUFSIZE {
-			out_buf[c][s] += block[c][s];
-			master_reverb_in[c][s] += block[c][s] * current_event.source.reverb_level();
-			master_delay_in[c][s] += block[c][s] * current_event.source.delay_level();
+                let current_event = ambi_module.pending_events.pop().unwrap();
+                //println!("on time ts: {} st: {}", current_event.timestamp, self.now);
+                // calculate precise timing
+                let sample_offset = (current_event.timestamp - now) / self.sec_per_sample;
+                if let ScheduledSource::Ambi(mut src) = current_event.source {
+                    let ambi_block =
+                        src.get_next_block(sample_offset.round() as usize, &self.buffers);
+                    let block = ambi_module.binauralizer.binauralize(ambi_block);
+
+                    for c in 0..NCHAN {
+                        for s in 0..BUFSIZE {
+                            out_buf[c][s] += block[c][s];
+                            master_reverb_in[c][s] += block[c][s] * src.reverb_level();
+                            master_delay_in[c][s] += block[c][s] * src.delay_level();
+                        }
                     }
-		}
-		
-		// if length of sample event is longer than the rest of the block,
-		// add to running instances
-		if !current_event.source.is_finished() {
-                    ambi_module.running_instances.push(current_event.source);
-		}
+
+                    // if length of sample event is longer than the rest of the block,
+                    // add to running instances
+                    if !src.is_finished() {
+                        ambi_module.running_instances.push(src);
+                    }
+                }
             }
-	}
-	
-	
+        }
+
         let reverb_out = self.master_reverb.process(master_reverb_in);
         let delay_out = self.master_delay.process(master_delay_in, &self.buffers);
 

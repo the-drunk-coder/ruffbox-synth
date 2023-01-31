@@ -25,7 +25,7 @@ pub enum ScheduledSource<const BUFSIZE: usize, const NCHAN: usize> {
 /// or pushed to the pending queue ...
 pub(crate) struct ScheduledEvent<const BUFSIZE: usize, const NCHAN: usize> {
     timestamp: f64,
-    source: ScheduledSource<BUFSIZE, NCHAN>,    
+    source: ScheduledSource<BUFSIZE, NCHAN>,
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> Ord for ScheduledEvent<BUFSIZE, NCHAN> {
@@ -62,17 +62,16 @@ impl<const BUFSIZE: usize, const NCHAN: usize> ScheduledEvent<BUFSIZE, NCHAN> {
             source: src,
         }
     }
-    
 
     pub fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
-	match self.src {
-	    ScheduledSource::Channel(src) => {
-			    src.set_parameter(par, value);
-	    }
-	    ScheduledSource::Ambi(src) => {
-			    src.set_parameter(par, value);
-	    }
-	}        
+        match self.source {
+            ScheduledSource::Channel(ref mut src) => {
+                src.set_parameter(par, value);
+            }
+            ScheduledSource::Ambi(ref mut src) => {
+                src.set_parameter(par, value);
+            }
+        }
     }
 
     pub fn set_modulator(
@@ -81,15 +80,14 @@ impl<const BUFSIZE: usize, const NCHAN: usize> ScheduledEvent<BUFSIZE, NCHAN> {
         init: f32,
         modulator: Modulator<BUFSIZE>,
     ) {
-	match self.src {
-	    ScheduledSource::Channel(src) => {
-			    src.set_modulator(par, init, modulator);
-	    }
-	    ScheduledSource::Ambi(src) => {
-			    src.set_modulator(par, init, modulator);
-	    }
-	}
-	
+        match self.source {
+            ScheduledSource::Channel(ref mut src) => {
+                src.set_modulator(par, init, modulator);
+            }
+            ScheduledSource::Ambi(ref mut src) => {
+                src.set_modulator(par, init, modulator);
+            }
+        }
     }
 
     fn set_param_or_modulator(
@@ -114,7 +112,6 @@ pub(crate) enum ControlMessage<const BUFSIZE: usize, const NCHAN: usize> {
     LoadSample(usize, usize, SampleBuffer), // num, len, samples
     SetGlobalParamOrModulator(SynthParameterLabel, ValueOrModulator<BUFSIZE>),
     ScheduleEvent(ScheduledEvent<BUFSIZE, NCHAN>),
-    ScheduleAmbisonicEvent(ScheduledEvent<BUFSIZE, 4>),
     FreezeBuffer(usize, usize),
 }
 
