@@ -143,6 +143,38 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
                         )),
                     },
                 ),
+                SynthType::AmbisonicSampler(hpf_type, pf1_type, pf2_type, lpf_type) => {
+                    ScheduledEvent::new(
+                        timestamp,
+                        // insert the right sampler type
+                        // only mono sources are spatialized to ambisonic so far ...
+                        match *self.buffer_types.get(&sample_buf).unwrap() {
+                            BufferType::Mono => ScheduledSource::Ambi(Box::new(
+                                AmbisonicSamplerO1::with_bufnum_len(
+                                    sample_buf,
+                                    *self.buffer_lengths.get(&sample_buf).unwrap(),
+                                    hpf_type,
+                                    pf1_type,
+                                    pf2_type,
+                                    lpf_type,
+                                    self.samplerate,
+                                ),
+                            )),
+                            // just ignore for now ...
+                            BufferType::Stereo => ScheduledSource::Channel(Box::new(
+                                NChannelStereoSampler::with_bufnum_len(
+                                    sample_buf,
+                                    *self.buffer_lengths.get(&sample_buf).unwrap(),
+                                    hpf_type,
+                                    pf1_type,
+                                    pf2_type,
+                                    lpf_type,
+                                    self.samplerate,
+                                ),
+                            )),
+                        },
+                    )
+                }
                 SynthType::LiveSampler(hpf_type, pf1_type, pf2_type, lpf_type)
                     if self.num_live_buffers > 0 =>
                 {
