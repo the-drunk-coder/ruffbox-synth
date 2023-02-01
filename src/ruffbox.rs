@@ -124,6 +124,7 @@ pub fn init_ruffbox<const BUFSIZE: usize, const NCHAN: usize>(
     samplerate: f64,
     max_buffers: usize,
     freeze_buffers: usize,
+    ambisonics_binaural: bool,
 ) -> (
     RuffboxControls<BUFSIZE, NCHAN>,
     RuffboxPlayhead<BUFSIZE, NCHAN>,
@@ -144,7 +145,7 @@ pub fn init_ruffbox<const BUFSIZE: usize, const NCHAN: usize>(
         &now,
         tx,
     );
-    let playhead = RuffboxPlayhead::<BUFSIZE, NCHAN>::new(
+    let mut playhead = RuffboxPlayhead::<BUFSIZE, NCHAN>::new(
         live_buffers,
         live_buffer_time,
         reverb_mode,
@@ -154,6 +155,10 @@ pub fn init_ruffbox<const BUFSIZE: usize, const NCHAN: usize>(
         &now,
         rx,
     );
+
+    if ambisonics_binaural {
+        playhead.enable_ambisonics_binaural();
+    }
 
     (controls, playhead)
 }

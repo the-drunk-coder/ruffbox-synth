@@ -38,15 +38,7 @@ impl<const BUFSIZE: usize> BinauralizerO1<BUFSIZE> {
                 ir_proc[i] = (l_resampled[0].clone(), r_resampled[0].clone());
             }
         }
-        // in case we have bufsizes larger than 128 (most of the time I guess) ...
-        let zero_pad = BUFSIZE - ir_proc[0].0.len();
-        if zero_pad > 0 {
-            for (l, r) in ir_proc.iter_mut() {
-                l.append(&mut vec![0.0; zero_pad]);
-                r.append(&mut vec![0.0; zero_pad]);
-            }
-        }
-
+        
         BinauralizerO1::from_ir(ir_proc)
     }
 

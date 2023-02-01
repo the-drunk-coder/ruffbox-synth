@@ -37,11 +37,11 @@ impl<const BUFSIZE: usize> BlockConvolver<BUFSIZE> {
     pub fn from_ir(ir: &[f32]) -> Self {
         // check if IR len == BUFSIZE ?
 
-        let mut fft = RFft1D::<f32>::new(ir.len() * 2);
+        let mut fft = RFft1D::<f32>::new(BUFSIZE * 2);
 
         // zero-pad impulse response (to match IR lenght)
         let mut ir_zeropad = vec![0.0; BUFSIZE * 2];
-        ir_zeropad[..(BUFSIZE / 2)].copy_from_slice(&ir[..(BUFSIZE / 2)]);
+        ir_zeropad[..ir.len()].copy_from_slice(&ir);
 
         BlockConvolver {
             ir_freq_domain: fft.forward(&ir_zeropad),

@@ -31,6 +31,16 @@ pub struct AmbisonicBinaural<const BUFSIZE: usize, const NCHAN: usize> {
     binauralizer: BinauralizerO1<BUFSIZE>,
 }
 
+impl<const BUFSIZE: usize, const NCHAN: usize> AmbisonicBinaural<BUFSIZE, NCHAN> {
+    pub fn new(samplerate: f32) -> Self {
+        AmbisonicBinaural {
+            running_instances: Vec::with_capacity(600),
+            pending_events: Vec::with_capacity(600),
+            binauralizer: BinauralizerO1::default_filter(samplerate),
+        }
+    }
+}
+
 /// This is the "Playhead", that is, the part you use in the
 /// output callback funtion of your application
 pub struct RuffboxPlayhead<const BUFSIZE: usize, const NCHAN: usize> {
@@ -44,6 +54,7 @@ pub struct RuffboxPlayhead<const BUFSIZE: usize, const NCHAN: usize> {
     pub(crate) fade_curve: Vec<f32>, // crate public for test
     pub(crate) live_buffer_metadata: Vec<LiveBufferMetadata>,
     bufsize: usize,
+    samplerate: f32,
     control_q_rec: crossbeam::channel::Receiver<ControlMessage<BUFSIZE, NCHAN>>,
     block_duration: f64,
     sec_per_sample: f64,
@@ -158,6 +169,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
             fade_curve,
             non_stitch_size: bufsize - stitch_size,
             bufsize,
+            samplerate: samplerate as f32,
             control_q_rec: rx,
             // timing stuff
             block_duration: BUFSIZE as f64 / samplerate,
@@ -166,6 +178,11 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
             master_reverb: rev,
             master_delay: MultichannelDelay::new(samplerate as f32),
         }
+    }
+
+    pub fn enable_ambisonics_binaural(&mut self) {
+        println!("activate ambisonic-binaural module");
+        self.ambisonic_binaural = Some(AmbisonicBinaural::new(self.samplerate));
     }
 
     // there HAS to be a more elegant solution for this ...
@@ -377,7 +394,6 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
         if let Some(ambi_module) = self.ambisonic_binaural.as_mut() {
             // sort new events by timestamp, order of already sorted elements doesn't matter
             ambi_module.pending_events.sort_unstable_by(|a, b| b.cmp(a));
-            let block_end = now + self.block_duration;
 
             // fetch event if it belongs to this block, if any ...
             while !ambi_module.pending_events.is_empty()
