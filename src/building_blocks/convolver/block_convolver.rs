@@ -50,7 +50,7 @@ impl<const BUFSIZE: usize> BlockConvolver<BUFSIZE> {
             tmp_in: vec![0.0; BUFSIZE * 2],
             tmp_out: vec![0.0; BUFSIZE * 2],
             remainder: vec![0.0; BUFSIZE],
-            len: ir.len() * 2,
+            len: BUFSIZE * 2,
         }
     }
 
