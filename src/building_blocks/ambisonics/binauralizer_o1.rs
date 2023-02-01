@@ -14,12 +14,17 @@ pub struct BinauralizerO1<const BUFSIZE: usize> {
 
 impl<const BUFSIZE: usize> BinauralizerO1<BUFSIZE> {
     pub fn default_filter(samplerate: f32) -> Self {
-        let ir: Vec<f32> = DEFAULT_FILTER
+        let mut ir: Vec<f32> = DEFAULT_FILTER
             .chunks(4)
             .map(|b| (f32::from_le_bytes(b.try_into().unwrap()) as f32))
             .collect();
 
         debug_assert!(ir.len() == 1024);
+
+        // lower gain a little
+        for s in ir.iter_mut() {
+            *s *= 0.45;
+        }
 
         let mut ir_proc: Vec<(Vec<f32>, Vec<f32>)> = vec![
             (ir[0..128].to_vec(), ir[512..640].to_vec()),
@@ -38,7 +43,7 @@ impl<const BUFSIZE: usize> BinauralizerO1<BUFSIZE> {
                 ir_proc[i] = (l_resampled[0].clone(), r_resampled[0].clone());
             }
         }
-        
+
         BinauralizerO1::from_ir(ir_proc)
     }
 
