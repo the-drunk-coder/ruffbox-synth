@@ -426,16 +426,12 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
             for c in 0..NCHAN {
                 for s in 0..BUFSIZE {
                     out_buf[c][s] += block[c][s];
-                    //master_reverb_in[c][s] += block[c][s] * src.reverb_level();
-                    //master_delay_in[c][s] += block[c][s] * src.delay_level();
                 }
             }
         }
 
         let reverb_out = self.master_reverb.process(master_reverb_in);
         let delay_out = self.master_delay.process(master_delay_in, &self.buffers);
-
-        //println!("{} {}", self.running_instances.len(), self.pending_events.len());
 
         for c in 0..NCHAN {
             for s in 0..BUFSIZE {
