@@ -394,7 +394,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
         if let Some(ambi_module) = self.ambisonic_binaural.as_mut() {
             // sort new events by timestamp, order of already sorted elements doesn't matter
             ambi_module.pending_events.sort_unstable_by(|a, b| b.cmp(a));
-
+            let mut ambi_master = [[0.0; BUFSIZE]; 4];
             // fetch event if it belongs to this block, if any ...
             while !ambi_module.pending_events.is_empty()
                 && ambi_module.pending_events.last().unwrap().timestamp < block_end
@@ -406,13 +406,10 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
                 if let ScheduledSource::Ambi(mut src) = current_event.source {
                     let ambi_block =
                         src.get_next_block(sample_offset.round() as usize, &self.buffers);
-                    let block = ambi_module.binauralizer.binauralize(ambi_block);
 
-                    for c in 0..NCHAN {
+                    for c in 0..4 {
                         for s in 0..BUFSIZE {
-                            out_buf[c][s] += block[c][s];
-                            master_reverb_in[c][s] += block[c][s] * src.reverb_level();
-                            master_delay_in[c][s] += block[c][s] * src.delay_level();
+                            ambi_master[c][s] += ambi_block[c][s];
                         }
                     }
 
@@ -421,6 +418,16 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
                     if !src.is_finished() {
                         ambi_module.running_instances.push(src);
                     }
+                }
+            }
+
+            let block = ambi_module.binauralizer.binauralize(ambi_master);
+
+            for c in 0..NCHAN {
+                for s in 0..BUFSIZE {
+                    out_buf[c][s] += block[c][s];
+                    //master_reverb_in[c][s] += block[c][s] * src.reverb_level();
+                    //master_delay_in[c][s] += block[c][s] * src.delay_level();
                 }
             }
         }

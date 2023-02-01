@@ -74,8 +74,8 @@ impl<const BUFSIZE: usize> BlockConvolver<BUFSIZE> {
 
         // copy relevant part from ifft, scrap the rest
         let mut outarr = [0.0; BUFSIZE];
-        self.remainder[..128].copy_from_slice(&input[..128]);
-        outarr[..128].copy_from_slice(&self.tmp_out[BUFSIZE..(128 + BUFSIZE)]);
+        self.remainder[..BUFSIZE].copy_from_slice(&input[..BUFSIZE]);
+        outarr[..BUFSIZE].copy_from_slice(&self.tmp_out[BUFSIZE..(2 * BUFSIZE)]);
 
         // return result block ...
         outarr
