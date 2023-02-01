@@ -24,9 +24,9 @@ impl<const BUFSIZE: usize> std::clone::Clone for BlockConvolver<BUFSIZE> {
             ir_freq_domain: self.ir_freq_domain.clone(),
             in_freq_domain: self.in_freq_domain.clone(),
             fft,
-            tmp_in: vec![0.0; 256],
-            tmp_out: vec![0.0; 256],
-            remainder: vec![0.0; 128],
+            tmp_in: vec![0.0; BUFSIZE * 2],
+            tmp_out: vec![0.0; BUFSIZE * 2],
+            remainder: vec![0.0; BUFSIZE],
             len: self.len,
         }
     }
