@@ -31,7 +31,7 @@ pub struct AmbisonicBinaural<const BUFSIZE: usize, const NCHAN: usize> {
     binauralizer: BinauralizerO1<BUFSIZE>,
     binauralizer_rev: BinauralizerO1<BUFSIZE>,
     ambi_master: [[f32; BUFSIZE]; 4],
-    ambi_reverb_in: [[f32; BUFSIZE]; 4],   
+    ambi_reverb_in: [[f32; BUFSIZE]; 4],
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> AmbisonicBinaural<BUFSIZE, NCHAN> {
@@ -40,7 +40,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> AmbisonicBinaural<BUFSIZE, NCHAN>
             running_instances: Vec::with_capacity(600),
             pending_events: Vec::with_capacity(600),
             binauralizer: BinauralizerO1::default_filter(samplerate),
-	    binauralizer_rev: BinauralizerO1::default_filter(samplerate),
+            binauralizer_rev: BinauralizerO1::default_filter(samplerate),
             ambi_master: [[0.0; BUFSIZE]; 4],
             ambi_reverb_in: [[0.0; BUFSIZE]; 4],
         }
@@ -435,11 +435,10 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
                 }
             }
 
-                     
             let block = ambi_module
                 .binauralizer
                 .binauralize(ambi_module.ambi_master);
-	    let block_rev = ambi_module
+            let block_rev = ambi_module
                 .binauralizer_rev
                 .binauralize(ambi_module.ambi_reverb_in);
 
@@ -447,7 +446,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
             for c in 0..NCHAN {
                 for s in 0..BUFSIZE {
                     out_buf[c][s] += block[c][s];
-		    master_reverb_in[c][s] += block_rev[c][s];
+                    master_reverb_in[c][s] += block_rev[c][s];
                 }
             }
         }
