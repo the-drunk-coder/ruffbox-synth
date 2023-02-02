@@ -44,7 +44,7 @@ impl<const BUFSIZE: usize> EncoderO1<BUFSIZE> {
                 self.azimuth_mod = Some(modulator);
             }
             SynthParameterLabel::AmbisonicElevation => {
-                self.elevation = init; // keep for later
+                self.elevation = init - std::f32::consts::PI / 2.0; // keep for later
                 self.elevation_mod = Some(modulator);
             }
             _ => {}
@@ -89,7 +89,13 @@ impl<const BUFSIZE: usize> EncoderO1<BUFSIZE> {
                 [self.azimuth; BUFSIZE]
             };
             let ele_buf = if let Some(ele_mod) = self.elevation_mod.as_mut() {
-                ele_mod.process(self.elevation, start_sample, in_buffers)
+                ele_mod
+                    .process(
+                        self.elevation + std::f32::consts::PI / 2.0,
+                        start_sample,
+                        in_buffers,
+                    )
+                    .map(|x| x - std::f32::consts::PI / 2.0)
             } else {
                 [self.elevation; BUFSIZE]
             };
