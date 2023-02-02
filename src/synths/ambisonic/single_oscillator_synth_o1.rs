@@ -125,7 +125,8 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for SingleOscillatorSynthO1<BUFSIZE
         out = self
             .envelope
             .process_block(out, start_sample, sample_buffers);
-        self.encoder.process_block(out) // needs the additional info for the modulators
+        self.encoder
+            .process_block(out, start_sample, sample_buffers) // needs the additional info for the modulators
     }
 
     fn reverb_level(&self) -> f32 {
