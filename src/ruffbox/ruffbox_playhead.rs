@@ -29,7 +29,9 @@ pub struct AmbisonicBinaural<const BUFSIZE: usize, const NCHAN: usize> {
     // has to be n-channel unfotunately ..
     pending_events: Vec<ScheduledEvent<BUFSIZE, NCHAN>>,
     binauralizer: BinauralizerO1<BUFSIZE>,
+    binauralizer_rev: BinauralizerO1<BUFSIZE>,
     ambi_master: [[f32; BUFSIZE]; 4],
+    ambi_reverb_in: [[f32; BUFSIZE]; 4],   
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> AmbisonicBinaural<BUFSIZE, NCHAN> {
@@ -38,7 +40,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> AmbisonicBinaural<BUFSIZE, NCHAN>
             running_instances: Vec::with_capacity(600),
             pending_events: Vec::with_capacity(600),
             binauralizer: BinauralizerO1::default_filter(samplerate),
+	    binauralizer_rev: BinauralizerO1::default_filter(samplerate),
             ambi_master: [[0.0; BUFSIZE]; 4],
+            ambi_reverb_in: [[0.0; BUFSIZE]; 4],
         }
     }
 }
@@ -250,6 +254,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
         // clear ambi master if necessary
         if let Some(ambi_module) = self.ambisonic_binaural.as_mut() {
             ambi_module.ambi_master = [[0.0; BUFSIZE]; 4];
+            ambi_module.ambi_reverb_in = [[0.0; BUFSIZE]; 4];
         }
 
         let now = if !track_time_internally {
@@ -360,6 +365,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
                 for c in 0..4 {
                     for s in 0..BUFSIZE {
                         ambi_module.ambi_master[c][s] += ambi_block[c][s];
+                        ambi_module.ambi_reverb_in[c][s] +=
+                            ambi_block[c][s] * running_inst.reverb_level();
                     }
                 }
             }
@@ -415,6 +422,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
                     for c in 0..4 {
                         for s in 0..BUFSIZE {
                             ambi_module.ambi_master[c][s] += ambi_block[c][s];
+                            ambi_module.ambi_reverb_in[c][s] +=
+                                ambi_block[c][s] * src.reverb_level();
                         }
                     }
 
@@ -426,14 +435,19 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
                 }
             }
 
+                     
             let block = ambi_module
                 .binauralizer
                 .binauralize(ambi_module.ambi_master);
+	    let block_rev = ambi_module
+                .binauralizer_rev
+                .binauralize(ambi_module.ambi_reverb_in);
 
             // mix binauralized block in with master
             for c in 0..NCHAN {
                 for s in 0..BUFSIZE {
                     out_buf[c][s] += block[c][s];
+		    master_reverb_in[c][s] += block_rev[c][s];
                 }
             }
         }
@@ -450,7 +464,6 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
         if track_time_internally {
             self.now.store(now + self.block_duration);
         }
-        //println!("now {}", self.now);
 
         out_buf
     }
