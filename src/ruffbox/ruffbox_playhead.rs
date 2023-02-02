@@ -28,6 +28,7 @@ pub struct AmbisonicBinaural<const BUFSIZE: usize, const NCHAN: usize> {
     running_instances: Vec<Box<dyn Synth<BUFSIZE, 4> + Send + Sync>>, // first order ambisonic sources
     // has to be n-channel unfotunately ..
     pending_events: Vec<ScheduledEvent<BUFSIZE, NCHAN>>,
+    // this has to do until I manage to implement a proper ambisonic reverb ...
     binauralizer: BinauralizerO1<BUFSIZE>,
     binauralizer_rev: BinauralizerO1<BUFSIZE>,
     ambi_master: [[f32; BUFSIZE]; 4],
@@ -438,6 +439,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
             let block = ambi_module
                 .binauralizer
                 .binauralize(ambi_module.ambi_master);
+
+            // this has to do for a reverb until I manage to implement a proper ambisonic reverb ...
             let block_rev = ambi_module
                 .binauralizer_rev
                 .binauralize(ambi_module.ambi_reverb_in);

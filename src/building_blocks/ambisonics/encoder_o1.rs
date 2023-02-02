@@ -23,7 +23,7 @@ impl<const BUFSIZE: usize> EncoderO1<BUFSIZE> {
             a_1_0: 1.0,
             a_1_1: 1.0,
             azimuth: 0.0,
-            elevation: 0.0,
+            elevation: -std::f32::consts::PI / 2.0,
             coefs: [0.0; 4],
         }
     }
@@ -33,7 +33,9 @@ impl<const BUFSIZE: usize> EncoderO1<BUFSIZE> {
         if let SynthParameterValue::ScalarF32(val) = value {
             match par {
                 SynthParameterLabel::AmbisonicAzimuth => self.azimuth = *val,
-                SynthParameterLabel::AmbisonicElevation => self.elevation = *val,
+                SynthParameterLabel::AmbisonicElevation => {
+                    self.elevation = *val - std::f32::consts::PI / 2.0
+                }
                 _ => (),
             };
 
