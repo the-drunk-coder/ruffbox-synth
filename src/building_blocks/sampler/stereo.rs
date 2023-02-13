@@ -247,7 +247,7 @@ impl<const BUFSIZE: usize> StereoSource<BUFSIZE> for StereoSampler<BUFSIZE> {
         start_sample: usize,
         sample_buffers: &[SampleBuffer],
     ) -> [[f32; BUFSIZE]; 2] {
-        if self.rate_mod.is_some() || self.rate_mod.is_some() {
+        if self.rate_mod.is_some() || self.amp_mod.is_some() {
             self.get_next_block_modulated(start_sample, sample_buffers)
         } else if self.playback_rate == 1.0 {
             self.get_next_block_plain(start_sample, sample_buffers)

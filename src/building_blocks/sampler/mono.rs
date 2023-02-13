@@ -231,7 +231,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for MonoSampler<BUFSIZE> {
         start_sample: usize,
         sample_buffers: &[SampleBuffer],
     ) -> [f32; BUFSIZE] {
-        if self.rate_mod.is_some() || self.rate_mod.is_some() {
+        if self.rate_mod.is_some() || self.amp_mod.is_some() {
             self.get_next_block_modulated(start_sample, sample_buffers)
         } else if self.playback_rate == 1.0 {
             self.get_next_block_plain(start_sample, sample_buffers)
