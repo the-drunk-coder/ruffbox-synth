@@ -10,6 +10,7 @@ pub mod oscillators;
 pub mod reverb;
 pub mod routing;
 pub mod sampler;
+pub mod waveshaper;
 
 pub use crate::building_blocks::envelopes::source_env::*;
 pub use crate::building_blocks::modulator::Modulator;
@@ -116,6 +117,7 @@ pub enum SynthParameterLabel {
     Wavetable,            // 36
     Wavematrix,           // 37
     WavematrixTableIndex, // 38
+    WaveshaperMix,        // 39
 }
 
 /// the value operation is defined on parameters

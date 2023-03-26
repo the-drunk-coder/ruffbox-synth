@@ -4,14 +4,15 @@ use crate::building_blocks::routing::BalChan;
 use crate::building_blocks::sampler::StereoSampler;
 use crate::building_blocks::SampleBuffer;
 use crate::building_blocks::{
-    EnvelopeSegmentInfo, EnvelopeSegmentType, FilterType, Modulator, MonoEffect, StereoSource,
-    Synth, SynthParameterLabel, SynthParameterValue,
+    waveshaper::Waveshaper, EnvelopeSegmentInfo, EnvelopeSegmentType, FilterType, Modulator,
+    MonoEffect, StereoSource, Synth, SynthParameterLabel, SynthParameterValue,
 };
 
 /// a stereo sampler with envelope etc.
 /// here we need everything twice ...
 pub struct NChannelStereoSampler<const BUFSIZE: usize, const NCHAN: usize> {
     sampler: StereoSampler<BUFSIZE>,
+    waveshaper: (Waveshaper<BUFSIZE>, Waveshaper<BUFSIZE>),
     envelope: (
         MultiPointEffectEnvelope<BUFSIZE>,
         MultiPointEffectEnvelope<BUFSIZE>,
@@ -75,6 +76,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> NChannelStereoSampler<BUFSIZE, NC
 
         NChannelStereoSampler {
             sampler: StereoSampler::with_bufnum_len(bufnum, buflen, true),
+            waveshaper: (Waveshaper::new(), Waveshaper::new()),
             envelope: (env_l, env_r),
             hpf: match hpf_type {
                 FilterType::BiquadHpf12dB => (
@@ -238,6 +240,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
     fn set_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {
         self.sampler.set_parameter(par, val);
 
+        self.waveshaper.0.set_parameter(par, val);
+        self.waveshaper.1.set_parameter(par, val);
+
         self.hpf.0.set_parameter(par, val);
         self.hpf.1.set_parameter(par, val);
 
@@ -331,6 +336,15 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
     ) -> [[f32; BUFSIZE]; NCHAN] {
         let [mut left, mut right]: [[f32; BUFSIZE]; 2] =
             self.sampler.get_next_block(start_sample, sample_buffers);
+
+        left = self
+            .waveshaper
+            .0
+            .process_block(left, start_sample, sample_buffers);
+        right = self
+            .waveshaper
+            .1
+            .process_block(right, start_sample, sample_buffers);
 
         left = self.hpf.0.process_block(left, start_sample, sample_buffers);
         right = self

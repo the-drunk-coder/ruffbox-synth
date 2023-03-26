@@ -2,6 +2,7 @@ use crate::building_blocks::envelopes::*;
 use crate::building_blocks::filters::*;
 use crate::building_blocks::routing::PanChan;
 use crate::building_blocks::sampler::MonoSampler;
+use crate::building_blocks::waveshaper::Waveshaper;
 use crate::building_blocks::SampleBuffer;
 use crate::building_blocks::{
     EnvelopeSegmentInfo, EnvelopeSegmentType, FilterType, Modulator, MonoEffect, MonoSource, Synth,
@@ -12,6 +13,7 @@ use crate::building_blocks::{
 pub struct NChannelSampler<const BUFSIZE: usize, const NCHAN: usize> {
     sampler: MonoSampler<BUFSIZE>,
     envelope: MultiPointEffectEnvelope<BUFSIZE>,
+    waveshaper: Waveshaper<BUFSIZE>,
     hpf: Box<dyn MonoEffect<BUFSIZE> + Send + Sync>,
     peak_eq_1: Box<dyn MonoEffect<BUFSIZE> + Send + Sync>,
     peak_eq_2: Box<dyn MonoEffect<BUFSIZE> + Send + Sync>,
@@ -59,6 +61,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> NChannelSampler<BUFSIZE, NCHAN> {
         NChannelSampler {
             sampler: MonoSampler::with_bufnum_len(bufnum, buflen, true),
             envelope: env,
+            waveshaper: Waveshaper::new(),
             hpf: match hpf_type {
                 FilterType::BiquadHpf12dB => Box::new(BiquadHpf12dB::new(20.0, 0.3, sr)),
                 FilterType::BiquadHpf24dB => Box::new(BiquadHpf24dB::new(20.0, 0.3, sr)),
@@ -142,6 +145,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
 
     fn set_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {
         self.sampler.set_parameter(par, val);
+        self.waveshaper.set_parameter(par, val);
         self.hpf.set_parameter(par, val);
 
         match par {
@@ -199,6 +203,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
         sample_buffers: &[SampleBuffer],
     ) -> [[f32; BUFSIZE]; NCHAN] {
         let mut out: [f32; BUFSIZE] = self.sampler.get_next_block(start_sample, sample_buffers);
+        out = self
+            .waveshaper
+            .process_block(out, start_sample, sample_buffers);
         out = self.hpf.process_block(out, start_sample, sample_buffers);
         out = self
             .peak_eq_1

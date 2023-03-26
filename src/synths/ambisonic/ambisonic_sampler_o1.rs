@@ -3,13 +3,14 @@ use crate::building_blocks::envelopes::*;
 use crate::building_blocks::filters::*;
 use crate::building_blocks::sampler::MonoSampler;
 use crate::building_blocks::{
-    FilterType, Modulator, MonoEffect, MonoSource, SampleBuffer, Synth, SynthParameterLabel,
-    SynthParameterValue,
+    waveshaper::Waveshaper, FilterType, Modulator, MonoEffect, MonoSource, SampleBuffer, Synth,
+    SynthParameterLabel, SynthParameterValue,
 };
 
 /// a sampler with envelope etc.
 pub struct AmbisonicSamplerO1<const BUFSIZE: usize> {
     sampler: MonoSampler<BUFSIZE>,
+    waveshaper: Waveshaper<BUFSIZE>,
     envelope: LinearASREnvelope<BUFSIZE>,
     hpf: Box<dyn MonoEffect<BUFSIZE> + Send + Sync>,
     peak_eq_1: Box<dyn MonoEffect<BUFSIZE> + Send + Sync>,
@@ -34,6 +35,7 @@ impl<const BUFSIZE: usize> AmbisonicSamplerO1<BUFSIZE> {
 
         AmbisonicSamplerO1 {
             sampler: MonoSampler::with_bufnum_len(bufnum, buflen, true),
+            waveshaper: Waveshaper::new(),
             envelope: LinearASREnvelope::new(1.0, 0.0001, dur, 0.0001, sr),
             hpf: match hpf_type {
                 FilterType::BiquadHpf12dB => Box::new(BiquadHpf12dB::new(20.0, 0.3, sr)),
@@ -83,6 +85,7 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for AmbisonicSamplerO1<BUFSIZE> {
 
     fn set_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {
         self.sampler.set_parameter(par, val);
+        self.waveshaper.set_parameter(par, val);
         self.hpf.set_parameter(par, val);
         self.peak_eq_1.set_parameter(par, val);
         self.peak_eq_2.set_parameter(par, val);
@@ -119,6 +122,9 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for AmbisonicSamplerO1<BUFSIZE> {
         sample_buffers: &[SampleBuffer],
     ) -> [[f32; BUFSIZE]; 4] {
         let mut out: [f32; BUFSIZE] = self.sampler.get_next_block(start_sample, sample_buffers);
+        out = self
+            .waveshaper
+            .process_block(out, start_sample, sample_buffers);
         out = self.hpf.process_block(out, start_sample, sample_buffers);
         out = self
             .peak_eq_1

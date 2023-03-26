@@ -3,13 +3,15 @@ use crate::building_blocks::filters::*;
 use crate::building_blocks::oscillators::*;
 use crate::building_blocks::routing::PanChan;
 use crate::building_blocks::{
-    EnvelopeSegmentInfo, EnvelopeSegmentType, FilterType, Modulator, MonoEffect, MonoSource,
-    OscillatorType, SampleBuffer, Synth, SynthParameterLabel, SynthParameterValue,
+    waveshaper::Waveshaper, EnvelopeSegmentInfo, EnvelopeSegmentType, FilterType, Modulator,
+    MonoEffect, MonoSource, OscillatorType, SampleBuffer, Synth, SynthParameterLabel,
+    SynthParameterValue,
 };
 
 /// a triangle synth with envelope etc.
 pub struct SingleOscillatorSynth<const BUFSIZE: usize, const NCHAN: usize> {
     oscillator: Box<dyn MonoSource<BUFSIZE> + Sync + Send>,
+    waveshaper: Waveshaper<BUFSIZE>,
     lp_filter: Box<dyn MonoEffect<BUFSIZE> + Sync + Send>,
     hp_filter: Box<dyn MonoEffect<BUFSIZE> + Sync + Send>,
     envelope: MultiPointEffectEnvelope<BUFSIZE>,
@@ -66,6 +68,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> SingleOscillatorSynth<BUFSIZE, NC
                 OscillatorType::WhiteNoise => Box::new(WhiteNoise::new(0.2)),
                 OscillatorType::BrownNoise => Box::new(BrownNoise::new(0.2, 0.125)),
             },
+            waveshaper: Waveshaper::new(),
             lp_filter: match lpf_type {
                 FilterType::Dummy => Box::new(DummyFilter::new()),
                 FilterType::Lpf18 => Box::new(Lpf18::new(1500.0, 0.5, 0.1, sr)),
@@ -111,6 +114,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
 
     fn set_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {
         self.oscillator.set_parameter(par, val);
+        self.waveshaper.set_parameter(par, val);
         self.lp_filter.set_parameter(par, val);
         self.hp_filter.set_parameter(par, val);
         self.envelope.set_parameter(par, val);
@@ -144,6 +148,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
         sample_buffers: &[SampleBuffer],
     ) -> [[f32; BUFSIZE]; NCHAN] {
         let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample, sample_buffers);
+        out = self
+            .waveshaper
+            .process_block(out, start_sample, sample_buffers);
         out = self
             .lp_filter
             .process_block(out, start_sample, sample_buffers);
