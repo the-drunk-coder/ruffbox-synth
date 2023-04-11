@@ -2,7 +2,7 @@ use crate::building_blocks::convolver::block_convolver::BlockConvolver;
 use rubato::{FftFixedIn, Resampler};
 
 // 4x128 points @ 44100kHz, raw f32 ...
-const DEFAULT_FILTER: &'static [u8] = include_bytes!("../../../binaural_filter/default.raw");
+const DEFAULT_FILTER: &[u8] = include_bytes!("../../../binaural_filter/default.raw");
 
 /**
  * a simple first-order convolution binauralizer
@@ -16,7 +16,7 @@ impl<const BUFSIZE: usize> BinauralizerO1<BUFSIZE> {
     pub fn default_filter(samplerate: f32) -> Self {
         let mut ir: Vec<f32> = DEFAULT_FILTER
             .chunks(4)
-            .map(|b| (f32::from_le_bytes(b.try_into().unwrap()) as f32))
+            .map(|b| f32::from_le_bytes(b.try_into().unwrap()))
             .collect();
 
         debug_assert!(ir.len() == 1024);
@@ -38,8 +38,8 @@ impl<const BUFSIZE: usize> BinauralizerO1<BUFSIZE> {
                 let (l, r) = ir_proc.get(i).unwrap();
                 let mut resampler_l = FftFixedIn::<f32>::new(44100, samplerate as usize, 128, 1, 1);
                 let mut resampler_r = FftFixedIn::<f32>::new(44100, samplerate as usize, 128, 1, 1);
-                let l_resampled = resampler_l.process(&vec![l]).unwrap();
-                let r_resampled = resampler_r.process(&vec![r]).unwrap();
+                let l_resampled = resampler_l.process(&[l]).unwrap();
+                let r_resampled = resampler_r.process(&[r]).unwrap();
                 ir_proc[i] = (l_resampled[0].clone(), r_resampled[0].clone());
             }
         }

@@ -56,8 +56,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> BalChan<BUFSIZE, NCHAN> {
                 let upper = lower + 1.0;
 
                 // only two channels are set at any time ...
-                self.levels[0][lower as usize % (NCHAN as usize)] = [angle_rad.cos(); BUFSIZE];
-                self.levels[1][upper as usize % (NCHAN as usize)] = [angle_rad.sin(); BUFSIZE];
+                self.levels[0][lower as usize % NCHAN] = [angle_rad.cos(); BUFSIZE];
+                self.levels[1][upper as usize % NCHAN] = [angle_rad.sin(); BUFSIZE];
             }
         }
     }
@@ -76,8 +76,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> BalChan<BUFSIZE, NCHAN> {
                 let upper = lower + 1.0;
 
                 // only two channels are set at any time ...
-                self.levels[0][lower as usize % (NCHAN as usize)][idx] = angle_rad.cos();
-                self.levels[1][upper as usize % (NCHAN as usize)][idx] = angle_rad.sin();
+                self.levels[0][lower as usize % NCHAN][idx] = angle_rad.cos();
+                self.levels[1][upper as usize % NCHAN][idx] = angle_rad.sin();
             }
         }
     }

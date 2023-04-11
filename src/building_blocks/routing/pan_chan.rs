@@ -52,8 +52,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> PanChan<BUFSIZE, NCHAN> {
                 let angle_rad = (p - lower) * PI * 0.5;
                 let upper = lower + 1.0;
 
-                self.levels[lower as usize % (NCHAN as usize)] = [angle_rad.cos(); BUFSIZE];
-                self.levels[upper as usize % (NCHAN as usize)] = [angle_rad.sin(); BUFSIZE];
+                self.levels[lower as usize % NCHAN] = [angle_rad.cos(); BUFSIZE];
+                self.levels[upper as usize % NCHAN] = [angle_rad.sin(); BUFSIZE];
             }
         }
     }
@@ -71,8 +71,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> PanChan<BUFSIZE, NCHAN> {
                 let angle_rad = (p - lower) * PI * 0.5;
                 let upper = lower + 1.0;
 
-                self.levels[lower as usize % (NCHAN as usize)][idx] = angle_rad.cos();
-                self.levels[upper as usize % (NCHAN as usize)][idx] = angle_rad.sin();
+                self.levels[lower as usize % NCHAN][idx] = angle_rad.cos();
+                self.levels[upper as usize % NCHAN][idx] = angle_rad.sin();
             }
         }
     }

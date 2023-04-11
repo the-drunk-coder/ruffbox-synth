@@ -173,7 +173,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
             max_buffers,
             live_buffer_metadata,
             fade_curve,
-            stitch_size: stitch_size,
+            stitch_size,
             samplerate: samplerate as f32,
             control_q_rec: rx,
             // timing stuff
@@ -197,7 +197,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
             let bufidx = self.live_buffer_metadata[bufnum].live_buffer_idx;
 
             // the easiest case ...
-            if bufidx >= self.stitch_size + 1 && bufidx + BUFSIZE < buflen {
+            if bufidx > self.stitch_size && bufidx + BUFSIZE < buflen {
                 // first, reconstruct ...
                 buf[bufidx - self.stitch_size..bufidx]
                     .copy_from_slice(&self.live_buffer_metadata[bufnum].stitch_buffer_incoming);

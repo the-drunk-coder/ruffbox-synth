@@ -41,7 +41,7 @@ impl<const BUFSIZE: usize> BlockConvolver<BUFSIZE> {
 
         // zero-pad impulse response (to match IR lenght)
         let mut ir_zeropad = vec![0.0; BUFSIZE * 2];
-        ir_zeropad[..ir.len()].copy_from_slice(&ir);
+        ir_zeropad[..ir.len()].copy_from_slice(ir);
 
         BlockConvolver {
             ir_freq_domain: fft.forward(&ir_zeropad),

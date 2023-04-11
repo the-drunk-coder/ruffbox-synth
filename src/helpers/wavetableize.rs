@@ -31,7 +31,7 @@ fn raw(buffer: &[f32], matrix_size: (usize, usize), start: f32) -> Vec<Vec<f32>>
     // calcluate max step size ...
     let remaining_length = buffer.len() - (buffer.len() as f32 * start) as usize;
     let step_size = if remaining_length / matrix_size.1 < matrix_size.0 {
-        remaining_length / matrix_size.0 as usize
+        remaining_length / matrix_size.0
     } else {
         matrix_size.1
     };
@@ -53,7 +53,7 @@ fn smooth(buffer: &[f32], matrix_size: (usize, usize), start: f32) -> Vec<Vec<f3
     // calcluate max step size ...
     let remaining_length = buffer.len() - (buffer.len() as f32 * start) as usize;
     let step_size = if remaining_length / matrix_size.1 < matrix_size.0 {
-        remaining_length / matrix_size.0 as usize
+        remaining_length / matrix_size.0
     } else {
         matrix_size.1
     };
@@ -134,7 +134,7 @@ fn crossfade(buffer: &[f32], mut matrix_size: (usize, usize), start_factor: f32)
 fn supersmooth(buffer: &[f32], matrix_size: (usize, usize), start_factor: f32) -> Vec<Vec<f32>> {
     let remaining_length = buffer.len() - (buffer.len() as f32 * start_factor) as usize;
     let step_size = if remaining_length / matrix_size.1 < matrix_size.0 {
-        remaining_length / matrix_size.0 as usize
+        remaining_length / matrix_size.0
     } else {
         matrix_size.1
     };
