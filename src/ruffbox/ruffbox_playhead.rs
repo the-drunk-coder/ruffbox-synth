@@ -15,12 +15,12 @@ use crate::ruffbox::{ControlMessage, ReverbMode, ScheduledEvent};
 
 use crate::ruffbox::ScheduledSource;
 
-pub(crate) struct LiveBufferMetadata {
+pub(crate) struct LiveBufferMetadata<const BUFSIZE: usize> {
     live_buffer_idx: usize,
-    live_buffer_current_block: usize,
-    live_buffer_stitch_size: usize,
-    fade_stitch_idx: usize,
-    pub(crate) stitch_buffer: Vec<f32>,
+    pub(crate) stitch_buffer_incoming: Vec<f32>,
+    pub(crate) stitch_buffer_previous: Vec<f32>,
+    accum_buf: [f32; BUFSIZE],
+    accum_buf_idx: usize,
 }
 
 /// ambisonic binaural module (order 1 for now)
@@ -57,10 +57,9 @@ pub struct RuffboxPlayhead<const BUFSIZE: usize, const NCHAN: usize> {
     pub(crate) buffers: Vec<SampleBuffer>, // crate public for test
     pub(crate) buffer_lengths: Vec<usize>, // crate public for test
     max_buffers: usize,
-    non_stitch_size: usize,
+    stitch_size: usize,
     pub(crate) fade_curve: Vec<f32>, // crate public for test
-    pub(crate) live_buffer_metadata: Vec<LiveBufferMetadata>,
-    bufsize: usize,
+    pub(crate) live_buffer_metadata: Vec<LiveBufferMetadata<BUFSIZE>>,
     samplerate: f32,
     control_q_rec: crossbeam::channel::Receiver<ControlMessage<BUFSIZE, NCHAN>>,
     block_duration: f64,
@@ -129,8 +128,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
         let mut buffer_lengths = vec![0; max_buffers];
 
         //println!("max num buffers {} {}", buffers.len(), max_buffers);
-        let bufsize = BUFSIZE;
-        let stitch_size = bufsize / 4;
+
+        let stitch_size = BUFSIZE / 4;
         let mut live_buffer_metadata = Vec::new();
         let mut fade_curve = Vec::new();
 
@@ -138,10 +137,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
             // pre-calculate a fade curve for live buffer stitching
             let pi_inc = std::f32::consts::PI / stitch_size as f32;
             let mut pi_idx: f32 = 0.0;
-            let mut stitch_buffer = Vec::new();
 
             for _ in 0..stitch_size {
-                stitch_buffer.push(0.0);
+                // FADE-IN-CURVE
                 fade_curve.push((-pi_idx.cos() + 1.0) / 2.0);
                 pi_idx += pi_inc;
             }
@@ -150,10 +148,10 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
             for _ in 0..live_buffers {
                 live_buffer_metadata.push(LiveBufferMetadata {
                     live_buffer_idx: 1,
-                    live_buffer_current_block: 0,
-                    live_buffer_stitch_size: stitch_size,
-                    fade_stitch_idx: 0,
-                    stitch_buffer: stitch_buffer.clone(),
+                    stitch_buffer_incoming: vec![0.0; stitch_size],
+                    stitch_buffer_previous: vec![0.0; stitch_size],
+                    accum_buf: [0.0; BUFSIZE],
+                    accum_buf_idx: 0,
                 });
             }
             // create live buffers and freeze buffers
@@ -162,6 +160,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
                     SampleBuffer::Mono(vec![0.0; (samplerate * live_buffer_time) as usize + 3]);
                 buffer_lengths[b] = (samplerate * live_buffer_time) as usize;
             }
+
             println!("live buf time samples: {}", buffer_lengths[0]);
         }
 
@@ -174,8 +173,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
             max_buffers,
             live_buffer_metadata,
             fade_curve,
-            non_stitch_size: bufsize - stitch_size,
-            bufsize,
+            stitch_size: stitch_size,
             samplerate: samplerate as f32,
             control_q_rec: rx,
             // timing stuff
@@ -192,53 +190,127 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
         self.ambisonic_binaural = Some(AmbisonicBinaural::new(self.samplerate));
     }
 
-    // there HAS to be a more elegant solution for this ...
-    pub fn write_sample_to_live_buffer(&mut self, bufnum: usize, sample: f32) {
-        // first, overwrite old stitch region if we're at the beginning of a new block
+    pub fn write_samples_to_live_buffer(&mut self, bufnum: usize, samples: [f32; BUFSIZE]) {
+        // so far we only allow writing to a mono buffer, one input at a time
         if let Some(SampleBuffer::Mono(buf)) = self.buffers.get_mut(bufnum) {
-            if self.live_buffer_metadata[bufnum].live_buffer_current_block == 0 {
-                let mut count_back_idx = self.live_buffer_metadata[bufnum].live_buffer_idx - 1;
-                for s in (0..self.live_buffer_metadata[bufnum].stitch_buffer.len()).rev() {
-                    if count_back_idx < 1 {
-                        count_back_idx = self.buffer_lengths[bufnum]; // live buffer length
-                    }
-                    buf[count_back_idx] = self.live_buffer_metadata[bufnum].stitch_buffer[s];
-                    count_back_idx -= 1;
+            let buflen = self.buffer_lengths[bufnum];
+            let bufidx = self.live_buffer_metadata[bufnum].live_buffer_idx;
+
+            // the easiest case ...
+            if bufidx >= self.stitch_size + 1 && bufidx + BUFSIZE < buflen {
+                // first, reconstruct ...
+                buf[bufidx - self.stitch_size..bufidx]
+                    .copy_from_slice(&self.live_buffer_metadata[bufnum].stitch_buffer_incoming);
+
+                // keep for later (incoming)
+                self.live_buffer_metadata[bufnum]
+                    .stitch_buffer_incoming
+                    .copy_from_slice(&samples[BUFSIZE - self.stitch_size..BUFSIZE]);
+
+                let stx_l = bufidx + BUFSIZE - self.stitch_size;
+                let stx_u = bufidx + BUFSIZE;
+
+                // keep for later (previous)
+                self.live_buffer_metadata[bufnum]
+                    .stitch_buffer_previous
+                    .copy_from_slice(&buf[stx_l..stx_u]);
+
+                // fill in the bulk
+                buf[bufidx..stx_l].copy_from_slice(&samples[0..BUFSIZE - self.stitch_size]);
+
+                // crossfade stitch zone
+                for i in 0..self.stitch_size {
+                    let gain = self.fade_curve[i];
+                    buf[stx_l + i] = self.live_buffer_metadata[bufnum].stitch_buffer_previous[i]
+                        * (1.0 - gain)
+                        + self.live_buffer_metadata[bufnum].stitch_buffer_incoming[i] * gain;
                 }
+
+                self.live_buffer_metadata[bufnum].live_buffer_idx += BUFSIZE;
+            } else {
+                // first, reconstruct ...
+                let mut rev_idx = if bufidx > 0 {
+                    bufidx
+                } else {
+                    self.buffer_lengths[bufnum] - 1
+                };
+
+                for i in (0..self.stitch_size).rev() {
+                    buf[rev_idx] = self.live_buffer_metadata[bufnum].stitch_buffer_incoming[i];
+                    rev_idx -= 1;
+                    if rev_idx == 0 {
+                        rev_idx = self.buffer_lengths[bufnum] - 1;
+                    }
+                }
+
+                // keep for later (incoming)
+                self.live_buffer_metadata[bufnum]
+                    .stitch_buffer_incoming
+                    .copy_from_slice(&samples[BUFSIZE - self.stitch_size..BUFSIZE]);
+
+                // keep for later (previous)
+                let stx_l = bufidx + BUFSIZE - self.stitch_size;
+                let mut fwd_idx = if stx_l >= self.buffer_lengths[bufnum] {
+                    stx_l - self.buffer_lengths[bufnum]
+                } else {
+                    stx_l
+                };
+
+                for i in 0..self.stitch_size {
+                    self.live_buffer_metadata[bufnum].stitch_buffer_previous[i] = buf[fwd_idx];
+                    fwd_idx += 1;
+                    if fwd_idx >= self.buffer_lengths[bufnum] {
+                        fwd_idx = 1;
+                    }
+                }
+
+                // fill in the bulk
+                fwd_idx = if bufidx >= self.buffer_lengths[bufnum] {
+                    bufidx - self.buffer_lengths[bufnum]
+                } else {
+                    bufidx
+                };
+                for i in 0..BUFSIZE - self.stitch_size {
+                    buf[fwd_idx] = samples[i];
+                    fwd_idx += 1;
+                    if fwd_idx >= self.buffer_lengths[bufnum] {
+                        fwd_idx = 1;
+                    }
+                }
+
+                // crossfade stitch zone
+                fwd_idx = if stx_l >= self.buffer_lengths[bufnum] {
+                    stx_l - self.buffer_lengths[bufnum]
+                } else {
+                    stx_l
+                };
+
+                for i in 0..self.stitch_size {
+                    let gain = self.fade_curve[i];
+                    buf[fwd_idx] = self.live_buffer_metadata[bufnum].stitch_buffer_previous[i]
+                        * (1.0 - gain)
+                        + self.live_buffer_metadata[bufnum].stitch_buffer_incoming[i] * gain;
+
+                    fwd_idx += 1;
+                    if fwd_idx >= self.buffer_lengths[bufnum] {
+                        fwd_idx = 1;
+                    }
+                }
+
+                self.live_buffer_metadata[bufnum].live_buffer_idx = fwd_idx;
             }
+        }
+    }
 
-            if self.live_buffer_metadata[bufnum].live_buffer_current_block < self.non_stitch_size {
-                buf[self.live_buffer_metadata[bufnum].live_buffer_idx] = sample;
-            } else if self.live_buffer_metadata[bufnum].live_buffer_current_block < self.bufsize {
-                let fdi = self.live_buffer_metadata[bufnum].fade_stitch_idx;
-                self.live_buffer_metadata[bufnum].stitch_buffer[fdi] = sample;
-
-                // stitch by fading ...
-                buf[self.live_buffer_metadata[bufnum].live_buffer_idx] = buf
-                    [self.live_buffer_metadata[bufnum].live_buffer_idx]
-                    * self.fade_curve[self.live_buffer_metadata[bufnum].fade_stitch_idx]
-                    + sample
-                        * (1.0
-                            - self.fade_curve[self.live_buffer_metadata[bufnum].fade_stitch_idx]);
-                self.live_buffer_metadata[bufnum].fade_stitch_idx += 1;
-            }
-
-            self.live_buffer_metadata[bufnum].live_buffer_idx += 1;
-            self.live_buffer_metadata[bufnum].live_buffer_current_block += 1;
-
-            if self.live_buffer_metadata[bufnum].live_buffer_idx >= self.buffer_lengths[bufnum] {
-                self.live_buffer_metadata[bufnum].live_buffer_idx = 1;
-            }
-
-            if self.live_buffer_metadata[bufnum].live_buffer_current_block >= self.bufsize {
-                self.live_buffer_metadata[bufnum].live_buffer_current_block = 0;
-            }
-
-            if self.live_buffer_metadata[bufnum].fade_stitch_idx
-                >= self.live_buffer_metadata[bufnum].live_buffer_stitch_size
-            {
-                self.live_buffer_metadata[bufnum].fade_stitch_idx = 0;
-            }
+    pub fn write_sample_to_live_buffer(&mut self, bufnum: usize, sample: f32) {
+        let mut idx = self.live_buffer_metadata[bufnum].accum_buf_idx;
+        self.live_buffer_metadata[bufnum].accum_buf[idx] = sample;
+        idx += 1;
+        if idx == BUFSIZE {
+            self.write_samples_to_live_buffer(bufnum, self.live_buffer_metadata[bufnum].accum_buf);
+            self.live_buffer_metadata[bufnum].accum_buf_idx = 0;
+        } else {
+            self.live_buffer_metadata[bufnum].accum_buf_idx = idx;
         }
     }
 
