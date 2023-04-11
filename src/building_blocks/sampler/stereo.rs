@@ -56,7 +56,7 @@ impl<const BUFSIZE: usize> StereoSampler<BUFSIZE> {
                 out_buf[0][s] = left[self.index] * self.amp;
                 out_buf[1][s] = right[self.index] * self.amp;
 
-                if self.index < self.buflen {
+                if self.index < self.buflen - 2 {
                     self.index += 1;
                 } else if self.repeat {
                     self.frac_index = 1.0;
@@ -104,7 +104,7 @@ impl<const BUFSIZE: usize> StereoSampler<BUFSIZE> {
                     self.amp,
                 );
 
-                if ((self.frac_index + self.frac_index_increment) as usize) < self.buflen {
+                if ((self.frac_index + self.frac_index_increment) as usize) < self.buflen - 2 {
                     self.frac_index += self.frac_index_increment;
                 } else if self.repeat {
                     self.frac_index = 1.0;
@@ -165,7 +165,7 @@ impl<const BUFSIZE: usize> StereoSampler<BUFSIZE> {
                     amp_buf[sample_idx],
                 );
 
-                if ((self.frac_index + self.frac_index_increment) as usize) < self.buflen {
+                if ((self.frac_index + self.frac_index_increment) as usize) < self.buflen - 2 {
                     self.frac_index += self.frac_index_increment;
                 } else if self.repeat {
                     self.frac_index = 1.0;
@@ -207,10 +207,14 @@ impl<const BUFSIZE: usize> StereoSource<BUFSIZE> for StereoSampler<BUFSIZE> {
                     let value = *value_ref;
                     let mut value_clamped = value;
                     // clamp value
-                    if value > 1.0 {
+                    if value == 1.0 {
+                        value_clamped = 0.0
+                    } else if value > 1.0 {
                         value_clamped = value - ((value as usize) as f32);
                     } else if value < 0.0 {
-                        value_clamped = 1.0 + (value - ((value as i32) as f32));
+                        let v_abs = value.abs();
+                        let v_abs_clamped = v_abs - ((v_abs as usize) as f32);
+                        value_clamped = 1.0 - v_abs_clamped;
                     }
 
                     let offset = ((self.buflen - 1) as f32 * value_clamped) as usize;
