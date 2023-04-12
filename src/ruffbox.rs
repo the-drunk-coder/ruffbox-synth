@@ -885,7 +885,7 @@ mod tests {
         let out_buf = ruff.process(stream_time, false);
         stream_time += block_duration;
 
-        println!("pre {:?}", out_buf);
+        println!("pre {out_buf:?}");
 
         for i in 0..9 {
             assert_approx_eq::assert_approx_eq!(out_buf[0][33 + i], sample1[i + 1], 0.03);
@@ -898,7 +898,7 @@ mod tests {
         }
 
         let out_buf = ruff.process(stream_time, false);
-        println!("{:?}", out_buf);
+        println!("{out_buf:?}");
         for i in 0..9 {
             assert_approx_eq::assert_approx_eq!(out_buf[0][33 + i], sample2[i + 1], 0.03);
         }

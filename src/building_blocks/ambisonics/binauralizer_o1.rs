@@ -82,6 +82,6 @@ mod tests {
     use super::*;
     #[test]
     fn test_load() {
-        let bin = BinauralizerO1::<128>::default_filter(44100.0);
+        let _bin = BinauralizerO1::<128>::default_filter(44100.0);
     }
 }

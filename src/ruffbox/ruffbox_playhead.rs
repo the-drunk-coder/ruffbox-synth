@@ -412,9 +412,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
                     if let Ok([SampleBuffer::Mono(inbuf), SampleBuffer::Mono(freezbuf)]) =
                         self.buffers.get_many_mut([ib, fb])
                     {
-                        for i in 1..self.buffer_lengths[ib] + 1 {
-                            freezbuf[i] = inbuf[i];
-                        }
+                        freezbuf[1..(self.buffer_lengths[ib] + 1)]
+                            .copy_from_slice(&inbuf[1..(self.buffer_lengths[ib] + 1)]);
                     }
                 }
             }
