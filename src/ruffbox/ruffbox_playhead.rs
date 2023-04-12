@@ -197,7 +197,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
             let bufidx = self.live_buffer_metadata[bufnum].live_buffer_idx;
 
             // the easiest case ...
-            if bufidx > self.stitch_size && bufidx + BUFSIZE < buflen {
+            if bufidx > self.stitch_size && bufidx + BUFSIZE <= buflen {
                 // first, reconstruct ...
                 buf[bufidx - self.stitch_size..bufidx]
                     .copy_from_slice(&self.live_buffer_metadata[bufnum].stitch_buffer_incoming);
@@ -229,17 +229,13 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
                 self.live_buffer_metadata[bufnum].live_buffer_idx += BUFSIZE;
             } else {
                 // first, reconstruct ...
-                let mut rev_idx = if bufidx > 0 {
-                    bufidx
-                } else {
-                    self.buffer_lengths[bufnum] - 1
-                };
+                let mut rev_idx = if bufidx > 0 { bufidx } else { buflen };
 
                 for i in (0..self.stitch_size).rev() {
                     buf[rev_idx] = self.live_buffer_metadata[bufnum].stitch_buffer_incoming[i];
                     rev_idx -= 1;
                     if rev_idx == 0 {
-                        rev_idx = self.buffer_lengths[bufnum] - 1;
+                        rev_idx = buflen;
                     }
                 }
 
@@ -250,8 +246,10 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
 
                 // keep for later (previous)
                 let stx_l = bufidx + BUFSIZE - self.stitch_size;
-                let mut fwd_idx = if stx_l >= self.buffer_lengths[bufnum] {
-                    stx_l - self.buffer_lengths[bufnum]
+                // include buflen index because we have
+                // an offset of 1 for interpolation
+                let mut fwd_idx = if stx_l > buflen {
+                    stx_l - buflen
                 } else {
                     stx_l
                 };
@@ -259,28 +257,34 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
                 for i in 0..self.stitch_size {
                     self.live_buffer_metadata[bufnum].stitch_buffer_previous[i] = buf[fwd_idx];
                     fwd_idx += 1;
-                    if fwd_idx >= self.buffer_lengths[bufnum] {
+                    if fwd_idx > buflen {
                         fwd_idx = 1;
                     }
                 }
 
                 // fill in the bulk
-                fwd_idx = if bufidx >= self.buffer_lengths[bufnum] {
-                    bufidx - self.buffer_lengths[bufnum]
+                // include buflen index because we have
+                // an offset of 1 for interpolation
+                fwd_idx = if bufidx > buflen {
+                    bufidx - buflen
                 } else {
                     bufidx
                 };
                 for i in 0..BUFSIZE - self.stitch_size {
                     buf[fwd_idx] = samples[i];
                     fwd_idx += 1;
-                    if fwd_idx >= self.buffer_lengths[bufnum] {
+                    // include buflen index because we have
+                    // an offset of 1 for interpolation
+                    if fwd_idx > buflen {
                         fwd_idx = 1;
                     }
                 }
 
                 // crossfade stitch zone
-                fwd_idx = if stx_l >= self.buffer_lengths[bufnum] {
-                    stx_l - self.buffer_lengths[bufnum]
+                // include buflen index because we have
+                // an offset of 1 for interpolation
+                fwd_idx = if stx_l > buflen {
+                    stx_l - buflen
                 } else {
                     stx_l
                 };
@@ -292,7 +296,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
                         + self.live_buffer_metadata[bufnum].stitch_buffer_incoming[i] * gain;
 
                     fwd_idx += 1;
-                    if fwd_idx >= self.buffer_lengths[bufnum] {
+                    if fwd_idx > buflen {
                         fwd_idx = 1;
                     }
                 }

@@ -56,7 +56,8 @@ impl<const BUFSIZE: usize> StereoSampler<BUFSIZE> {
                 out_buf[0][s] = left[self.index] * self.amp;
                 out_buf[1][s] = right[self.index] * self.amp;
 
-                if self.index < self.buflen - 2 {
+                // include buflen idx as we start counting at 1 due to interpolation
+                if self.index < self.buflen {
                     self.index += 1;
                 } else if self.repeat {
                     self.frac_index = 1.0;
@@ -104,7 +105,8 @@ impl<const BUFSIZE: usize> StereoSampler<BUFSIZE> {
                     self.amp,
                 );
 
-                if ((self.frac_index + self.frac_index_increment) as usize) < self.buflen - 2 {
+                // include buflen idx as we start counting at 1 due to interpolation
+                if ((self.frac_index + self.frac_index_increment) as usize) < self.buflen {
                     self.frac_index += self.frac_index_increment;
                 } else if self.repeat {
                     self.frac_index = 1.0;
@@ -165,7 +167,8 @@ impl<const BUFSIZE: usize> StereoSampler<BUFSIZE> {
                     amp_buf[sample_idx],
                 );
 
-                if ((self.frac_index + self.frac_index_increment) as usize) < self.buflen - 2 {
+                // include buflen idx as we start counting at 1 due to interpolation
+                if ((self.frac_index + self.frac_index_increment) as usize) < self.buflen {
                     self.frac_index += self.frac_index_increment;
                 } else if self.repeat {
                     self.frac_index = 1.0;
@@ -217,7 +220,9 @@ impl<const BUFSIZE: usize> StereoSource<BUFSIZE> for StereoSampler<BUFSIZE> {
                         value_clamped = 1.0 - v_abs_clamped;
                     }
 
-                    let offset = ((self.buflen - 1) as f32 * value_clamped) as usize;
+                    // as the start value is [0.0, 1.0), the offset will always be
+                    // smaller than self.buflen ...
+                    let offset = (self.buflen as f32 * value_clamped) as usize;
                     self.index = offset + 1; // start counting at one, due to interpolation
                                              //println!("setting starting point to sample {}", self.index);
                     self.frac_index = self.index as f32;
