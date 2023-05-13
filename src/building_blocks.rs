@@ -65,59 +65,59 @@ pub enum SynthState {
 #[repr(C)]
 #[derive(Hash, Eq, PartialEq, Clone, Copy, Debug)]
 pub enum SynthParameterLabel {
-    Attack, // 0
-    AttackType,
-    AttackPeakLevel,
-    Decay, // 1
-    DecayType,
-    DelayDampeningFrequency, // 2
-    DelayFeedback,           // 3
-    DelayMix,                // 4
-    DelayTime,               // 5
-    DelayRate,               // 6
-    Duration,                // 7
-    Envelope,
-    PitchFrequency,           // 8
-    PitchNote,                // 9
-    HighpassCutoffFrequency,  // 10
-    HighpassQFactor,          // 11
-    HighpassFilterType,       //
-    EnvelopeLevel,            // 12
-    OscillatorAmplitude,      // 13 (oscillator amplitude)
-    OscillatorPhaseRelative,  // 14 (radians)
-    OscillatorPhaseEffective, // 15 (the target value or effective offset dependent on the amplitude)
-    LowpassCutoffFrequency,   // 16
-    LowpassQFactor,           // 17
-    LowpassFilterDistortion,  // 18
-    LowpassFilterType,        //
-    PeakFrequency,            // 19
-    PeakGain,                 // 20
-    PeakBandwidth,            // 21
-    Peak1Frequency,           // 19
-    Peak1Gain,                // 20
-    Peak1Bandwidth,           // 21
-    Peak2Frequency,           // 19
-    Peak2Gain,                // 20
-    Peak2Bandwidth,           // 21
-    Pulsewidth,               // 22
-    PlaybackRate,             // 23
-    PlaybackStart,            // 24
-    PlaybackLoop,             // 25
-    Release,                  // 26
-    ReleaseType,
-    ReverbDampening,      // 27
-    ReverbMix,            // 28
-    ReverbRoomsize,       // 29
-    SampleBufferNumber,   // 30
-    Samplerate,           // 31
-    ChannelPosition,      // 32
-    AmbisonicAzimuth,     // 33
-    AmbisonicElevation,   // 34
-    Sustain,              // 35
-    Wavetable,            // 36
-    Wavematrix,           // 37
-    WavematrixTableIndex, // 38
-    WaveshaperMix,        // 39
+    Attack,                   // 0
+    AttackType,               // 1
+    AttackPeakLevel,          // 2
+    Decay,                    // 3
+    DecayType,                // 4
+    DelayDampeningFrequency,  // 5
+    DelayFeedback,            // 6
+    DelayMix,                 // 7
+    DelayTime,                // 8
+    DelayRate,                // 9
+    Duration,                 // 10
+    Envelope,                 // 11
+    PitchFrequency,           // 12
+    PitchNote,                // 13
+    HighpassCutoffFrequency,  // 14
+    HighpassQFactor,          // 15
+    HighpassFilterType,       // 16
+    EnvelopeLevel,            // 17
+    OscillatorAmplitude,      // 18 (oscillator amplitude)
+    OscillatorPhaseRelative,  // 19 (radians)
+    OscillatorPhaseEffective, // 20 (the target value or effective offset dependent on the amplitude)
+    LowpassCutoffFrequency,   // 21
+    LowpassQFactor,           // 22
+    LowpassFilterDistortion,  // 23
+    LowpassFilterType,        // 24
+    PeakFrequency,            // 25
+    PeakGain,                 // 26
+    PeakBandwidth,            // 27
+    Peak1Frequency,           // 28
+    Peak1Gain,                // 29
+    Peak1Bandwidth,           // 30
+    Peak2Frequency,           // 31
+    Peak2Gain,                // 32
+    Peak2Bandwidth,           // 33
+    Pulsewidth,               // 34
+    PlaybackRate,             // 35
+    PlaybackStart,            // 36
+    PlaybackLoop,             // 37
+    Release,                  // 38
+    ReleaseType,              // 39
+    ReverbDampening,          // 40
+    ReverbMix,                // 41
+    ReverbRoomsize,           // 42
+    SampleBufferNumber,       // 43
+    Samplerate,               // 44
+    ChannelPosition,          // 45
+    AmbisonicAzimuth,         // 46
+    AmbisonicElevation,       // 47
+    Sustain,                  // 48
+    Wavetable,                // 59
+    Wavematrix,               // 60
+    WavematrixTableIndex,     // 61
+    WaveshaperMix,            // 62
 }
 
 /// the value operation is defined on parameters
@@ -159,7 +159,7 @@ pub struct EnvelopeSegmentInfo {
 // from an outside perspective, there can be modulator-valued parameters (like, an lfo-valued parameter)
 #[derive(Clone, Debug)]
 #[rustfmt::skip]
-pub enum SynthParameterValue {
+pub enum SynthParameterValue {    
     ScalarF32(f32),
     ScalarU32(u32),
     ScalarUsize(usize),
