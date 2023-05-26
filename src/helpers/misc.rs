@@ -44,7 +44,7 @@ pub fn find_closest_upward_zerocrossing(buffer: &[f32], idx: usize) -> usize {
         }
     }
     let mut idx_d = idx;
-    for i in (0..idx + 1).rev() {
+    for i in (1..idx + 1).rev() {
         if buffer[i - 1] <= 0.0 && buffer[i] > 0.0 {
             idx_d = i;
             break;
