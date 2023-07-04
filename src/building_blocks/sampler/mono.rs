@@ -44,6 +44,7 @@ impl<const BUFSIZE: usize> MonoSampler<BUFSIZE> {
         }
     }
 
+    // standard speed playback, no interpolation needed ...
     fn get_next_block_plain(
         &mut self,
         start_sample: usize,
@@ -69,6 +70,33 @@ impl<const BUFSIZE: usize> MonoSampler<BUFSIZE> {
         out_buf
     }
 
+    // reverse standard speed playback, no interpolation needed ...
+    fn get_next_block_plain_reverse(
+        &mut self,
+        start_sample: usize,
+        sample_buffers: &[SampleBuffer],
+    ) -> [f32; BUFSIZE] {
+        let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
+        if let SampleBuffer::Mono(buf) = &sample_buffers[self.bufnum] {
+            for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
+                *current_sample = buf[self.index] * self.amp;
+
+                // include buflen idx as we start counting at 1 due to interpolation
+                if self.index > 1 {
+                    self.index -= 1;
+                } else if self.repeat {
+                    self.frac_index = (self.buflen - 1) as f32;
+                    self.index = self.buflen - 1;
+                } else {
+                    self.finish();
+                }
+            }
+        }
+
+        out_buf
+    }
+
+    // positive rate other than 1.0
     fn get_next_block_interpolated(
         &mut self,
         start_sample: usize,
@@ -106,6 +134,47 @@ impl<const BUFSIZE: usize> MonoSampler<BUFSIZE> {
         out_buf
     }
 
+    // negative rate other than -1.0
+    fn get_next_block_interpolated_reverse(
+        &mut self,
+        start_sample: usize,
+        sample_buffers: &[SampleBuffer],
+    ) -> [f32; BUFSIZE] {
+        let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
+        if let SampleBuffer::Mono(buf) = &sample_buffers[self.bufnum] {
+            for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
+                // get sample:
+                let idx = self.frac_index.ceil();
+                let frac = (self.frac_index - idx).abs();
+                let idx_u = idx as usize;
+
+                // aaargh ...
+                if idx_u >= 2 {
+                    // 4-point, 3rd-order Hermite
+                    *current_sample = interpolate(
+                        frac,
+                        buf[idx_u + 1],
+                        buf[idx_u],
+                        buf[idx_u - 1],
+                        buf[idx_u - 2],
+                        self.amp,
+                    );
+                }
+
+                self.frac_index += self.frac_index_increment;
+
+                // mind the buffer padding here ...
+                if self.repeat && self.frac_index < 2.0 {
+                    self.frac_index = (self.buflen - 2) as f32;
+                    self.index = self.buflen - 2;
+                } else {
+                    self.finish();
+                }
+            }
+        }
+        out_buf
+    }
+
     fn get_next_block_modulated(
         &mut self,
         start_sample: usize,
@@ -133,29 +202,52 @@ impl<const BUFSIZE: usize> MonoSampler<BUFSIZE> {
                 .take(BUFSIZE)
                 .skip(start_sample)
             {
+                // again, no idea what the 1.0 is about, but too afraid to remove ...
+                // leave it here for good luck ...
                 self.frac_index_increment = 1.0 * rate_buf[sample_idx];
 
-                // get sample:
-                let idx = self.frac_index.floor();
-                let frac = self.frac_index - idx;
-                let idx_u = idx as usize;
+                if self.frac_index_increment.is_sign_positive() {
+                    // get sample:
+                    let idx = self.frac_index.floor();
+                    let frac = self.frac_index - idx;
+                    let idx_u = idx as usize;
 
-                // 4-point, 3rd-order Hermite
-                *current_sample = interpolate(
-                    frac,
-                    buf[idx_u - 1],
-                    buf[idx_u],
-                    buf[idx_u + 1],
-                    buf[idx_u + 2],
-                    amp_buf[sample_idx],
-                );
+                    // 4-point, 3rd-order Hermite
+                    *current_sample = interpolate(
+                        frac,
+                        buf[idx_u - 1],
+                        buf[idx_u],
+                        buf[idx_u + 1],
+                        buf[idx_u + 2],
+                        amp_buf[sample_idx],
+                    );
+                } else {
+                    // get sample:
+                    let idx = self.frac_index.ceil();
+                    let frac = (self.frac_index - idx).abs();
+                    let idx_u = idx as usize;
 
-                // include buflen idx as we start counting at 1 due to interpolation
-                if ((self.frac_index + self.frac_index_increment) as usize) < self.buflen {
-                    self.frac_index += self.frac_index_increment;
-                } else if self.repeat {
+                    if idx_u > 2 {
+                        // 4-point, 3rd-order Hermite
+                        *current_sample = interpolate(
+                            frac,
+                            buf[idx_u + 1],
+                            buf[idx_u],
+                            buf[idx_u - 1],
+                            buf[idx_u - 2],
+                            amp_buf[sample_idx],
+                        );
+                    }
+                }
+
+                self.frac_index += self.frac_index_increment;
+
+                if self.repeat && self.frac_index >= self.buflen as f32 {
                     self.frac_index = 1.0;
                     self.index = 1;
+                } else if self.repeat && self.frac_index < 2.0 {
+                    self.frac_index = (self.buflen - 1) as f32;
+                    self.index = self.buflen - 1;
                 } else {
                     self.finish();
                 }
@@ -215,6 +307,8 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for MonoSampler<BUFSIZE> {
             SynthParameterLabel::PlaybackRate => {
                 if let SynthParameterValue::ScalarF32(value) = val {
                     self.playback_rate = *value;
+                    // I really don't know what the 1.0 is supposed to do here ...
+                    // but by now I'm afraid to take it out ...
                     self.frac_index_increment = 1.0 * *value;
                 }
             }
@@ -244,6 +338,10 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for MonoSampler<BUFSIZE> {
             self.get_next_block_modulated(start_sample, sample_buffers)
         } else if self.playback_rate == 1.0 {
             self.get_next_block_plain(start_sample, sample_buffers)
+        } else if self.playback_rate == -1.0 {
+            self.get_next_block_plain_reverse(start_sample, sample_buffers)
+        } else if self.playback_rate.is_sign_negative() {
+            self.get_next_block_interpolated_reverse(start_sample, sample_buffers)
         } else {
             self.get_next_block_interpolated(start_sample, sample_buffers)
         }
