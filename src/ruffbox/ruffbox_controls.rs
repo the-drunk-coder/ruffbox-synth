@@ -281,7 +281,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
             let mut resampler =
                 FftFixedIn::<f32>::new(sr as usize, self.samplerate as usize, 1024, 1, 1);
 
-            // interpolation samples
+            // interpolation samples, two at each end, as we can read and interpolate in both directions
+            samples_resampled.push(0.0);
             samples_resampled.push(0.0);
             let num_chunks = samples.len() / 1024;
             for chunk in 0..num_chunks {
@@ -292,12 +293,14 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
             // interpolation samples
             samples_resampled.push(0.0);
             samples_resampled.push(0.0);
-            (samples_resampled.len() - 3, samples_resampled)
+            (samples_resampled.len() - 4, samples_resampled)
         } else {
-            samples.insert(0, 0.0); // interpolation sample
+            // interpolation samples, two at each end, as we can read and interpolate in both directions
+            samples.insert(0, 0.0);
+            samples.insert(0, 0.0);
             samples.push(0.0);
             samples.push(0.0);
-            (samples.len() - 3, samples.to_vec())
+            (samples.len() - 4, samples.to_vec())
         };
 
         self.buffer_lengths.insert(buffer_id, buflen);
@@ -350,8 +353,10 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
             let mut resampler_right =
                 FftFixedIn::<f32>::new(sr as usize, self.samplerate as usize, 1024, 1, 1);
 
-            // interpolation samples
+            // interpolation samples, two on each end ...
             samples_left_resampled.push(0.0);
+            samples_left_resampled.push(0.0);
+            samples_right_resampled.push(0.0);
             samples_right_resampled.push(0.0);
 
             let num_chunks = samples_left.len() / 1024;
@@ -366,22 +371,26 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
             }
             // interpolation samples
             samples_left_resampled.push(0.0);
+            samples_left_resampled.push(0.0);
+            samples_right_resampled.push(0.0);
             samples_right_resampled.push(0.0);
             (
-                samples_left_resampled.len() - 3,
+                samples_left_resampled.len() - 4,
                 samples_left_resampled,
                 samples_right_resampled,
             )
         } else {
             // add interpolation samples
             samples_left.insert(0, 0.0);
+            samples_left.insert(0, 0.0);
+            samples_right.insert(0, 0.0);
             samples_right.insert(0, 0.0);
             samples_left.push(0.0);
             samples_left.push(0.0);
             samples_right.push(0.0);
             samples_right.push(0.0);
             (
-                samples_left.len() - 3,
+                samples_left.len() - 4,
                 samples_left.to_vec(),
                 samples_right.to_vec(),
             )
