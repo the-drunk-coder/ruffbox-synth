@@ -14,11 +14,14 @@ pub struct StereoSampler<const BUFSIZE: usize> {
     amp: f32,
 
     // internal parameters
-    index: usize,
-    frac_index: f32,
+    phase: usize,
+    frac_phase: f32,
     bufnum: usize,
     buflen: usize,
-    frac_index_increment: f32,
+    // pre-calc some often-used values
+    buflen_plus_one: usize,
+    buflen_plus_one_f32: f32,
+    frac_phase_increment: f32,
     state: SynthState,
     repeat: bool,
 
@@ -30,12 +33,14 @@ pub struct StereoSampler<const BUFSIZE: usize> {
 impl<const BUFSIZE: usize> StereoSampler<BUFSIZE> {
     pub fn with_bufnum_len(bufnum: usize, buflen: usize, repeat: bool) -> StereoSampler<BUFSIZE> {
         StereoSampler {
-            index: 1, // start with one to account for interpolation
-            frac_index: 1.0,
+            phase: 2, // start with one to account for interpolation samples on each side
+            frac_phase: 2.0,
             bufnum,
-            buflen,
+            buflen, // length WITHOUT interpolation samples
+            buflen_plus_one: buflen + 1,
+            buflen_plus_one_f32: (buflen + 1) as f32,
             playback_rate: 1.0,
-            frac_index_increment: 1.0,
+            frac_phase_increment: 1.0,
             state: SynthState::Fresh,
             amp: 1.0,
             repeat,
@@ -53,15 +58,43 @@ impl<const BUFSIZE: usize> StereoSampler<BUFSIZE> {
 
         if let SampleBuffer::Stereo(left, right) = &sample_buffers[self.bufnum] {
             for s in start_sample..BUFSIZE {
-                out_buf[0][s] = left[self.index] * self.amp;
-                out_buf[1][s] = right[self.index] * self.amp;
+                out_buf[0][s] = left[self.phase] * self.amp;
+                out_buf[1][s] = right[self.phase] * self.amp;
 
                 // include buflen idx as we start counting at 1 due to interpolation
-                if self.index < self.buflen {
-                    self.index += 1;
+                if self.phase < self.buflen_plus_one {
+                    self.phase += 1;
                 } else if self.repeat {
-                    self.frac_index = 1.0;
-                    self.index = 1;
+                    // start counting at two to account for interpolation samples
+                    self.frac_phase = 2.0;
+                    self.phase = 2;
+                } else {
+                    self.finish();
+                }
+            }
+        }
+
+        out_buf
+    }
+
+    fn get_next_block_plain_reverse(
+        &mut self,
+        start_sample: usize,
+        sample_buffers: &[SampleBuffer],
+    ) -> [[f32; BUFSIZE]; 2] {
+        let mut out_buf: [[f32; BUFSIZE]; 2] = [[0.0; BUFSIZE]; 2];
+
+        if let SampleBuffer::Stereo(left, right) = &sample_buffers[self.bufnum] {
+            for s in start_sample..BUFSIZE {
+                out_buf[0][s] = left[self.phase] * self.amp;
+                out_buf[1][s] = right[self.phase] * self.amp;
+
+                // include buflen idx as we start counting at 2 due to interpolation
+                if self.phase > 2 {
+                    self.phase -= 1;
+                } else if self.repeat {
+                    self.frac_phase = self.buflen_plus_one_f32;
+                    self.phase = self.buflen_plus_one;
                 } else {
                     self.finish();
                 }
@@ -81,8 +114,8 @@ impl<const BUFSIZE: usize> StereoSampler<BUFSIZE> {
         if let SampleBuffer::Stereo(left, right) = &sample_buffers[self.bufnum] {
             for s in start_sample..BUFSIZE {
                 // get sample:
-                let idx = self.frac_index.floor();
-                let frac = self.frac_index - idx;
+                let idx = self.frac_phase.floor();
+                let frac = self.frac_phase - idx;
                 let idx_u = idx as usize;
 
                 // 4-point, 3rd-order Hermite
@@ -105,12 +138,62 @@ impl<const BUFSIZE: usize> StereoSampler<BUFSIZE> {
                     self.amp,
                 );
 
+                self.frac_phase += self.frac_phase_increment;
+
                 // include buflen idx as we start counting at 1 due to interpolation
-                if ((self.frac_index + self.frac_index_increment) as usize) < self.buflen {
-                    self.frac_index += self.frac_index_increment;
-                } else if self.repeat {
-                    self.frac_index = 1.0;
-                    self.index = 1;
+                if self.repeat && self.frac_phase.floor() > self.buflen_plus_one_f32 {
+                    // again, start counting at two (at some point i should use the correct fraction here ...)
+                    self.frac_phase = 2.0;
+                    self.phase = 2;
+                } else {
+                    self.finish();
+                }
+            }
+        }
+
+        out_buf
+    }
+
+    fn get_next_block_interpolated_reverse(
+        &mut self,
+        start_sample: usize,
+        sample_buffers: &[SampleBuffer],
+    ) -> [[f32; BUFSIZE]; 2] {
+        let mut out_buf: [[f32; BUFSIZE]; 2] = [[0.0; BUFSIZE]; 2];
+
+        if let SampleBuffer::Stereo(left, right) = &sample_buffers[self.bufnum] {
+            for s in start_sample..BUFSIZE {
+                // get sample:
+                let idx = self.frac_phase.ceil();
+                let frac = idx - self.frac_phase;
+                let idx_u = idx as usize;
+
+                // 4-point, 3rd-order Hermite
+                out_buf[0][s] = interpolate(
+                    frac,
+                    left[idx_u + 1],
+                    left[idx_u],
+                    left[idx_u - 1],
+                    left[idx_u - 2],
+                    self.amp,
+                );
+
+                // 4-point, 3rd-order Hermite
+                out_buf[1][s] = interpolate(
+                    frac,
+                    right[idx_u + 1],
+                    right[idx_u],
+                    right[idx_u - 1],
+                    right[idx_u - 2],
+                    self.amp,
+                );
+
+                self.frac_phase += self.frac_phase_increment;
+
+                // mind the buffer padding here ...
+                if self.repeat && self.frac_phase.ceil() < 2.0 {
+                    self.frac_phase = self.buflen_plus_one_f32;
+                    self.phase = self.buflen_plus_one;
                 } else {
                     self.finish();
                 }
@@ -141,38 +224,66 @@ impl<const BUFSIZE: usize> StereoSampler<BUFSIZE> {
             };
 
             for sample_idx in start_sample..BUFSIZE {
-                self.frac_index_increment = 1.0 * rate_buf[sample_idx];
+                self.frac_phase_increment = rate_buf[sample_idx];
 
-                // get sample:
-                let idx = self.frac_index.floor();
-                let frac = self.frac_index - idx;
-                let idx_u = idx as usize;
+                if self.frac_phase_increment.is_sign_positive() {
+                    // get sample:
+                    let idx = self.frac_phase.floor();
+                    let frac = self.frac_phase - idx;
+                    let idx_u = idx as usize;
 
-                // 4-point, 3rd-order Hermite
-                out_buf[0][sample_idx] = interpolate(
-                    frac,
-                    left[idx_u - 1],
-                    left[idx_u],
-                    left[idx_u + 1],
-                    left[idx_u + 2],
-                    amp_buf[sample_idx],
-                );
+                    // 4-point, 3rd-order Hermite
+                    out_buf[0][sample_idx] = interpolate(
+                        frac,
+                        left[idx_u - 1],
+                        left[idx_u],
+                        left[idx_u + 1],
+                        left[idx_u + 2],
+                        amp_buf[sample_idx],
+                    );
 
-                out_buf[1][sample_idx] = interpolate(
-                    frac,
-                    right[idx_u - 1],
-                    right[idx_u],
-                    right[idx_u + 1],
-                    right[idx_u + 2],
-                    amp_buf[sample_idx],
-                );
+                    out_buf[1][sample_idx] = interpolate(
+                        frac,
+                        right[idx_u - 1],
+                        right[idx_u],
+                        right[idx_u + 1],
+                        right[idx_u + 2],
+                        amp_buf[sample_idx],
+                    );
+                } else {
+                    // get sample:
+                    let idx = self.frac_phase.ceil();
+                    let frac = idx - self.frac_phase;
+                    let idx_u = idx as usize;
 
-                // include buflen idx as we start counting at 1 due to interpolation
-                if ((self.frac_index + self.frac_index_increment) as usize) < self.buflen {
-                    self.frac_index += self.frac_index_increment;
-                } else if self.repeat {
-                    self.frac_index = 1.0;
-                    self.index = 1;
+                    // 4-point, 3rd-order Hermite
+                    out_buf[0][sample_idx] = interpolate(
+                        frac,
+                        left[idx_u + 1],
+                        left[idx_u],
+                        left[idx_u - 1],
+                        left[idx_u - 2],
+                        amp_buf[sample_idx],
+                    );
+
+                    out_buf[1][sample_idx] = interpolate(
+                        frac,
+                        right[idx_u + 1],
+                        right[idx_u],
+                        right[idx_u - 1],
+                        right[idx_u - 2],
+                        amp_buf[sample_idx],
+                    );
+                }
+
+                self.frac_phase += self.frac_phase_increment;
+
+                if self.repeat && self.frac_phase.floor() > self.buflen_plus_one_f32 {
+                    self.frac_phase = 2.0;
+                    self.phase = 2;
+                } else if self.repeat && self.frac_phase.ceil() < 2.0 {
+                    self.frac_phase = self.buflen_plus_one_f32;
+                    self.phase = self.buflen_plus_one;
                 } else {
                     self.finish();
                 }
@@ -223,15 +334,17 @@ impl<const BUFSIZE: usize> StereoSource<BUFSIZE> for StereoSampler<BUFSIZE> {
                     // as the start value is [0.0, 1.0), the offset will always be
                     // smaller than self.buflen ...
                     let offset = (self.buflen as f32 * value_clamped) as usize;
-                    self.index = offset + 1; // start counting at one, due to interpolation
-                                             //println!("setting starting point to sample {}", self.index);
-                    self.frac_index = self.index as f32;
+                    self.phase = offset + 2; // start counting at one, due to interpolation
+                                             //println!("setting starting point to sample {}", self.phase);
+                    self.frac_phase = self.phase as f32;
                 }
             }
             SynthParameterLabel::PlaybackRate => {
                 if let SynthParameterValue::ScalarF32(value) = val {
                     self.playback_rate = *value;
-                    self.frac_index_increment = 1.0 * *value;
+                    // I really don't know what the 1.0 is supposed to do here ...
+                    // but by now I'm afraid to take it out ...
+                    self.frac_phase_increment = 1.0 * *value;
                 }
             }
             SynthParameterLabel::OscillatorAmplitude => {
@@ -260,6 +373,10 @@ impl<const BUFSIZE: usize> StereoSource<BUFSIZE> for StereoSampler<BUFSIZE> {
             self.get_next_block_modulated(start_sample, sample_buffers)
         } else if self.playback_rate == 1.0 {
             self.get_next_block_plain(start_sample, sample_buffers)
+        } else if self.playback_rate == -1.0 {
+            self.get_next_block_plain_reverse(start_sample, sample_buffers)
+        } else if self.playback_rate.is_sign_negative() {
+            self.get_next_block_interpolated_reverse(start_sample, sample_buffers)
         } else {
             self.get_next_block_interpolated(start_sample, sample_buffers)
         }

@@ -14,13 +14,14 @@ pub struct MonoSampler<const BUFSIZE: usize> {
     amp: f32,
 
     // internal parameters
-    index: usize,
-    frac_index: f32,
+    phase: usize,
+    frac_phase: f32,
     bufnum: usize,
     buflen: usize,
+    // pre-calc some often-used values
     buflen_plus_one: usize,
     buflen_plus_one_f32: f32,
-    frac_index_increment: f32,
+    frac_phase_increment: f32,
     state: SynthState,
     repeat: bool,
 
@@ -32,14 +33,14 @@ pub struct MonoSampler<const BUFSIZE: usize> {
 impl<const BUFSIZE: usize> MonoSampler<BUFSIZE> {
     pub fn with_bufnum_len(bufnum: usize, buflen: usize, repeat: bool) -> MonoSampler<BUFSIZE> {
         MonoSampler {
-            index: 2, // start with two to account for interpolation samples on each end
-            frac_index: 2.0,
+            phase: 2, // start with two to account for interpolation samples on each end
+            frac_phase: 2.0,
             bufnum,
             buflen, // length WITHOUT interpolation samples
             buflen_plus_one: buflen + 1,
             buflen_plus_one_f32: (buflen + 1) as f32,
             playback_rate: 1.0,
-            frac_index_increment: 1.0,
+            frac_phase_increment: 1.0,
             state: SynthState::Fresh,
             amp: 1.0,
             repeat,
@@ -57,15 +58,15 @@ impl<const BUFSIZE: usize> MonoSampler<BUFSIZE> {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
         if let SampleBuffer::Mono(buf) = &sample_buffers[self.bufnum] {
             for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
-                *current_sample = buf[self.index] * self.amp;
+                *current_sample = buf[self.phase] * self.amp;
 
                 // include buflen idx as we start counting at 2 due to interpolation
-                if self.index < self.buflen_plus_one {
-                    self.index += 1;
+                if self.phase < self.buflen_plus_one {
+                    self.phase += 1;
                 } else if self.repeat {
                     // start counting at two to account for interpolation samples
-                    self.frac_index = 2.0;
-                    self.index = 2;
+                    self.frac_phase = 2.0;
+                    self.phase = 2;
                 } else {
                     self.finish();
                 }
@@ -84,14 +85,14 @@ impl<const BUFSIZE: usize> MonoSampler<BUFSIZE> {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
         if let SampleBuffer::Mono(buf) = &sample_buffers[self.bufnum] {
             for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
-                *current_sample = buf[self.index] * self.amp;
+                *current_sample = buf[self.phase] * self.amp;
 
                 // include buflen idx as we start counting at 2 due to interpolation
-                if self.index > 2 {
-                    self.index -= 1;
+                if self.phase > 2 {
+                    self.phase -= 1;
                 } else if self.repeat {
-                    self.frac_index = self.buflen_plus_one_f32;
-                    self.index = self.buflen_plus_one;
+                    self.frac_phase = self.buflen_plus_one_f32;
+                    self.phase = self.buflen_plus_one;
                 } else {
                     self.finish();
                 }
@@ -111,8 +112,8 @@ impl<const BUFSIZE: usize> MonoSampler<BUFSIZE> {
         if let SampleBuffer::Mono(buf) = &sample_buffers[self.bufnum] {
             for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
                 // get sample:
-                let idx = self.frac_index.floor();
-                let frac = self.frac_index - idx;
+                let idx = self.frac_phase.floor();
+                let frac = self.frac_phase - idx;
                 let idx_u = idx as usize;
 
                 // 4-point, 3rd-order Hermite
@@ -125,13 +126,13 @@ impl<const BUFSIZE: usize> MonoSampler<BUFSIZE> {
                     self.amp,
                 );
 
-                self.frac_index += self.frac_index_increment;
+                self.frac_phase += self.frac_phase_increment;
 
                 // include buflen idx as we start counting at 1 due to interpolation
-                if self.repeat && self.frac_index.floor() > self.buflen_plus_one_f32 {
+                if self.repeat && self.frac_phase.floor() > self.buflen_plus_one_f32 {
                     // again, start counting at two (at some point i should use the correct fraction here ...)
-                    self.frac_index = 2.0;
-                    self.index = 2;
+                    self.frac_phase = 2.0;
+                    self.phase = 2;
                 } else {
                     self.finish();
                 }
@@ -150,8 +151,8 @@ impl<const BUFSIZE: usize> MonoSampler<BUFSIZE> {
         if let SampleBuffer::Mono(buf) = &sample_buffers[self.bufnum] {
             for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
                 // get sample:
-                let idx = self.frac_index.ceil();
-                let frac = idx - self.frac_index;
+                let idx = self.frac_phase.ceil();
+                let frac = idx - self.frac_phase;
                 let idx_u = idx as usize;
 
                 // 4-point, 3rd-order Hermite
@@ -164,12 +165,12 @@ impl<const BUFSIZE: usize> MonoSampler<BUFSIZE> {
                     self.amp,
                 );
 
-                self.frac_index += self.frac_index_increment;
+                self.frac_phase += self.frac_phase_increment;
 
                 // mind the buffer padding here ...
-                if self.repeat && self.frac_index.ceil() < 2.0 {
-                    self.frac_index = self.buflen_plus_one_f32;
-                    self.index = self.buflen_plus_one;
+                if self.repeat && self.frac_phase.ceil() < 2.0 {
+                    self.frac_phase = self.buflen_plus_one_f32;
+                    self.phase = self.buflen_plus_one;
                 } else {
                     self.finish();
                 }
@@ -205,12 +206,12 @@ impl<const BUFSIZE: usize> MonoSampler<BUFSIZE> {
                 .take(BUFSIZE)
                 .skip(start_sample)
             {
-                self.frac_index_increment = rate_buf[sample_idx];
+                self.frac_phase_increment = rate_buf[sample_idx];
 
-                if self.frac_index_increment.is_sign_positive() {
+                if self.frac_phase_increment.is_sign_positive() {
                     // get sample:
-                    let idx = self.frac_index.floor();
-                    let frac = self.frac_index - idx;
+                    let idx = self.frac_phase.floor();
+                    let frac = self.frac_phase - idx;
                     let idx_u = idx as usize;
 
                     // 4-point, 3rd-order Hermite
@@ -224,8 +225,8 @@ impl<const BUFSIZE: usize> MonoSampler<BUFSIZE> {
                     );
                 } else {
                     // get sample:
-                    let idx = self.frac_index.ceil();
-                    let frac = idx - self.frac_index;
+                    let idx = self.frac_phase.ceil();
+                    let frac = idx - self.frac_phase;
                     let idx_u = idx as usize;
 
                     *current_sample = interpolate(
@@ -238,14 +239,14 @@ impl<const BUFSIZE: usize> MonoSampler<BUFSIZE> {
                     );
                 }
 
-                self.frac_index += self.frac_index_increment;
+                self.frac_phase += self.frac_phase_increment;
 
-                if self.repeat && self.frac_index.floor() > self.buflen_plus_one_f32 {
-                    self.frac_index = 2.0;
-                    self.index = 2;
-                } else if self.repeat && self.frac_index.ceil() < 2.0 {
-                    self.frac_index = self.buflen_plus_one_f32;
-                    self.index = self.buflen_plus_one;
+                if self.repeat && self.frac_phase.floor() > self.buflen_plus_one_f32 {
+                    self.frac_phase = 2.0;
+                    self.phase = 2;
+                } else if self.repeat && self.frac_phase.ceil() < 2.0 {
+                    self.frac_phase = self.buflen_plus_one_f32;
+                    self.phase = self.buflen_plus_one;
                 } else {
                     self.finish();
                 }
@@ -297,9 +298,9 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for MonoSampler<BUFSIZE> {
                     // as the start value is [0.0, 1.0), the offset will always be
                     // smaller than self.buflen ...
                     let offset = (self.buflen as f32 * value_clamped) as usize;
-                    self.index = offset + 2; // start counting at two, due to interpolation
+                    self.phase = offset + 2; // start counting at two, due to interpolation
 
-                    self.frac_index = self.index as f32;
+                    self.frac_phase = self.phase as f32;
                 }
             }
             SynthParameterLabel::PlaybackRate => {
@@ -307,7 +308,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for MonoSampler<BUFSIZE> {
                     self.playback_rate = *value;
                     // I really don't know what the 1.0 is supposed to do here ...
                     // but by now I'm afraid to take it out ...
-                    self.frac_index_increment = 1.0 * *value;
+                    self.frac_phase_increment = 1.0 * *value;
                 }
             }
             SynthParameterLabel::OscillatorAmplitude => {
