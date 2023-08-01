@@ -195,7 +195,9 @@ mod tests {
         }
 
         {
-            let SampleBuffer::Mono(buf) = &ruff.buffers[0] else {panic!()};
+            let SampleBuffer::Mono(buf) = &ruff.buffers[0] else {
+                panic!()
+            };
             assert_approx_eq::assert_approx_eq!(buf[1], 1.0, 0.0002);
             assert_approx_eq::assert_approx_eq!(buf[513], 0.0, 0.0002);
             //assert_approx_eq::assert_approx_eq!(buf[385], 1.0, 0.0002); // not sure why this doesn't hold anymore but it sounds perfect
@@ -206,7 +208,9 @@ mod tests {
         }
 
         {
-            let SampleBuffer::Mono(buf) = &ruff.buffers[0] else {panic!()};
+            let SampleBuffer::Mono(buf) = &ruff.buffers[0] else {
+                panic!()
+            };
             assert_approx_eq::assert_approx_eq!(buf[513], 1.0, 0.0002);
             assert_approx_eq::assert_approx_eq!(buf[385], 1.0, 0.0002);
             //assert_approx_eq::assert_approx_eq!(buf[1024], 0.0, 0.0002); // not sure why this doesn't hold anymore but it sounds perfect
@@ -219,7 +223,9 @@ mod tests {
             }
         }
         {
-            let SampleBuffer::Mono(buf) = &ruff.buffers[0] else {panic!()};
+            let SampleBuffer::Mono(buf) = &ruff.buffers[0] else {
+                panic!()
+            };
             assert_approx_eq::assert_approx_eq!(buf[0], 0.0, 0.0002);
             assert_approx_eq::assert_approx_eq!(buf[1], 1.0, 0.0002);
             assert_approx_eq::assert_approx_eq!(buf[44100], 1.0, 0.0002);
@@ -240,7 +246,9 @@ mod tests {
         ruff.process(0.0, true);
 
         {
-            let SampleBuffer::Mono(buf) = &ruff.buffers[0] else {panic!()};
+            let SampleBuffer::Mono(buf) = &ruff.buffers[0] else {
+                panic!()
+            };
             assert_approx_eq::assert_approx_eq!(buf[0], 0.0, 0.0002);
             assert_approx_eq::assert_approx_eq!(buf[1], 1.0, 0.0002);
             assert_approx_eq::assert_approx_eq!(buf[2], 1.0, 0.0002);
