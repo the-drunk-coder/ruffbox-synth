@@ -976,3 +976,150 @@ mod tests {
         }
     }
 }
+
+#[cfg(test)]
+mod memory_tests {
+    use super::*;
+    use crate::building_blocks::{EnvelopeSegmentInfo, EnvelopeSegmentType, FilterType, ValOp};
+    use crate::synths::SynthType;
+    use assert_no_alloc::*;
+
+    #[cfg(debug_assertions)] // required when disable_release is set (default)
+    #[global_allocator]
+    static A: AllocDisabler = AllocDisabler;
+
+    #[test]
+    fn test_memory_alloc() {
+        let (ctrl, mut ruff) =
+            init_ruffbox::<128, 2>(1, 2.0, &ReverbMode::FreeVerb, 44100.0, 3000, 10, false);
+
+        let mut sample1 = vec![0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
+        let mut sample2 = vec![0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0];
+
+        let bnum1 = ctrl.load_mono_sample(&mut sample1, false, 44100.0);
+        let bnum2 = ctrl.load_mono_sample(&mut sample2, false, 44100.0);
+
+        ruff.process(0.0, true);
+
+        if let Some(mut inst_1) = ctrl.prepare_instance(
+            SynthType::Sampler(
+                FilterType::BiquadHpf12dB,
+                FilterType::Dummy,
+                FilterType::Dummy,
+                FilterType::Lpf18,
+            ),
+            0.0,
+            bnum1,
+        ) {
+            // pan to left, neutralize
+            inst_1.set_instance_parameter(
+                SynthParameterLabel::ChannelPosition,
+                &SynthParameterValue::ScalarF32(0.0),
+            );
+            inst_1.set_instance_parameter(
+                SynthParameterLabel::LowpassCutoffFrequency,
+                &SynthParameterValue::ScalarF32(22050.0),
+            );
+            inst_1.set_instance_parameter(
+                SynthParameterLabel::LowpassFilterDistortion,
+                &SynthParameterValue::ScalarF32(0.0),
+            );
+            inst_1.set_instance_parameter(
+                SynthParameterLabel::LowpassQFactor,
+                &SynthParameterValue::ScalarF32(0.0),
+            );
+            // this envelope mimics the old lin_asr sample by sample ...
+            inst_1.set_instance_parameter(
+                SynthParameterLabel::Envelope,
+                &SynthParameterValue::MultiPointEnvelope(
+                    vec![
+                        EnvelopeSegmentInfo {
+                            from: 0.0,
+                            to: 1.0,
+                            time: 0.000025,
+                            segment_type: EnvelopeSegmentType::Lin,
+                        },
+                        EnvelopeSegmentInfo {
+                            from: 1.0,
+                            to: 1.0,
+                            time: 1.0 - 0.000025,
+                            segment_type: EnvelopeSegmentType::Constant,
+                        },
+                        EnvelopeSegmentInfo {
+                            from: 1.0,
+                            to: 0.0,
+                            time: 0.000025,
+                            segment_type: EnvelopeSegmentType::Lin,
+                        },
+                    ],
+                    false,
+                    ValOp::Replace,
+                ),
+            );
+            ctrl.trigger(inst_1);
+        }
+        if let Some(mut inst_2) = ctrl.prepare_instance(
+            SynthType::Sampler(
+                FilterType::BiquadHpf12dB,
+                FilterType::Dummy,
+                FilterType::Dummy,
+                FilterType::Lpf18,
+            ),
+            0.0,
+            bnum2,
+        ) {
+            inst_2.set_instance_parameter(
+                SynthParameterLabel::ChannelPosition,
+                &SynthParameterValue::ScalarF32(0.0),
+            );
+            inst_2.set_instance_parameter(
+                SynthParameterLabel::LowpassCutoffFrequency,
+                &SynthParameterValue::ScalarF32(22050.0),
+            );
+            inst_2.set_instance_parameter(
+                SynthParameterLabel::LowpassFilterDistortion,
+                &SynthParameterValue::ScalarF32(0.0),
+            );
+            inst_2.set_instance_parameter(
+                SynthParameterLabel::LowpassQFactor,
+                &SynthParameterValue::ScalarF32(0.0),
+            );
+            // this envelope mimics the old lin_asr sample by sample ...
+            inst_2.set_instance_parameter(
+                SynthParameterLabel::Envelope,
+                &SynthParameterValue::MultiPointEnvelope(
+                    vec![
+                        EnvelopeSegmentInfo {
+                            from: 0.0,
+                            to: 1.0,
+                            time: 0.000025,
+                            segment_type: EnvelopeSegmentType::Lin,
+                        },
+                        EnvelopeSegmentInfo {
+                            from: 1.0,
+                            to: 1.0,
+                            time: 1.0 - 0.000025,
+                            segment_type: EnvelopeSegmentType::Constant,
+                        },
+                        EnvelopeSegmentInfo {
+                            from: 1.0,
+                            to: 0.0,
+                            time: 0.000025,
+                            segment_type: EnvelopeSegmentType::Lin,
+                        },
+                    ],
+                    false,
+                    ValOp::Replace,
+                ),
+            );
+            ctrl.trigger(inst_2);
+        }
+
+        println!("CHECK IF MAIN PROCESS FUNCTION ALLOCATES MEMORY");
+        assert_no_alloc(|| {
+            for _ in 0..100 {
+                let _ = ruff.process(0.0, true);
+            }
+        });
+    }
+}
