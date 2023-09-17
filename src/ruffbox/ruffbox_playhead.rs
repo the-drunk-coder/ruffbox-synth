@@ -156,8 +156,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
             }
             // create live buffers and freeze buffers
             for b in 0..live_buffers + freeze_buffers {
+                // two interpolation samples in each direction ...
                 buffers[b] =
-                    SampleBuffer::Mono(vec![0.0; (samplerate * live_buffer_time) as usize + 3]);
+                    SampleBuffer::Mono(vec![0.0; (samplerate * live_buffer_time) as usize + 4]);
                 buffer_lengths[b] = (samplerate * live_buffer_time) as usize;
             }
 

@@ -33,7 +33,7 @@ pub struct MonoSampler<const BUFSIZE: usize> {
 impl<const BUFSIZE: usize> MonoSampler<BUFSIZE> {
     pub fn with_bufnum_len(bufnum: usize, buflen: usize, repeat: bool) -> MonoSampler<BUFSIZE> {
         MonoSampler {
-            phase: 2, // start with two to account for interpolation samples on each end
+            phase: 2, // start with two to account for interpolation samples on each end (2 at each end as we can go in both directions)
             frac_phase: 2.0,
             bufnum,
             buflen, // length WITHOUT interpolation samples
