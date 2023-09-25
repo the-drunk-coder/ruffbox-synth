@@ -250,12 +250,14 @@ mod tests {
                 panic!()
             };
             assert_approx_eq::assert_approx_eq!(buf[0], 0.0, 0.0002);
-            assert_approx_eq::assert_approx_eq!(buf[1], 1.0, 0.0002);
+            assert_approx_eq::assert_approx_eq!(buf[1], 0.0, 0.0002);
             assert_approx_eq::assert_approx_eq!(buf[2], 1.0, 0.0002);
             assert_approx_eq::assert_approx_eq!(buf[3], 1.0, 0.0002);
+            assert_approx_eq::assert_approx_eq!(buf[4], 1.0, 0.0002);
             assert_approx_eq::assert_approx_eq!(buf[500], 1.0, 0.0002);
-            assert_approx_eq::assert_approx_eq!(buf[501], 0.0, 0.0002);
+            assert_approx_eq::assert_approx_eq!(buf[501], 1.0, 0.0002);
             assert_approx_eq::assert_approx_eq!(buf[502], 0.0, 0.0002);
+            assert_approx_eq::assert_approx_eq!(buf[503], 0.0, 0.0002);
         }
     }
 
@@ -457,10 +459,10 @@ mod tests {
         let out_buf = ruff.process(0.0, true);
 
         for i in 0..9 {
-            println!("{} {} ", out_buf[0][i], sample1[i + 1] + sample2[i + 1]);
+            println!("{} {} ", out_buf[0][i], sample1[i + 2] + sample2[i + 2]);
             assert_approx_eq::assert_approx_eq!(
                 out_buf[0][i],
-                sample1[i + 1] + sample2[i + 1],
+                sample1[i + 2] + sample2[i + 2],
                 0.03
             );
         }
@@ -543,8 +545,8 @@ mod tests {
         let out_buf = ruff.process(0.0, true);
 
         for i in 0..9 {
-            println!("{} {} ", out_buf[0][i], sample1[i + 1]);
-            assert_approx_eq::assert_approx_eq!(out_buf[0][i], sample1[i + 1], 0.03);
+            println!("{} {} ", out_buf[0][i], sample1[i + 2]);
+            assert_approx_eq::assert_approx_eq!(out_buf[0][i], sample1[i + 2], 0.03);
         }
     }
 
@@ -662,7 +664,7 @@ mod tests {
         for i in 0..9 {
             assert_approx_eq::assert_approx_eq!(
                 out_buf[0][33 + i],
-                sample1[i + 1] + sample2[i + 1],
+                sample1[i + 2] + sample2[i + 2],
                 0.03
             );
         }
@@ -782,13 +784,13 @@ mod tests {
 
         // offsets to account for interpolation
         for i in 0..4 {
-            assert_approx_eq::assert_approx_eq!(out_buf[0][33 + i], sample1[i + 1], 0.03);
+            assert_approx_eq::assert_approx_eq!(out_buf[0][33 + i], sample1[i + 2], 0.03);
         }
 
         for i in 0..5 {
             assert_approx_eq::assert_approx_eq!(
                 out_buf[0][37 + i],
-                sample1[i + 4 + 1] + sample2[i + 1],
+                sample1[i + 4 + 2] + sample2[i + 2],
                 0.03
             );
         }
@@ -896,7 +898,7 @@ mod tests {
         println!("pre {out_buf:?}");
 
         for i in 0..9 {
-            assert_approx_eq::assert_approx_eq!(out_buf[0][33 + i], sample1[i + 1], 0.03);
+            assert_approx_eq::assert_approx_eq!(out_buf[0][33 + i], sample1[i + 2], 0.03);
         }
 
         // calculate a few blocks more
@@ -908,7 +910,7 @@ mod tests {
         let out_buf = ruff.process(stream_time, false);
         println!("{out_buf:?}");
         for i in 0..9 {
-            assert_approx_eq::assert_approx_eq!(out_buf[0][33 + i], sample2[i + 1], 0.03);
+            assert_approx_eq::assert_approx_eq!(out_buf[0][33 + i], sample2[i + 2], 0.03);
         }
     }
 
@@ -972,7 +974,7 @@ mod tests {
         let out_buf = ruff.process(0.101, false);
 
         for i in 0..9 {
-            assert_approx_eq::assert_approx_eq!(out_buf[0][i], sample1[i + 1], 0.03);
+            assert_approx_eq::assert_approx_eq!(out_buf[0][i], sample1[i + 2], 0.03);
         }
     }
 }
