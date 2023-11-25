@@ -2,6 +2,7 @@ use crate::building_blocks::ambisonics::encoder_o1::EncoderO1;
 use crate::building_blocks::envelopes::*;
 use crate::building_blocks::filters::*;
 use crate::building_blocks::oscillators::*;
+use crate::building_blocks::SynthParameterAddress;
 use crate::building_blocks::{
     waveshaper::Waveshaper, FilterType, Modulator, MonoEffect, MonoSource, OscillatorType,
     SampleBuffer, Synth, SynthParameterLabel, SynthParameterValue,
@@ -72,25 +73,28 @@ impl<const BUFSIZE: usize> SingleOscillatorSynthO1<BUFSIZE> {
 impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for SingleOscillatorSynthO1<BUFSIZE> {
     fn set_modulator(
         &mut self,
-        par: SynthParameterLabel,
+        par: SynthParameterAddress,
         init: f32,
         modulator: Modulator<BUFSIZE>,
     ) {
-        self.oscillator.set_modulator(par, init, modulator.clone());
-        self.lp_filter.set_modulator(par, init, modulator.clone());
-        self.hp_filter.set_modulator(par, init, modulator.clone());
-        self.envelope.set_modulator(par, init, modulator);
-        //self.encoder.set_modulator(par, init, modulator);
+        self.oscillator
+            .set_modulator(par.label, init, modulator.clone());
+        self.lp_filter
+            .set_modulator(par.label, init, modulator.clone());
+        self.hp_filter
+            .set_modulator(par.label, init, modulator.clone());
+        self.envelope.set_modulator(par.label, init, modulator);
+        //self.encoder.set_modulator(par.label, init, modulator);
     }
 
-    fn set_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {
-        self.oscillator.set_parameter(par, val);
-        self.waveshaper.set_parameter(par, val);
-        self.lp_filter.set_parameter(par, val);
-        self.hp_filter.set_parameter(par, val);
-        self.envelope.set_parameter(par, val);
-        self.encoder.set_parameter(par, val);
-        match par {
+    fn set_parameter(&mut self, par: SynthParameterAddress, val: &SynthParameterValue) {
+        self.oscillator.set_parameter(par.label, val);
+        self.waveshaper.set_parameter(par.label, val);
+        self.lp_filter.set_parameter(par.label, val);
+        self.hp_filter.set_parameter(par.label, val);
+        self.envelope.set_parameter(par.label, val);
+        self.encoder.set_parameter(par.label, val);
+        match par.label {
             SynthParameterLabel::ReverbMix => {
                 if let SynthParameterValue::ScalarF32(r) = val {
                     self.reverb = *r

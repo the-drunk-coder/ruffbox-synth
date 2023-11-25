@@ -2,6 +2,7 @@ use crate::building_blocks::envelopes::*;
 use crate::building_blocks::filters::*;
 use crate::building_blocks::oscillators::*;
 use crate::building_blocks::routing::PanChan;
+use crate::building_blocks::SynthParameterAddress;
 use crate::building_blocks::{
     Modulator, MonoEffect, MonoSource, SampleBuffer, Synth, SynthParameterLabel,
     SynthParameterValue,
@@ -82,23 +83,23 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
 {
     fn set_modulator(
         &mut self,
-        par: SynthParameterLabel,
+        par: SynthParameterAddress,
         init: f32,
         modulator: Modulator<BUFSIZE>,
     ) {
-        self.lpf.set_modulator(par, init, modulator.clone());
+        self.lpf.set_modulator(par.label, init, modulator.clone());
         self.main_envelope
-            .set_modulator(par, init, modulator.clone());
-        self.balance.set_modulator(par, init, modulator);
+            .set_modulator(par.label, init, modulator.clone());
+        self.balance.set_modulator(par.label, init, modulator);
     }
 
-    fn set_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {
-        self.lpf.set_parameter(par, val);
-        self.main_envelope.set_parameter(par, val);
-        self.balance.set_parameter(par, val);
+    fn set_parameter(&mut self, par: SynthParameterAddress, val: &SynthParameterValue) {
+        self.lpf.set_parameter(par.label, val);
+        self.main_envelope.set_parameter(par.label, val);
+        self.balance.set_parameter(par.label, val);
 
         let mut update_internals = false;
-        match par {
+        match par.label {
             SynthParameterLabel::ReverbMix => {
                 if let SynthParameterValue::ScalarF32(r) = val {
                     self.reverb = *r

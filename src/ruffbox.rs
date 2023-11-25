@@ -9,6 +9,7 @@ use crossbeam::channel::Sender;
 use std::cmp::Ordering;
 use std::sync::Arc;
 
+use crate::building_blocks::SynthParameterAddress;
 use crate::building_blocks::{
     Modulator, SampleBuffer, Synth, SynthParameterLabel, SynthParameterValue, ValueOrModulator,
 };
@@ -63,7 +64,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> ScheduledEvent<BUFSIZE, NCHAN> {
         }
     }
 
-    pub fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
+    pub fn set_parameter(&mut self, par: SynthParameterAddress, value: &SynthParameterValue) {
         match self.source {
             ScheduledSource::Channel(ref mut src) => {
                 src.set_parameter(par, value);
@@ -76,7 +77,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> ScheduledEvent<BUFSIZE, NCHAN> {
 
     pub fn set_modulator(
         &mut self,
-        par: SynthParameterLabel,
+        par: SynthParameterAddress,
         init: f32,
         modulator: Modulator<BUFSIZE>,
     ) {
@@ -92,7 +93,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> ScheduledEvent<BUFSIZE, NCHAN> {
 
     fn set_param_or_modulator(
         &mut self,
-        par: SynthParameterLabel,
+        par: SynthParameterAddress,
         val_or_mod: ValueOrModulator<BUFSIZE>,
     ) {
         match val_or_mod {

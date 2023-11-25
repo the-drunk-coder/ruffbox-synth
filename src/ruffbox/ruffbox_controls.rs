@@ -7,7 +7,8 @@ use crossbeam::atomic::AtomicCell;
 use dashmap::DashMap;
 
 use crate::building_blocks::{
-    resolve_parameter_value, SampleBuffer, SynthParameterLabel, SynthParameterValue,
+    resolve_parameter_value, SampleBuffer, SynthParameterAddress, SynthParameterLabel,
+    SynthParameterValue,
 };
 use crate::ruffbox::{ControlMessage, ScheduledEvent};
 use crate::synths::*;
@@ -21,9 +22,15 @@ pub struct PreparedInstance<const BUFSIZE: usize, const NCHAN: usize> {
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> PreparedInstance<BUFSIZE, NCHAN> {
-    pub fn set_instance_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {
-        self.ev
-            .set_param_or_modulator(par, resolve_parameter_value::<BUFSIZE>(par, val, self.sr));
+    pub fn set_instance_parameter(
+        &mut self,
+        par: SynthParameterAddress,
+        val: &SynthParameterValue,
+    ) {
+        self.ev.set_param_or_modulator(
+            par,
+            resolve_parameter_value::<BUFSIZE>(par.label, val, self.sr),
+        );
     }
 }
 

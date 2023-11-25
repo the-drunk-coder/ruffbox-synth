@@ -3,6 +3,7 @@ use crate::building_blocks::filters::*;
 use crate::building_blocks::routing::BalChan;
 use crate::building_blocks::sampler::StereoSampler;
 use crate::building_blocks::SampleBuffer;
+use crate::building_blocks::SynthParameterAddress;
 use crate::building_blocks::{
     waveshaper::Waveshaper, EnvelopeSegmentInfo, EnvelopeSegmentType, FilterType, Modulator,
     MonoEffect, StereoSource, Synth, SynthParameterLabel, SynthParameterValue,
@@ -146,15 +147,16 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
 {
     fn set_modulator(
         &mut self,
-        par: SynthParameterLabel,
+        par: SynthParameterAddress,
         init: f32,
         modulator: Modulator<BUFSIZE>,
     ) {
-        self.sampler.set_modulator(par, init, modulator.clone());
-        self.hpf.0.set_modulator(par, init, modulator.clone());
-        self.hpf.1.set_modulator(par, init, modulator.clone());
+        self.sampler
+            .set_modulator(par.label, init, modulator.clone());
+        self.hpf.0.set_modulator(par.label, init, modulator.clone());
+        self.hpf.1.set_modulator(par.label, init, modulator.clone());
 
-        match par {
+        match par.label {
             SynthParameterLabel::Peak1Frequency => {
                 self.peak_eq_1.0.set_modulator(
                     SynthParameterLabel::PeakFrequency,
@@ -230,23 +232,27 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
             _ => {}
         }
 
-        self.lpf.0.set_modulator(par, init, modulator.clone());
-        self.lpf.1.set_modulator(par, init, modulator.clone());
-        self.envelope.0.set_modulator(par, init, modulator.clone());
-        self.envelope.1.set_modulator(par, init, modulator.clone());
-        self.balance.set_modulator(par, init, modulator);
+        self.lpf.0.set_modulator(par.label, init, modulator.clone());
+        self.lpf.1.set_modulator(par.label, init, modulator.clone());
+        self.envelope
+            .0
+            .set_modulator(par.label, init, modulator.clone());
+        self.envelope
+            .1
+            .set_modulator(par.label, init, modulator.clone());
+        self.balance.set_modulator(par.label, init, modulator);
     }
 
-    fn set_parameter(&mut self, par: SynthParameterLabel, val: &SynthParameterValue) {
-        self.sampler.set_parameter(par, val);
+    fn set_parameter(&mut self, par: SynthParameterAddress, val: &SynthParameterValue) {
+        self.sampler.set_parameter(par.label, val);
 
-        self.waveshaper.0.set_parameter(par, val);
-        self.waveshaper.1.set_parameter(par, val);
+        self.waveshaper.0.set_parameter(par.label, val);
+        self.waveshaper.1.set_parameter(par.label, val);
 
-        self.hpf.0.set_parameter(par, val);
-        self.hpf.1.set_parameter(par, val);
+        self.hpf.0.set_parameter(par.label, val);
+        self.hpf.1.set_parameter(par.label, val);
 
-        match par {
+        match par.label {
             SynthParameterLabel::Peak1Frequency => {
                 self.peak_eq_1
                     .0
@@ -298,13 +304,13 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
             _ => {}
         }
 
-        self.lpf.0.set_parameter(par, val);
-        self.lpf.1.set_parameter(par, val);
-        self.envelope.0.set_parameter(par, val);
-        self.envelope.1.set_parameter(par, val);
-        self.balance.set_parameter(par, val);
+        self.lpf.0.set_parameter(par.label, val);
+        self.lpf.1.set_parameter(par.label, val);
+        self.envelope.0.set_parameter(par.label, val);
+        self.envelope.1.set_parameter(par.label, val);
+        self.balance.set_parameter(par.label, val);
 
-        match par {
+        match par.label {
             SynthParameterLabel::ReverbMix => {
                 if let SynthParameterValue::ScalarF32(r) = val {
                     self.reverb = *r

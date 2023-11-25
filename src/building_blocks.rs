@@ -670,15 +670,28 @@ pub trait MultichannelReverb<const BUFSIZE: usize, const NCHAN: usize> {
     fn process(&mut self, block: [[f32; BUFSIZE]; NCHAN]) -> [[f32; BUFSIZE]; NCHAN];
 }
 
+// we need some more info in case a synth can have more than one
+// of something ...
+#[derive(Clone, Copy)]
+pub struct SynthParameterAddress {
+    pub label: SynthParameterLabel,
+    pub idx: Option<usize>,
+}
+
 /// This is where the building blocks come together
 pub trait Synth<const BUFSIZE: usize, const NCHAN: usize> {
-    fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue);
-    fn set_modulator(&mut self, par: SynthParameterLabel, init: f32, modulator: Modulator<BUFSIZE>);
+    fn set_parameter(&mut self, par: SynthParameterAddress, value: &SynthParameterValue);
+    fn set_modulator(
+        &mut self,
+        par: SynthParameterAddress,
+        init: f32,
+        modulator: Modulator<BUFSIZE>,
+    );
 
     /// default impl so we have a common interface ...
     fn set_param_or_modulator(
         &mut self,
-        par: SynthParameterLabel,
+        par: SynthParameterAddress,
         val_or_mod: ValueOrModulator<BUFSIZE>,
     ) {
         match val_or_mod {
