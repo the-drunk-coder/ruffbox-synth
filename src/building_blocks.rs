@@ -93,31 +93,25 @@ pub enum SynthParameterLabel {
     PeakFrequency,            // 25
     PeakGain,                 // 26
     PeakBandwidth,            // 27
-    Peak1Frequency,           // 28
-    Peak1Gain,                // 29
-    Peak1Bandwidth,           // 30
-    Peak2Frequency,           // 31
-    Peak2Gain,                // 32
-    Peak2Bandwidth,           // 33
-    Pulsewidth,               // 34
-    PlaybackRate,             // 35
-    PlaybackStart,            // 36
-    PlaybackLoop,             // 37
-    Release,                  // 38
-    ReleaseType,              // 39
-    ReverbDampening,          // 40
-    ReverbMix,                // 41
-    ReverbRoomsize,           // 42
-    SampleBufferNumber,       // 43
-    Samplerate,               // 44
-    ChannelPosition,          // 45
-    AmbisonicAzimuth,         // 46
-    AmbisonicElevation,       // 47
-    Sustain,                  // 48
-    Wavetable,                // 59
-    Wavematrix,               // 60
-    WavematrixTableIndex,     // 61
-    WaveshaperMix,            // 62
+    Pulsewidth,               // 28
+    PlaybackRate,             // 29
+    PlaybackStart,            // 30
+    PlaybackLoop,             // 31
+    Release,                  // 32
+    ReleaseType,              // 33
+    ReverbDampening,          // 34
+    ReverbMix,                // 35
+    ReverbRoomsize,           // 36
+    SampleBufferNumber,       // 37
+    Samplerate,               // 38
+    ChannelPosition,          // 39
+    AmbisonicAzimuth,         // 40
+    AmbisonicElevation,       // 41
+    Sustain,                  // 42
+    Wavetable,                // 43
+    Wavematrix,               // 44
+    WavematrixTableIndex,     // 45
+    WaveshaperMix,            // 46
 }
 
 /// the value operation is defined on parameters

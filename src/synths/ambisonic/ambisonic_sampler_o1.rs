@@ -78,10 +78,22 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for AmbisonicSamplerO1<BUFSIZE> {
         self.sampler
             .set_modulator(par.label, init, modulator.clone());
         self.hpf.set_modulator(par.label, init, modulator.clone());
-        self.peak_eq_1
-            .set_modulator(par.label, init, modulator.clone());
-        self.peak_eq_2
-            .set_modulator(par.label, init, modulator.clone());
+
+        match par.label {
+            SynthParameterLabel::PeakFrequency
+            | SynthParameterLabel::PeakBandwidth
+            | SynthParameterLabel::PeakGain => match par.idx {
+                Some(n) if n == 2 => {
+                    self.peak_eq_2
+                        .set_modulator(par.label, init, modulator.clone())
+                }
+                _ => self
+                    .peak_eq_1
+                    .set_modulator(par.label, init, modulator.clone()),
+            },
+            _ => {}
+        }
+
         self.lpf.set_modulator(par.label, init, modulator.clone());
         self.envelope
             .set_modulator(par.label, init, modulator.clone());
@@ -92,8 +104,17 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for AmbisonicSamplerO1<BUFSIZE> {
         self.sampler.set_parameter(par.label, val);
         self.waveshaper.set_parameter(par.label, val);
         self.hpf.set_parameter(par.label, val);
-        self.peak_eq_1.set_parameter(par.label, val);
-        self.peak_eq_2.set_parameter(par.label, val);
+
+        match par.label {
+            SynthParameterLabel::PeakFrequency
+            | SynthParameterLabel::PeakBandwidth
+            | SynthParameterLabel::PeakGain => match par.idx {
+                Some(n) if n == 2 => self.peak_eq_1.set_parameter(par.label, val),
+                _ => self.peak_eq_1.set_parameter(par.label, val),
+            },
+            _ => {}
+        }
+
         self.lpf.set_parameter(par.label, val);
         self.envelope.set_parameter(par.label, val);
         self.encoder.set_parameter(par.label, val);

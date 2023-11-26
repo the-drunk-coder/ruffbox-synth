@@ -109,34 +109,18 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
         self.hpf.set_modulator(par.label, init, modulator.clone());
 
         match par.label {
-            SynthParameterLabel::Peak1Frequency => self.peak_eq_1.set_modulator(
-                SynthParameterLabel::PeakFrequency,
-                init,
-                modulator.clone(),
-            ),
-            SynthParameterLabel::Peak1Gain => {
-                self.peak_eq_1
-                    .set_modulator(SynthParameterLabel::PeakGain, init, modulator.clone())
-            }
-            SynthParameterLabel::Peak1Bandwidth => self.peak_eq_1.set_modulator(
-                SynthParameterLabel::PeakBandwidth,
-                init,
-                modulator.clone(),
-            ),
-            SynthParameterLabel::Peak2Frequency => self.peak_eq_2.set_modulator(
-                SynthParameterLabel::PeakFrequency,
-                init,
-                modulator.clone(),
-            ),
-            SynthParameterLabel::Peak2Gain => {
-                self.peak_eq_2
-                    .set_modulator(SynthParameterLabel::PeakGain, init, modulator.clone())
-            }
-            SynthParameterLabel::Peak2Bandwidth => self.peak_eq_2.set_modulator(
-                SynthParameterLabel::PeakBandwidth,
-                init,
-                modulator.clone(),
-            ),
+            SynthParameterLabel::PeakFrequency
+            | SynthParameterLabel::PeakBandwidth
+            | SynthParameterLabel::PeakGain => match par.idx {
+                Some(n) if n == 2 => {
+                    self.peak_eq_2
+                        .set_modulator(par.label, init, modulator.clone())
+                }
+                _ => self
+                    .peak_eq_1
+                    .set_modulator(par.label, init, modulator.clone()),
+            },
+
             _ => {}
         }
 
@@ -152,24 +136,13 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
         self.hpf.set_parameter(par.label, val);
 
         match par.label {
-            SynthParameterLabel::Peak1Frequency => self
-                .peak_eq_1
-                .set_parameter(SynthParameterLabel::PeakFrequency, val),
-            SynthParameterLabel::Peak1Gain => self
-                .peak_eq_1
-                .set_parameter(SynthParameterLabel::PeakGain, val),
-            SynthParameterLabel::Peak1Bandwidth => self
-                .peak_eq_1
-                .set_parameter(SynthParameterLabel::PeakBandwidth, val),
-            SynthParameterLabel::Peak2Frequency => self
-                .peak_eq_2
-                .set_parameter(SynthParameterLabel::PeakFrequency, val),
-            SynthParameterLabel::Peak2Gain => self
-                .peak_eq_2
-                .set_parameter(SynthParameterLabel::PeakGain, val),
-            SynthParameterLabel::Peak2Bandwidth => self
-                .peak_eq_2
-                .set_parameter(SynthParameterLabel::PeakBandwidth, val),
+            SynthParameterLabel::PeakFrequency
+            | SynthParameterLabel::PeakBandwidth
+            | SynthParameterLabel::PeakGain => match par.idx {
+                Some(n) if n == 2 => self.peak_eq_1.set_parameter(par.label, val),
+                _ => self.peak_eq_1.set_parameter(par.label, val),
+            },
+
             _ => {}
         }
 
