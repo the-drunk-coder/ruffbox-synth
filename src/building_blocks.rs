@@ -680,6 +680,15 @@ impl From<SynthParameterLabel> for SynthParameterAddress {
     }
 }
 
+impl SynthParameterLabel {
+    pub fn with_index(self, idx: usize) -> SynthParameterAddress {
+        SynthParameterAddress {
+            label: self,
+            idx: Some(idx),
+        }
+    }
+}
+
 /// This is where the building blocks come together
 pub trait Synth<const BUFSIZE: usize, const NCHAN: usize> {
     fn set_parameter(&mut self, par: SynthParameterAddress, value: &SynthParameterValue);
