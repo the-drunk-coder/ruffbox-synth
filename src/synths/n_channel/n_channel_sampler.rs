@@ -112,7 +112,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
             SynthParameterLabel::PeakFrequency
             | SynthParameterLabel::PeakBandwidth
             | SynthParameterLabel::PeakGain => match par.idx {
-                Some(n) if n == 2 => {
+                Some(n) if n == 1 => {
                     self.peak_eq_2
                         .set_modulator(par.label, init, modulator.clone())
                 }
@@ -120,7 +120,6 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
                     .peak_eq_1
                     .set_modulator(par.label, init, modulator.clone()),
             },
-
             _ => {}
         }
 
@@ -139,10 +138,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
             SynthParameterLabel::PeakFrequency
             | SynthParameterLabel::PeakBandwidth
             | SynthParameterLabel::PeakGain => match par.idx {
-                Some(n) if n == 2 => self.peak_eq_1.set_parameter(par.label, val),
+                Some(n) if n == 1 => self.peak_eq_2.set_parameter(par.label, val),
                 _ => self.peak_eq_1.set_parameter(par.label, val),
             },
-
             _ => {}
         }
 
