@@ -672,10 +672,18 @@ pub trait MultichannelReverb<const BUFSIZE: usize, const NCHAN: usize> {
 
 // we need some more info in case a synth can have more than one
 // of something ...
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
 pub struct SynthParameterAddress {
     pub label: SynthParameterLabel,
+    // the index is optional, as so far, most synths have only one of each
+    // (filter, env), so we can work with that ...
     pub idx: Option<usize>,
+}
+
+impl From<SynthParameterLabel> for SynthParameterAddress {
+    fn from(label: SynthParameterLabel) -> Self {
+        SynthParameterAddress { label, idx: None }
+    }
 }
 
 /// This is where the building blocks come together
