@@ -51,7 +51,6 @@ impl<const BUFSIZE: usize, const NCHAN: usize> MultiOscillatorSynth<BUFSIZE, NCH
         ];
 
         let envelope = MultiPointEffectEnvelope::new(env_segments, false, sr);
-
         let oscillators: Vec<Box<dyn MonoSource<BUFSIZE> + Send + Sync>> = osc_types
             .iter()
             .map(|x| {
@@ -119,10 +118,11 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
             | SynthParameterLabel::OscillatorPhaseEffective
             | SynthParameterLabel::OscillatorPhaseRelative
             | SynthParameterLabel::PitchFrequency => {
-                let idx = if let Some(idx) = par.idx { idx } else { 0 };
-                if let Some(osc) = self.oscillators.get_mut(idx) {
-                    osc.set_modulator(par.label, init, modulator.clone());
-                }
+                if let Some(idx) = par.idx {
+                    if let Some(osc) = self.oscillators.get_mut(idx) {
+                        osc.set_modulator(par.label, init, modulator.clone());
+                    }
+                };
             }
             _ => {}
         }
@@ -142,9 +142,10 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
             | SynthParameterLabel::OscillatorPhaseEffective
             | SynthParameterLabel::OscillatorPhaseRelative
             | SynthParameterLabel::PitchFrequency => {
-                let idx = if let Some(idx) = par.idx { idx } else { 0 };
-                if let Some(osc) = self.oscillators.get_mut(idx) {
-                    osc.set_parameter(par.label, val);
+                if let Some(idx) = par.idx {
+                    if let Some(osc) = self.oscillators.get_mut(idx) {
+                        osc.set_parameter(par.label, val);
+                    }
                 }
             }
             _ => {}

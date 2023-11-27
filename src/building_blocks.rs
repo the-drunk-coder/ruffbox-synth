@@ -83,35 +83,36 @@ pub enum SynthParameterLabel {
     HighpassQFactor,          // 15
     HighpassFilterType,       // 16
     EnvelopeLevel,            // 17
-    OscillatorAmplitude,      // 18 (oscillator amplitude)
-    OscillatorPhaseRelative,  // 19 (radians)
-    OscillatorPhaseEffective, // 20 (the target value or effective offset dependent on the amplitude)
-    LowpassCutoffFrequency,   // 21
-    LowpassQFactor,           // 22
-    LowpassFilterDistortion,  // 23
-    LowpassFilterType,        // 24
-    PeakFrequency,            // 25
-    PeakGain,                 // 26
-    PeakBandwidth,            // 27
-    Pulsewidth,               // 28
-    PlaybackRate,             // 29
-    PlaybackStart,            // 30
-    PlaybackLoop,             // 31
-    Release,                  // 32
-    ReleaseType,              // 33
-    ReverbDampening,          // 34
-    ReverbMix,                // 35
-    ReverbRoomsize,           // 36
-    SampleBufferNumber,       // 37
-    Samplerate,               // 38
-    ChannelPosition,          // 39
-    AmbisonicAzimuth,         // 40
-    AmbisonicElevation,       // 41
-    Sustain,                  // 42
-    Wavetable,                // 43
-    Wavematrix,               // 44
-    WavematrixTableIndex,     // 45
-    WaveshaperMix,            // 46
+    OscillatorType,           // 18
+    OscillatorAmplitude,      // 19 (oscillator amplitude)
+    OscillatorPhaseRelative,  // 20 (radians)
+    OscillatorPhaseEffective, // 21 (the target value or effective offset dependent on the amplitude)
+    LowpassCutoffFrequency,   // 22
+    LowpassQFactor,           // 23
+    LowpassFilterDistortion,  // 24
+    LowpassFilterType,        // 25
+    PeakFrequency,            // 26
+    PeakGain,                 // 27
+    PeakBandwidth,            // 28
+    Pulsewidth,               // 29
+    PlaybackRate,             // 30
+    PlaybackStart,            // 31
+    PlaybackLoop,             // 32
+    Release,                  // 33
+    ReleaseType,              // 34
+    ReverbDampening,          // 35
+    ReverbMix,                // 36
+    ReverbRoomsize,           // 37
+    SampleBufferNumber,       // 38
+    Samplerate,               // 39
+    ChannelPosition,          // 40
+    AmbisonicAzimuth,         // 41
+    AmbisonicElevation,       // 42
+    Sustain,                  // 43
+    Wavetable,                // 44
+    Wavematrix,               // 45
+    WavematrixTableIndex,     // 46
+    WaveshaperMix,            // 47
 }
 
 /// the value operation is defined on parameters
@@ -158,7 +159,8 @@ pub enum SynthParameterValue {
     ScalarU32(u32),
     ScalarUsize(usize),
     VecF32(Vec<f32>),
-    FilterType(FilterType), // these aren't really treated as parameters so far, but as a pragmatic solution that's ok for now ...    
+    FilterType(FilterType), // these aren't really treated as parameters so far, but as a pragmatic solution that's ok for now ...
+    OscillatorType(OscillatorType), // these aren't really treated as parameters so far, but as a pragmatic solution that's ok for now ...    
     MatrixF32((usize, usize), Vec<Vec<f32>>), // dimension, content
     // lfo param order - init val, freq, phase, amp, add, operation (mul, add, sub, div, replace)
     Lfo(f32, Box<SynthParameterValue>, f32, Box<SynthParameterValue>, f32, ValOp), // sine lfo
