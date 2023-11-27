@@ -14,6 +14,7 @@ use crate::ruffbox::{ControlMessage, ScheduledEvent};
 use crate::synths::*;
 
 use crate::ruffbox::ScheduledSource;
+use crate::synths::n_channel::MultiOscillatorSynth;
 
 /// thin wrapper around a scheduled event instasnce
 pub struct PreparedInstance<const BUFSIZE: usize, const NCHAN: usize> {
@@ -113,6 +114,15 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
                     timestamp,
                     ScheduledSource::Channel(Box::new(SingleOscillatorSynth::new(
                         osc_type,
+                        lp_type,
+                        hp_type,
+                        self.samplerate,
+                    ))),
+                ),
+                SynthType::MultiOscillator(osc_types, lp_type, hp_type) => ScheduledEvent::new(
+                    timestamp,
+                    ScheduledSource::Channel(Box::new(MultiOscillatorSynth::new(
+                        osc_types,
                         lp_type,
                         hp_type,
                         self.samplerate,

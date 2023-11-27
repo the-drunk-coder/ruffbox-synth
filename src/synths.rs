@@ -19,5 +19,6 @@ pub enum SynthType {
     LiveSampler(FilterType, FilterType, FilterType, FilterType),
     FrozenSampler(FilterType, FilterType, FilterType, FilterType),
     SingleOscillator(OscillatorType, FilterType, FilterType),
+    MultiOscillator(Vec<OscillatorType>, FilterType, FilterType),
     RissetBell,
 }

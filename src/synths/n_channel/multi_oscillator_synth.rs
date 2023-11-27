@@ -23,7 +23,7 @@ pub struct MultiOscillatorSynth<const BUFSIZE: usize, const NCHAN: usize> {
 
 impl<const BUFSIZE: usize, const NCHAN: usize> MultiOscillatorSynth<BUFSIZE, NCHAN> {
     pub fn new(
-        osc_types: &[OscillatorType],
+        osc_types: Vec<OscillatorType>,
         lpf_type: FilterType,
         hpf_type: FilterType,
         sr: f32,
@@ -114,7 +114,19 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
         init: f32,
         modulator: Modulator<BUFSIZE>,
     ) {
-        //self.oscillator.set_modulator(par.label, init, modulator.clone());
+        match par.label {
+            SynthParameterLabel::OscillatorAmplitude
+            | SynthParameterLabel::OscillatorPhaseEffective
+            | SynthParameterLabel::OscillatorPhaseRelative
+            | SynthParameterLabel::PitchFrequency => {
+                let idx = if let Some(idx) = par.idx { idx } else { 0 };
+                if let Some(osc) = self.oscillators.get_mut(idx) {
+                    osc.set_modulator(par.label, init, modulator.clone());
+                }
+            }
+            _ => {}
+        }
+
         self.lp_filter
             .set_modulator(par.label, init, modulator.clone());
         self.hp_filter
@@ -125,7 +137,18 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
     }
 
     fn set_parameter(&mut self, par: SynthParameterAddress, val: &SynthParameterValue) {
-        //self.oscillator.set_parameter(par.label, val);
+        match par.label {
+            SynthParameterLabel::OscillatorAmplitude
+            | SynthParameterLabel::OscillatorPhaseEffective
+            | SynthParameterLabel::OscillatorPhaseRelative
+            | SynthParameterLabel::PitchFrequency => {
+                let idx = if let Some(idx) = par.idx { idx } else { 0 };
+                if let Some(osc) = self.oscillators.get_mut(idx) {
+                    osc.set_parameter(par.label, val);
+                }
+            }
+            _ => {}
+        }
         self.waveshaper.set_parameter(par.label, val);
         self.lp_filter.set_parameter(par.label, val);
         self.hp_filter.set_parameter(par.label, val);
