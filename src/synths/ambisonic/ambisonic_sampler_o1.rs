@@ -83,10 +83,9 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for AmbisonicSamplerO1<BUFSIZE> {
             SynthParameterLabel::PeakFrequency
             | SynthParameterLabel::PeakBandwidth
             | SynthParameterLabel::PeakGain => match par.idx {
-                Some(n) if n == 1 => {
-                    self.peak_eq_2
-                        .set_modulator(par.label, init, modulator.clone())
-                }
+                Some(1) => self
+                    .peak_eq_2
+                    .set_modulator(par.label, init, modulator.clone()),
                 _ => self
                     .peak_eq_1
                     .set_modulator(par.label, init, modulator.clone()),
@@ -109,7 +108,7 @@ impl<const BUFSIZE: usize> Synth<BUFSIZE, 4> for AmbisonicSamplerO1<BUFSIZE> {
             SynthParameterLabel::PeakFrequency
             | SynthParameterLabel::PeakBandwidth
             | SynthParameterLabel::PeakGain => match par.idx {
-                Some(n) if n == 1 => self.peak_eq_2.set_parameter(par.label, val),
+                Some(1) => self.peak_eq_2.set_parameter(par.label, val),
                 _ => self.peak_eq_1.set_parameter(par.label, val),
             },
             _ => {}
