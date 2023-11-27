@@ -273,17 +273,17 @@ mod tests {
             0,
         ) {
             inst.set_instance_parameter(
-                SynthParameterLabel::PitchFrequency,
+                SynthParameterLabel::PitchFrequency.into(),
                 &SynthParameterValue::ScalarF32(440.0),
             );
             inst.set_instance_parameter(
-                SynthParameterLabel::ChannelPosition,
+                SynthParameterLabel::ChannelPosition.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
 
             // this envelope mimics the old lin_asr sample by sample ...
             inst.set_instance_parameter(
-                SynthParameterLabel::Envelope,
+                SynthParameterLabel::Envelope.into(),
                 &SynthParameterValue::MultiPointEnvelope(
                     vec![
                         EnvelopeSegmentInfo {
@@ -355,24 +355,24 @@ mod tests {
         ) {
             // pan to left, neutralize
             inst_1.set_instance_parameter(
-                SynthParameterLabel::ChannelPosition,
+                SynthParameterLabel::ChannelPosition.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
             inst_1.set_instance_parameter(
-                SynthParameterLabel::LowpassCutoffFrequency,
+                SynthParameterLabel::LowpassCutoffFrequency.into(),
                 &SynthParameterValue::ScalarF32(22050.0),
             );
             inst_1.set_instance_parameter(
-                SynthParameterLabel::LowpassFilterDistortion,
+                SynthParameterLabel::LowpassFilterDistortion.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
             inst_1.set_instance_parameter(
-                SynthParameterLabel::LowpassQFactor,
+                SynthParameterLabel::LowpassQFactor.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
             // this envelope mimics the old lin_asr sample by sample ...
             inst_1.set_instance_parameter(
-                SynthParameterLabel::Envelope,
+                SynthParameterLabel::Envelope.into(),
                 &SynthParameterValue::MultiPointEnvelope(
                     vec![
                         EnvelopeSegmentInfo {
@@ -411,24 +411,24 @@ mod tests {
             bnum2,
         ) {
             inst_2.set_instance_parameter(
-                SynthParameterLabel::ChannelPosition,
+                SynthParameterLabel::ChannelPosition.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
             inst_2.set_instance_parameter(
-                SynthParameterLabel::LowpassCutoffFrequency,
+                SynthParameterLabel::LowpassCutoffFrequency.into(),
                 &SynthParameterValue::ScalarF32(22050.0),
             );
             inst_2.set_instance_parameter(
-                SynthParameterLabel::LowpassFilterDistortion,
+                SynthParameterLabel::LowpassFilterDistortion.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
             inst_2.set_instance_parameter(
-                SynthParameterLabel::LowpassQFactor,
+                SynthParameterLabel::LowpassQFactor.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
             // this envelope mimics the old lin_asr sample by sample ...
             inst_2.set_instance_parameter(
-                SynthParameterLabel::Envelope,
+                SynthParameterLabel::Envelope.into(),
                 &SynthParameterValue::MultiPointEnvelope(
                     vec![
                         EnvelopeSegmentInfo {
@@ -492,28 +492,28 @@ mod tests {
         ) {
             // pan to left
             inst_1.set_instance_parameter(
-                SynthParameterLabel::ChannelPosition,
+                SynthParameterLabel::ChannelPosition.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
             inst_1.set_instance_parameter(
-                SynthParameterLabel::ReverbMix,
+                SynthParameterLabel::ReverbMix.into(),
                 &SynthParameterValue::ScalarF32(1.0),
             );
             inst_1.set_instance_parameter(
-                SynthParameterLabel::LowpassCutoffFrequency,
+                SynthParameterLabel::LowpassCutoffFrequency.into(),
                 &SynthParameterValue::ScalarF32(22050.0),
             );
             inst_1.set_instance_parameter(
-                SynthParameterLabel::LowpassFilterDistortion,
+                SynthParameterLabel::LowpassFilterDistortion.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
             inst_1.set_instance_parameter(
-                SynthParameterLabel::LowpassQFactor,
+                SynthParameterLabel::LowpassQFactor.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
             // this envelope mimics the old lin_asr sample by sample ...
             inst_1.set_instance_parameter(
-                SynthParameterLabel::Envelope,
+                SynthParameterLabel::Envelope.into(),
                 &SynthParameterValue::MultiPointEnvelope(
                     vec![
                         EnvelopeSegmentInfo {
@@ -577,25 +577,25 @@ mod tests {
         ) {
             // pan to left
             inst_1.set_instance_parameter(
-                SynthParameterLabel::ChannelPosition,
+                SynthParameterLabel::ChannelPosition.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
             inst_1.set_instance_parameter(
-                SynthParameterLabel::LowpassCutoffFrequency,
+                SynthParameterLabel::LowpassCutoffFrequency.into(),
                 &SynthParameterValue::ScalarF32(22050.0),
             );
             inst_1.set_instance_parameter(
-                SynthParameterLabel::LowpassFilterDistortion,
+                SynthParameterLabel::LowpassFilterDistortion.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
             inst_1.set_instance_parameter(
-                SynthParameterLabel::LowpassQFactor,
+                SynthParameterLabel::LowpassQFactor.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
 
             // this envelope mimics the old lin_asr sample by sample ...
             inst_1.set_instance_parameter(
-                SynthParameterLabel::Envelope,
+                SynthParameterLabel::Envelope.into(),
                 &SynthParameterValue::MultiPointEnvelope(
                     vec![EnvelopeSegmentInfo {
                         from: 1.0,
@@ -621,24 +621,24 @@ mod tests {
             bnum2,
         ) {
             inst_2.set_instance_parameter(
-                SynthParameterLabel::ChannelPosition,
+                SynthParameterLabel::ChannelPosition.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
             inst_2.set_instance_parameter(
-                SynthParameterLabel::LowpassCutoffFrequency,
+                SynthParameterLabel::LowpassCutoffFrequency.into(),
                 &SynthParameterValue::ScalarF32(22050.0),
             );
             inst_2.set_instance_parameter(
-                SynthParameterLabel::LowpassFilterDistortion,
+                SynthParameterLabel::LowpassFilterDistortion.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
             inst_2.set_instance_parameter(
-                SynthParameterLabel::LowpassQFactor,
+                SynthParameterLabel::LowpassQFactor.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
             // this envelope mimics the old lin_asr sample by sample ...
             inst_2.set_instance_parameter(
-                SynthParameterLabel::Envelope,
+                SynthParameterLabel::Envelope.into(),
                 &SynthParameterValue::MultiPointEnvelope(
                     vec![EnvelopeSegmentInfo {
                         from: 1.0,
@@ -698,24 +698,24 @@ mod tests {
         ) {
             // pan to left
             inst_1.set_instance_parameter(
-                SynthParameterLabel::ChannelPosition,
+                SynthParameterLabel::ChannelPosition.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
             inst_1.set_instance_parameter(
-                SynthParameterLabel::LowpassCutoffFrequency,
+                SynthParameterLabel::LowpassCutoffFrequency.into(),
                 &SynthParameterValue::ScalarF32(22050.0),
             );
             inst_1.set_instance_parameter(
-                SynthParameterLabel::LowpassFilterDistortion,
+                SynthParameterLabel::LowpassFilterDistortion.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
             inst_1.set_instance_parameter(
-                SynthParameterLabel::LowpassQFactor,
+                SynthParameterLabel::LowpassQFactor.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
             // this envelope mimics the old lin_asr sample by sample ...
             inst_1.set_instance_parameter(
-                SynthParameterLabel::Envelope,
+                SynthParameterLabel::Envelope.into(),
                 &SynthParameterValue::MultiPointEnvelope(
                     vec![EnvelopeSegmentInfo {
                         from: 1.0,
@@ -741,24 +741,24 @@ mod tests {
             bnum2,
         ) {
             inst_2.set_instance_parameter(
-                SynthParameterLabel::ChannelPosition,
+                SynthParameterLabel::ChannelPosition.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
             inst_2.set_instance_parameter(
-                SynthParameterLabel::LowpassCutoffFrequency,
+                SynthParameterLabel::LowpassCutoffFrequency.into(),
                 &SynthParameterValue::ScalarF32(22050.0),
             );
             inst_2.set_instance_parameter(
-                SynthParameterLabel::LowpassFilterDistortion,
+                SynthParameterLabel::LowpassFilterDistortion.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
             inst_2.set_instance_parameter(
-                SynthParameterLabel::LowpassQFactor,
+                SynthParameterLabel::LowpassQFactor.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
             // this envelope mimics the old lin_asr sample by sample ...
             inst_2.set_instance_parameter(
-                SynthParameterLabel::Envelope,
+                SynthParameterLabel::Envelope.into(),
                 &SynthParameterValue::MultiPointEnvelope(
                     vec![EnvelopeSegmentInfo {
                         from: 1.0,
@@ -833,13 +833,13 @@ mod tests {
         ) {
             // pan to left
             inst_1.set_instance_parameter(
-                SynthParameterLabel::ChannelPosition,
+                SynthParameterLabel::ChannelPosition.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
 
             // this envelope mimics the old lin_asr sample by sample ...
             inst_1.set_instance_parameter(
-                SynthParameterLabel::Envelope,
+                SynthParameterLabel::Envelope.into(),
                 &SynthParameterValue::MultiPointEnvelope(
                     vec![EnvelopeSegmentInfo {
                         from: 1.0,
@@ -864,13 +864,13 @@ mod tests {
             bnum2,
         ) {
             inst_2.set_instance_parameter(
-                SynthParameterLabel::ChannelPosition,
+                SynthParameterLabel::ChannelPosition.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
 
             // this envelope mimics the old lin_asr sample by sample ...
             inst_2.set_instance_parameter(
-                SynthParameterLabel::Envelope,
+                SynthParameterLabel::Envelope.into(),
                 &SynthParameterValue::MultiPointEnvelope(
                     vec![EnvelopeSegmentInfo {
                         from: 1.0,
@@ -938,24 +938,24 @@ mod tests {
         ) {
             // pan to left
             inst_1.set_instance_parameter(
-                SynthParameterLabel::ChannelPosition,
+                SynthParameterLabel::ChannelPosition.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
             inst_1.set_instance_parameter(
-                SynthParameterLabel::LowpassCutoffFrequency,
+                SynthParameterLabel::LowpassCutoffFrequency.into(),
                 &SynthParameterValue::ScalarF32(22050.0),
             );
             inst_1.set_instance_parameter(
-                SynthParameterLabel::LowpassFilterDistortion,
+                SynthParameterLabel::LowpassFilterDistortion.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
             inst_1.set_instance_parameter(
-                SynthParameterLabel::LowpassQFactor,
+                SynthParameterLabel::LowpassQFactor.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
             // this envelope mimics the old lin_asr sample by sample ...
             inst_1.set_instance_parameter(
-                SynthParameterLabel::Envelope,
+                SynthParameterLabel::Envelope.into(),
                 &SynthParameterValue::MultiPointEnvelope(
                     vec![EnvelopeSegmentInfo {
                         from: 1.0,
@@ -1016,24 +1016,24 @@ mod memory_tests {
         ) {
             // pan to left, neutralize
             inst_1.set_instance_parameter(
-                SynthParameterLabel::ChannelPosition,
+                SynthParameterLabel::ChannelPosition.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
             inst_1.set_instance_parameter(
-                SynthParameterLabel::LowpassCutoffFrequency,
+                SynthParameterLabel::LowpassCutoffFrequency.into(),
                 &SynthParameterValue::ScalarF32(22050.0),
             );
             inst_1.set_instance_parameter(
-                SynthParameterLabel::LowpassFilterDistortion,
+                SynthParameterLabel::LowpassFilterDistortion.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
             inst_1.set_instance_parameter(
-                SynthParameterLabel::LowpassQFactor,
+                SynthParameterLabel::LowpassQFactor.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
             // this envelope mimics the old lin_asr sample by sample ...
             inst_1.set_instance_parameter(
-                SynthParameterLabel::Envelope,
+                SynthParameterLabel::Envelope.into(),
                 &SynthParameterValue::MultiPointEnvelope(
                     vec![
                         EnvelopeSegmentInfo {
@@ -1072,24 +1072,24 @@ mod memory_tests {
             bnum2,
         ) {
             inst_2.set_instance_parameter(
-                SynthParameterLabel::ChannelPosition,
+                SynthParameterLabel::ChannelPosition.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
             inst_2.set_instance_parameter(
-                SynthParameterLabel::LowpassCutoffFrequency,
+                SynthParameterLabel::LowpassCutoffFrequency.into(),
                 &SynthParameterValue::ScalarF32(22050.0),
             );
             inst_2.set_instance_parameter(
-                SynthParameterLabel::LowpassFilterDistortion,
+                SynthParameterLabel::LowpassFilterDistortion.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
             inst_2.set_instance_parameter(
-                SynthParameterLabel::LowpassQFactor,
+                SynthParameterLabel::LowpassQFactor.into(),
                 &SynthParameterValue::ScalarF32(0.0),
             );
             // this envelope mimics the old lin_asr sample by sample ...
             inst_2.set_instance_parameter(
-                SynthParameterLabel::Envelope,
+                SynthParameterLabel::Envelope.into(),
                 &SynthParameterValue::MultiPointEnvelope(
                     vec![
                         EnvelopeSegmentInfo {
