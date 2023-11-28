@@ -117,7 +117,11 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
             SynthParameterLabel::OscillatorAmplitude
             | SynthParameterLabel::OscillatorPhaseEffective
             | SynthParameterLabel::OscillatorPhaseRelative
-            | SynthParameterLabel::PitchFrequency => {
+            | SynthParameterLabel::PitchFrequency
+            | SynthParameterLabel::Pulsewidth
+            | SynthParameterLabel::WavematrixTableIndex
+            | SynthParameterLabel::Wavetable
+            | SynthParameterLabel::Wavematrix => {
                 if let Some(idx) = par.idx {
                     if let Some(osc) = self.oscillators.get_mut(idx) {
                         osc.set_modulator(par.label, init, modulator.clone());
@@ -141,7 +145,11 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
             SynthParameterLabel::OscillatorAmplitude
             | SynthParameterLabel::OscillatorPhaseEffective
             | SynthParameterLabel::OscillatorPhaseRelative
-            | SynthParameterLabel::PitchFrequency => {
+            | SynthParameterLabel::PitchFrequency
+            | SynthParameterLabel::Pulsewidth
+            | SynthParameterLabel::WavematrixTableIndex
+            | SynthParameterLabel::Wavetable
+            | SynthParameterLabel::Wavematrix => {
                 if let Some(idx) = par.idx {
                     if let Some(osc) = self.oscillators.get_mut(idx) {
                         osc.set_parameter(par.label, val);
