@@ -152,7 +152,7 @@ fn supersmooth(buffer: &[f32], matrix_size: (usize, usize), start_factor: f32) -
         let end_idx_inv =
             find_closest_upward_zerocrossing(buffer, start + i * step_size + matrix_size.1);
 
-        println!(
+        /*println!(
             "inv b {} inv e {} diff {}",
             begin_idx_inv,
             end_idx_inv,
@@ -163,23 +163,23 @@ fn supersmooth(buffer: &[f32], matrix_size: (usize, usize), start_factor: f32) -
             begin_idx,
             end_idx,
             ((end_idx - begin_idx) as i32 - matrix_size.1 as i32).abs()
-        );
+        );*/
 
         let mut buf = if ((end_idx - begin_idx) as i32 - matrix_size.1 as i32).abs()
             > ((end_idx_inv - begin_idx_inv) as i32 - matrix_size.1 as i32).abs()
         {
-            println!("choose inv");
+            //println!("choose inv");
             let mut buf = buffer[begin_idx_inv..end_idx_inv + 1].to_vec();
-            println!("buf {} {:?}", buf.len(), buf);
+            //println!("buf {} {:?}", buf.len(), buf);
             buf = buf.iter_mut().map(|x| *x * -1.0).collect();
-            println!("buf inv {} {:?}", buf.len(), buf);
+            //println!("buf inv {} {:?}", buf.len(), buf);
             buf
         } else {
-            println!("choose reg");
+            //println!("choose reg");
             buffer[begin_idx..end_idx + 1].to_vec()
         };
 
-        println!("buf {} {:?}", buf.len(), buf);
+        //println!("buf {} {:?}", buf.len(), buf);
 
         buf[0] = 0.0;
 
@@ -189,7 +189,7 @@ fn supersmooth(buffer: &[f32], matrix_size: (usize, usize), start_factor: f32) -
         buf.insert(0, 0.0);
         buf = stretch_to_size(&buf, matrix_size.1);
 
-        println!("buf after stretch {} {:?}", buf.len(), buf);
+        //println!("buf after stretch {} {:?}", buf.len(), buf);
 
         /*
             // append copy of itself
@@ -247,7 +247,7 @@ fn supersmooth(buffer: &[f32], matrix_size: (usize, usize), start_factor: f32) -
         buf[0] = 0.0;
              */
 
-        println!("final buf {} {:?}", buf.len(), buf);
+        //println!("final buf {} {:?}", buf.len(), buf);
 
         wavematrix.push(buf);
     }
