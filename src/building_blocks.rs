@@ -71,48 +71,50 @@ pub enum SynthParameterLabel {
     Decay,                    // 3
     DecayType,                // 4
     DelayDampeningFrequency,  // 5
-    DelayFeedback,            // 6
-    DelayMix,                 // 7
-    DelayTime,                // 8
-    DelayRate,                // 9
-    Duration,                 // 10
-    Envelope,                 // 11
-    PitchFrequency,           // 12
-    PitchNote,                // 13
-    HighpassCutoffFrequency,  // 14
-    HighpassQFactor,          // 15
-    HighpassFilterType,       // 16
-    EnvelopeLevel,            // 17
-    OscillatorType,           // 18
-    OscillatorAmplitude,      // 19 (oscillator amplitude)
-    OscillatorPhaseRelative,  // 20 (radians)
-    OscillatorPhaseEffective, // 21 (the target value or effective offset dependent on the amplitude)
-    LowpassCutoffFrequency,   // 22
-    LowpassQFactor,           // 23
-    LowpassFilterDistortion,  // 24
-    LowpassFilterType,        // 25
-    PeakFrequency,            // 26
-    PeakGain,                 // 27
-    PeakBandwidth,            // 28
-    Pulsewidth,               // 29
-    PlaybackRate,             // 30
-    PlaybackStart,            // 31
-    PlaybackLoop,             // 32
-    Release,                  // 33
-    ReleaseType,              // 34
-    ReverbDampening,          // 35
-    ReverbMix,                // 36
-    ReverbRoomsize,           // 37
-    SampleBufferNumber,       // 38
-    Samplerate,               // 39
-    ChannelPosition,          // 40
-    AmbisonicAzimuth,         // 41
-    AmbisonicElevation,       // 42
-    Sustain,                  // 43
-    Wavetable,                // 44
-    Wavematrix,               // 45
-    WavematrixTableIndex,     // 46
-    WaveshaperMix,            // 47
+    DelayDampeningFilterType, // 6
+    DelayFeedback,            // 7
+    DelayMix,                 // 8
+    DelayTime,                // 9
+    DelayRate,                // 10
+    Duration,                 // 11
+    Envelope,                 // 12
+    PitchFrequency,           // 13
+    PitchNote,                // 14
+    HighpassCutoffFrequency,  // 15
+    HighpassQFactor,          // 16
+    HighpassFilterType,       // 17
+    EnvelopeLevel,            // 18
+    OscillatorType,           // 19
+    OscillatorAmplitude,      // 20 (oscillator amplitude)
+    OscillatorPhaseRelative,  // 21 (radians)
+    OscillatorPhaseEffective, // 22 (the target value or effective offset dependent on the amplitude)
+    LowpassCutoffFrequency,   // 23
+    LowpassQFactor,           // 24
+    LowpassFilterDistortion,  // 25
+    LowpassFilterType,        // 26
+    PeakFrequency,            // 27
+    PeakGain,                 // 28
+    PeakBandwidth,            // 29
+    Pulsewidth,               // 30
+    PlaybackRate,             // 31
+    PlaybackStart,            // 32
+    PlaybackLoop,             // 33
+    Release,                  // 34
+    ReleaseType,              // 35
+    ReverbDampening,          // 36
+    ReverbMix,                // 37
+    ReverbRoomsize,           // 38
+    SampleBufferNumber,       // 39
+    Samplerate,               // 40
+    ChannelPosition,          // 41
+    AmbisonicAzimuth,         // 42
+    AmbisonicElevation,       // 43
+    Sustain,                  // 44
+    Wavetable,                // 45
+    Wavematrix,               // 46
+    WavematrixTableIndex,     // 47
+    WaveshaperMix,            // 48
+    FilterType,
 }
 
 /// the value operation is defined on parameters

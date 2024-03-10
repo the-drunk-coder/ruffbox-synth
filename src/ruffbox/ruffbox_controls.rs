@@ -16,6 +16,8 @@ use crate::synths::*;
 use crate::ruffbox::ScheduledSource;
 use crate::synths::n_channel::MultiOscillatorSynth;
 
+use self::n_channel::KarPlusPlus;
+
 /// thin wrapper around a scheduled event instasnce
 pub struct PreparedInstance<const BUFSIZE: usize, const NCHAN: usize> {
     ev: ScheduledEvent<BUFSIZE, NCHAN>,
@@ -110,6 +112,17 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
         Some(PreparedInstance {
             sr: self.samplerate,
             ev: match src_type {
+                SynthType::KarPlusPlus(osc_type, del_filter_type, post_filter_type) => {
+                    ScheduledEvent::new(
+                        timestamp,
+                        ScheduledSource::Channel(Box::new(KarPlusPlus::new(
+                            osc_type,
+                            del_filter_type,
+                            post_filter_type,
+                            self.samplerate,
+                        ))),
+                    )
+                }
                 SynthType::SingleOscillator(osc_type, lp_type, hp_type) => ScheduledEvent::new(
                     timestamp,
                     ScheduledSource::Channel(Box::new(SingleOscillatorSynth::new(

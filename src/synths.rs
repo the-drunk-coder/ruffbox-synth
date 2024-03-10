@@ -20,5 +20,6 @@ pub enum SynthType {
     FrozenSampler(FilterType, FilterType, FilterType, FilterType),
     SingleOscillator(OscillatorType, FilterType, FilterType),
     MultiOscillator(Vec<OscillatorType>, FilterType, FilterType),
+    KarPlusPlus(OscillatorType, FilterType, FilterType),
     RissetBell,
 }
