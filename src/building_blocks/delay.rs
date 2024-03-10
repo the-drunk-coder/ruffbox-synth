@@ -4,6 +4,8 @@ use crate::building_blocks::{
     Modulator, MonoEffect, SampleBuffer, SynthParameterLabel, SynthParameterValue, ValueOrModulator,
 };
 
+use super::FilterType;
+
 pub struct MonoDelay<const BUFSIZE: usize> {
     // user parameters
     rate: f32,
@@ -14,7 +16,7 @@ pub struct MonoDelay<const BUFSIZE: usize> {
     buffer: Vec<f32>, // max 2 sec for now
     buffer_ptr: f32,
     max_buffer_ptr: f32,
-    dampening_filter: Lpf18<BUFSIZE>,
+    dampening_filter: Box<dyn MonoEffect<BUFSIZE> + Sync + Send>,
     samplerate: f32,
 
     // modulator slots
@@ -24,6 +26,36 @@ pub struct MonoDelay<const BUFSIZE: usize> {
 }
 
 impl<const BUFSIZE: usize> MonoDelay<BUFSIZE> {
+    pub fn with_filter_type(sr: f32, filter_type: FilterType) -> Self {
+        MonoDelay {
+            rate: 1.0,
+            time: 0.256,
+            buffer: vec![0.0; sr as usize * 2 + 3],
+            buffer_ptr: 1.0,
+            max_buffer_ptr: (sr * 0.256) + 1.0, // 256 ms default time
+            feedback: 0.5,
+            dampening_filter: match filter_type {
+                FilterType::Dummy => Box::new(DummyFilter::new()),
+                FilterType::Lpf18 => Box::new(Lpf18::new(1500.0, 0.5, 0.1, sr)),
+                FilterType::BiquadLpf12dB => Box::new(BiquadLpf12dB::new(1500.0, 0.5, sr)),
+                FilterType::BiquadLpf24dB => Box::new(BiquadLpf24dB::new(1500.0, 0.5, sr)),
+                FilterType::BiquadHpf12dB => Box::new(BiquadHpf12dB::new(1500.0, 0.5, sr)),
+                FilterType::BiquadHpf24dB => Box::new(BiquadHpf24dB::new(1500.0, 0.5, sr)),
+                FilterType::ButterworthLpf(order) => {
+                    Box::new(ButterworthLpf::new(1500.0, order, sr))
+                }
+                FilterType::ButterworthHpf(order) => {
+                    Box::new(ButterworthHpf::new(1500.0, order, sr))
+                }
+                FilterType::PeakEQ => Box::new(PeakEq::new(1500.0, 100.0, 0.0, sr)),
+            },
+            samplerate: sr,
+            rate_mod: None,
+            time_mod: None,
+            fb_mod: None,
+        }
+    }
+
     pub fn new(sr: f32) -> Self {
         MonoDelay {
             rate: 1.0,
@@ -32,7 +64,7 @@ impl<const BUFSIZE: usize> MonoDelay<BUFSIZE> {
             buffer_ptr: 1.0,
             max_buffer_ptr: (sr * 0.256) + 1.0, // 256 ms default time
             feedback: 0.5,
-            dampening_filter: Lpf18::new(3000.0, 0.4, 0.3, 44100.0),
+            dampening_filter: Box::new(Lpf18::new(3000.0, 0.4, 0.3, 44100.0)),
             samplerate: sr,
             rate_mod: None,
             time_mod: None,
