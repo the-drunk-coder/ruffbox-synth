@@ -302,4 +302,13 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for ButterworthHpf<BUFSIZE> {
             out_block
         }
     }
+
+    #[inline(always)]
+    fn maybe_process_sample(&mut self, sample: f32) -> f32 {
+        let mut s = process_sos_sample(&self.coefs[0], &mut self.delays[0], sample);
+        for (j, coefs) in self.coefs.iter().enumerate().skip(1) {
+            s = process_sos_sample(coefs, &mut self.delays[j], s)
+        }
+        s
+    }
 }

@@ -70,20 +70,6 @@ impl<const BUFSIZE: usize> Lpf18<BUFSIZE> {
     }
 
     #[inline(always)]
-    pub fn process_sample(&mut self, sample: f32) -> f32 {
-        self.ax1 = self.lastin;
-        self.ay11 = self.ay1;
-        self.ay31 = self.ay2;
-
-        self.lastin = sample - (self.kres * self.aout).tanh();
-        self.ay1 = self.kp1h * (self.lastin + self.ax1) - self.kp * self.ay1;
-        self.ay2 = self.kp1h * (self.ay1 + self.ay11) - self.kp * self.ay2;
-        self.aout = self.kp1h * (self.ay2 + self.ay31) - self.kp * self.aout;
-
-        (self.aout * self.value).tanh()
-    }
-
-    #[inline(always)]
     fn update_internals(&mut self, cutoff: f32, res: f32, dist: f32) {
         self.kfcn = 2.0 * cutoff * (1.0 / self.samplerate);
         self.kp = ((-2.7528 * self.kfcn + 3.0429) * self.kfcn + 1.718) * self.kfcn - 0.9984;
@@ -213,5 +199,20 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for Lpf18<BUFSIZE> {
         }
 
         out_buf
+    }
+
+    #[inline(always)]
+    /// process_sample doesn't support modulation ...
+    fn maybe_process_sample(&mut self, sample: f32) -> f32 {
+        self.ax1 = self.lastin;
+        self.ay11 = self.ay1;
+        self.ay31 = self.ay2;
+
+        self.lastin = sample - (self.kres * self.aout).tanh();
+        self.ay1 = self.kp1h * (self.lastin + self.ax1) - self.kp * self.ay1;
+        self.ay2 = self.kp1h * (self.ay1 + self.ay11) - self.kp * self.ay2;
+        self.aout = self.kp1h * (self.ay2 + self.ay31) - self.kp * self.aout;
+
+        (self.aout * self.value).tanh()
     }
 }

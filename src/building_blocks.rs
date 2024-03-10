@@ -600,7 +600,7 @@ pub trait StereoSource<const BUFSIZE: usize>: StereoSourceClone<BUFSIZE> {
     fn get_next_block(
         &mut self,
         start_sample: usize,
-        in_buffers: &[SampleBuffer],
+        sample_buffers: &[SampleBuffer],
     ) -> [[f32; BUFSIZE]; 2];
 }
 
@@ -648,6 +648,13 @@ pub trait MonoEffect<const BUFSIZE: usize> {
         start_sample: usize,
         in_buffers: &[SampleBuffer],
     ) -> [f32; BUFSIZE];
+
+    /// doesn't have to be implemented for all effects,
+    /// currently only for filters so they can be used
+    /// as dampening filter in the delay ...
+    fn maybe_process_sample(&mut self, sample: f32) -> f32 {
+        sample
+    }
 }
 
 /// there's a freeverb- and a convolution-based implementation

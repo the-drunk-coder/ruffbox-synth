@@ -148,4 +148,13 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for BiquadLpf24dB<BUFSIZE> {
             )
         }
     }
+
+    #[inline(always)]
+    fn maybe_process_sample(&mut self, sample: f32) -> f32 {
+        process_sos_sample(
+            &self.coefs,
+            &mut self.delay2,
+            process_sos_sample(&self.coefs, &mut self.delay1, sample),
+        )
+    }
 }

@@ -185,4 +185,14 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for PeakEq<BUFSIZE> {
 
         out_buf
     }
+
+    #[inline(always)]
+    fn maybe_process_sample(&mut self, sample: f32) -> f32 {
+        let x_h = sample - self.d * (1.0 - self.c) * self.del1 + (self.c * self.del2);
+        let y_one = (-1.0 * self.c * x_h) + (self.d * (1.0 - self.c) * self.del1) + self.del2;
+        let out = 0.5 * self.h_zero * (sample - y_one) + sample;
+        self.del2 = self.del1;
+        self.del1 = x_h;
+        out
+    }
 }

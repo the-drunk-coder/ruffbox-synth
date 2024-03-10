@@ -140,7 +140,7 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for MonoDelay<BUFSIZE> {
                 );
 
                 self.buffer[idx_u] =
-                    (self.dampening_filter.process_sample(buf_out) * fb_buf[i]) + block[i];
+                    (self.dampening_filter.maybe_process_sample(buf_out) * fb_buf[i]) + block[i];
 
                 out_buf[i] = self.buffer[idx_u];
 
@@ -167,8 +167,9 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for MonoDelay<BUFSIZE> {
                     1.0,
                 );
 
-                self.buffer[idx_u] =
-                    (self.dampening_filter.process_sample(buf_out) * self.feedback) + block[i];
+                self.buffer[idx_u] = (self.dampening_filter.maybe_process_sample(buf_out)
+                    * self.feedback)
+                    + block[i];
 
                 out_buf[i] = self.buffer[idx_u];
 
