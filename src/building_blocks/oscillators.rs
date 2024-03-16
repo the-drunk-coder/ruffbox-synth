@@ -108,7 +108,7 @@ mod tests {
                 debug_plotter::plot!(b, c  where caption = "BlockPlotAbsPhase");
                 //assert_approx_eq::assert_approx_eq!(out_1[i], comp_1[i], 0.008);
             }
-    }*/
+    }
     #[test]
     fn plot_tri() {
         let mut osc = FMSaw::<128>::new(10000.0, 1.0, 44100.0);
@@ -122,7 +122,7 @@ mod tests {
                 debug_plotter::plot!(b where caption = "PlotFmTri2");
             }
         }
-    }
+    }*/
 
     #[test]
     fn sine_osc_test_start_in_block() {

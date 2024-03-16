@@ -282,6 +282,7 @@ impl<const BUFSIZE: usize> Modulator<BUFSIZE> {
     }
 }
 
+/*
 #[cfg(test)]
 mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
@@ -309,3 +310,4 @@ mod tests {
         }
     }
 }
+*/

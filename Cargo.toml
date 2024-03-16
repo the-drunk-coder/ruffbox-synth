@@ -21,6 +21,6 @@ fastrand = "1.8.0"
 
 [dev-dependencies]
 assert_approx_eq = "1.1.0"
-debug_plotter = { git = "https://github.com/fabianboesiger/debug-plotter", default-features=false }
+#debug_plotter = { git = "https://github.com/fabianboesiger/debug-plotter", default-features=false }
 assert_no_alloc = { git = "https://github.com/Windfisch/rust-assert-no-alloc" }
 

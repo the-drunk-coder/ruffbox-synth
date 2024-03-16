@@ -221,170 +221,173 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_multi_point_effect_env() {
-        let segments_lin = vec![
-            EnvelopeSegmentInfo {
-                from: 0.0,
-                to: 100.0,
-                time: 0.1,
-                segment_type: EnvelopeSegmentType::Lin,
-            },
-            EnvelopeSegmentInfo {
-                from: 100.0,
-                to: 100.0,
-                time: 0.3,
-                segment_type: EnvelopeSegmentType::Constant,
-            },
-            EnvelopeSegmentInfo {
-                from: 100.0,
-                to: 0.0,
-                time: 0.1,
-                segment_type: EnvelopeSegmentType::Lin,
-            },
-        ];
+    /*
+        #[test]
+        fn test_multi_point_effect_env() {
+            let segments_lin = vec![
+                EnvelopeSegmentInfo {
+                    from: 0.0,
+                    to: 100.0,
+                    time: 0.1,
+                    segment_type: EnvelopeSegmentType::Lin,
+                },
+                EnvelopeSegmentInfo {
+                    from: 100.0,
+                    to: 100.0,
+                    time: 0.3,
+                    segment_type: EnvelopeSegmentType::Constant,
+                },
+                EnvelopeSegmentInfo {
+                    from: 100.0,
+                    to: 0.0,
+                    time: 0.1,
+                    segment_type: EnvelopeSegmentType::Lin,
+                },
+            ];
 
-        let mut mpenv_lin = MultiPointEffectEnvelope::<512>::empty(44100.0);
+            let mut mpenv_lin = MultiPointEffectEnvelope::<512>::empty(44100.0);
 
-        let segments_log = vec![
-            EnvelopeSegmentInfo {
-                from: 0.0,
-                to: 100.0,
-                time: 0.1,
-                segment_type: EnvelopeSegmentType::Log,
-            },
-            EnvelopeSegmentInfo {
-                from: 100.0,
-                to: 100.0,
-                time: 0.3,
-                segment_type: EnvelopeSegmentType::Constant,
-            },
-            EnvelopeSegmentInfo {
-                from: 100.0,
-                to: 0.0,
-                time: 0.1,
-                segment_type: EnvelopeSegmentType::Log,
-            },
-        ];
+            let segments_log = vec![
+                EnvelopeSegmentInfo {
+                    from: 0.0,
+                    to: 100.0,
+                    time: 0.1,
+                    segment_type: EnvelopeSegmentType::Log,
+                },
+                EnvelopeSegmentInfo {
+                    from: 100.0,
+                    to: 100.0,
+                    time: 0.3,
+                    segment_type: EnvelopeSegmentType::Constant,
+                },
+                EnvelopeSegmentInfo {
+                    from: 100.0,
+                    to: 0.0,
+                    time: 0.1,
+                    segment_type: EnvelopeSegmentType::Log,
+                },
+            ];
 
-        let mut mpenv_log = MultiPointEffectEnvelope::<512>::empty(44100.0);
+            let mut mpenv_log = MultiPointEffectEnvelope::<512>::empty(44100.0);
 
-        let segments_sin = vec![
-            EnvelopeSegmentInfo {
-                from: 0.0,
-                to: 100.0,
-                time: 0.1,
-                segment_type: EnvelopeSegmentType::Sin,
-            },
-            EnvelopeSegmentInfo {
-                from: 100.0,
-                to: 100.0,
-                time: 0.3,
-                segment_type: EnvelopeSegmentType::Constant,
-            },
-            EnvelopeSegmentInfo {
-                from: 100.0,
-                to: 0.0,
-                time: 0.1,
-                segment_type: EnvelopeSegmentType::Cos,
-            },
-        ];
+            let segments_sin = vec![
+                EnvelopeSegmentInfo {
+                    from: 0.0,
+                    to: 100.0,
+                    time: 0.1,
+                    segment_type: EnvelopeSegmentType::Sin,
+                },
+                EnvelopeSegmentInfo {
+                    from: 100.0,
+                    to: 100.0,
+                    time: 0.3,
+                    segment_type: EnvelopeSegmentType::Constant,
+                },
+                EnvelopeSegmentInfo {
+                    from: 100.0,
+                    to: 0.0,
+                    time: 0.1,
+                    segment_type: EnvelopeSegmentType::Cos,
+                },
+            ];
 
-        let mut mpenv_sin = MultiPointEffectEnvelope::<512>::empty(44100.0);
+            let mut mpenv_sin = MultiPointEffectEnvelope::<512>::empty(44100.0);
 
-        mpenv_lin.set_parameter(
-            SynthParameterLabel::Envelope,
-            &SynthParameterValue::MultiPointEnvelope(
-                segments_lin,
-                false,
-                crate::building_blocks::ValOp::Replace,
-            ),
-        );
+            mpenv_lin.set_parameter(
+                SynthParameterLabel::Envelope,
+                &SynthParameterValue::MultiPointEnvelope(
+                    segments_lin,
+                    false,
+                    crate::building_blocks::ValOp::Replace,
+                ),
+            );
 
-        mpenv_log.set_parameter(
-            SynthParameterLabel::Envelope,
-            &SynthParameterValue::MultiPointEnvelope(
-                segments_log,
-                false,
-                crate::building_blocks::ValOp::Replace,
-            ),
-        );
+            mpenv_log.set_parameter(
+                SynthParameterLabel::Envelope,
+                &SynthParameterValue::MultiPointEnvelope(
+                    segments_log,
+                    false,
+                    crate::building_blocks::ValOp::Replace,
+                ),
+            );
 
-        mpenv_sin.set_parameter(
-            SynthParameterLabel::Envelope,
-            &SynthParameterValue::MultiPointEnvelope(
-                segments_sin,
-                false,
-                crate::building_blocks::ValOp::Replace,
-            ),
-        );
+            mpenv_sin.set_parameter(
+                SynthParameterLabel::Envelope,
+                &SynthParameterValue::MultiPointEnvelope(
+                    segments_sin,
+                    false,
+                    crate::building_blocks::ValOp::Replace,
+                ),
+            );
 
-        let in_block = [1.0; 512];
-        let num_blocks = (0.6 * 44100.0 / 512.0) as usize;
+            let in_block = [1.0; 512];
+            let num_blocks = (0.6 * 44100.0 / 512.0) as usize;
 
-        for _ in 0..num_blocks {
-            let block_lin = mpenv_lin.process_block(in_block, 0, &Vec::new());
-            let block_log = mpenv_log.process_block(in_block, 0, &Vec::new());
-            let block_sin = mpenv_sin.process_block(in_block, 0, &Vec::new());
-            //let block = mpenv.get_next_block(0, &Vec::new());
-            for i in 0..512 {
-                let a = block_lin[i];
-                let b = block_log[i];
-                let c = block_sin[i];
-                debug_plotter::plot!(a,b,c where caption = "MultiPointTestComp");
+            for _ in 0..num_blocks {
+                let block_lin = mpenv_lin.process_block(in_block, 0, &Vec::new());
+                let block_log = mpenv_log.process_block(in_block, 0, &Vec::new());
+                let block_sin = mpenv_sin.process_block(in_block, 0, &Vec::new());
+                //let block = mpenv.get_next_block(0, &Vec::new());
+                for i in 0..512 {
+                    let a = block_lin[i];
+                    let b = block_log[i];
+                    let c = block_sin[i];
+                    debug_plotter::plot!(a,b,c where caption = "MultiPointTestComp");
+                }
             }
-        }
     }
 
-    #[test]
-    fn test_compare_lin_asr_multipoint() {
-        let test_block: [f32; 512] = [1.0; 512];
 
-        // half a block attack, one block sustain, half a block release ... 2 blocks total .
-        let mut env1 = LinearASREnvelope::<512>::new(1.0, 0.0, 1.0, 0.0, 44100.0);
-        let mut env2 = multi_point_envelope::MultiPointEffectEnvelope::<512>::empty(44100.0);
+        #[test]
+        fn test_compare_lin_asr_multipoint() {
+            let test_block: [f32; 512] = [1.0; 512];
 
-        env2.set_parameter(
-            SynthParameterLabel::Envelope,
-            &SynthParameterValue::MultiPointEnvelope(
-                vec![
-                    EnvelopeSegmentInfo {
-                        from: 0.0,
-                        to: 1.0,
-                        time: 0.000025,
-                        segment_type: EnvelopeSegmentType::Lin,
-                    },
-                    EnvelopeSegmentInfo {
-                        from: 1.0,
-                        to: 1.0,
-                        time: 1.0,
-                        segment_type: EnvelopeSegmentType::Constant,
-                    },
-                    EnvelopeSegmentInfo {
-                        from: 1.0,
-                        to: 0.0,
-                        time: 0.0,
-                        segment_type: EnvelopeSegmentType::Lin,
-                    },
-                ],
-                false,
-                ValOp::Replace,
-            ),
-        );
+            // half a block attack, one block sustain, half a block release ... 2 blocks total .
+            let mut env1 = LinearASREnvelope::<512>::new(1.0, 0.0, 1.0, 0.0, 44100.0);
+            let mut env2 = multi_point_envelope::MultiPointEffectEnvelope::<512>::empty(44100.0);
 
-        let num_blocks = 44100 / 512 + 1;
+            env2.set_parameter(
+                SynthParameterLabel::Envelope,
+                &SynthParameterValue::MultiPointEnvelope(
+                    vec![
+                        EnvelopeSegmentInfo {
+                            from: 0.0,
+                            to: 1.0,
+                            time: 0.000025,
+                            segment_type: EnvelopeSegmentType::Lin,
+                        },
+                        EnvelopeSegmentInfo {
+                            from: 1.0,
+                            to: 1.0,
+                            time: 1.0,
+                            segment_type: EnvelopeSegmentType::Constant,
+                        },
+                        EnvelopeSegmentInfo {
+                            from: 1.0,
+                            to: 0.0,
+                            time: 0.0,
+                            segment_type: EnvelopeSegmentType::Lin,
+                        },
+                    ],
+                    false,
+                    ValOp::Replace,
+                ),
+            );
 
-        for i in 0..num_blocks {
-            let out1 = env1.process_block(test_block, 0, &Vec::new());
-            let out2 = env2.process_block(test_block, 0, &Vec::new());
+            let num_blocks = 44100 / 512 + 1;
 
-            if i == num_blocks - 1 {
-                for i in 60..80 {
-                    let a = out1[i];
-                    let b = out2[i];
-                    debug_plotter::plot!(a, b where caption = "MultiPointCompare");
+            for i in 0..num_blocks {
+                let out1 = env1.process_block(test_block, 0, &Vec::new());
+                let out2 = env2.process_block(test_block, 0, &Vec::new());
+
+                if i == num_blocks - 1 {
+                    for i in 60..80 {
+                        let a = out1[i];
+                        let b = out2[i];
+                        debug_plotter::plot!(a, b where caption = "MultiPointCompare");
+                    }
                 }
             }
         }
-    }
+        */
 }
