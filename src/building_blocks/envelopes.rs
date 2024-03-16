@@ -13,10 +13,7 @@ pub use crate::building_blocks::envelopes::multi_point_envelope::MultiPointEffec
 mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
-    use crate::building_blocks::{
-        EnvelopeSegmentInfo, EnvelopeSegmentType, MonoEffect, SynthParameterLabel,
-        SynthParameterValue, ValOp,
-    };
+    use crate::building_blocks::{MonoEffect, SynthParameterLabel, SynthParameterValue};
 
     /// test the general workings of the ASREnvelope
     #[test]
