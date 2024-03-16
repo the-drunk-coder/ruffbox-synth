@@ -22,6 +22,7 @@ use crate::building_blocks::{MonoEffect, MonoSource, SynthParameterLabel, SynthP
 
 pub struct KarPlusPlus<const BUFSIZE: usize, const NCHAN: usize> {
     source: Box<dyn MonoSource<BUFSIZE> + Sync + Send>,
+    source_gain: f32,
     fb_delay: MonoDelay<BUFSIZE>,
     waveshaper: Waveshaper<BUFSIZE>,
     post_filter: Box<dyn MonoEffect<BUFSIZE> + Sync + Send>,
@@ -97,6 +98,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> KarPlusPlus<BUFSIZE, NCHAN> {
                 }
                 FilterType::PeakEQ => Box::new(PeakEq::new(1500.0, 100.0, 0.0, samplerate)),
             },
+            source_gain: 1.0,
             waveshaper: Waveshaper::new(),
             envelope,
             balance: PanChan::new(),
@@ -112,8 +114,12 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
     for KarPlusPlus<BUFSIZE, NCHAN>
 {
     fn set_parameter(&mut self, par: SynthParameterAddress, val: &SynthParameterValue) {
-        match par {
-            SynthParameterAddress { label, idx: _ } => match label {
+        let SynthParameterAddress { label, idx } = par;
+
+        if let Some(0) = idx {
+            self.source.set_parameter(label, val);
+        } else {
+            match label {
                 SynthParameterLabel::PitchFrequency => {
                     if let SynthParameterValue::ScalarF32(f) = val {
                         let del_time_samples = self.samplerate / f;
@@ -125,18 +131,22 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
                         );
                     }
                 }
-
+                SynthParameterLabel::OscillatorAmplitude => {
+                    if let SynthParameterValue::ScalarF32(g) = val {
+                        self.source_gain = *g;
+                    }
+                }
                 _ => {}
-            },
+            }
         }
 
-        self.waveshaper.set_parameter(par.label, val);
-        self.envelope.set_parameter(par.label, val);
-        self.balance.set_parameter(par.label, val);
-        self.fb_delay.set_parameter(par.label, val);
-        self.post_filter.set_parameter(par.label, val);
+        self.waveshaper.set_parameter(label, val);
+        self.envelope.set_parameter(label, val);
+        self.balance.set_parameter(label, val);
+        self.fb_delay.set_parameter(label, val);
+        self.post_filter.set_parameter(label, val);
 
-        match par.label {
+        match label {
             SynthParameterLabel::ReverbMix => {
                 if let SynthParameterValue::ScalarF32(r) = val {
                     self.reverb = *r
@@ -153,11 +163,23 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
 
     fn set_modulator(
         &mut self,
-        _: SynthParameterAddress,
-        _: f32,
-        _: crate::building_blocks::Modulator<BUFSIZE>,
+        par: SynthParameterAddress,
+        init: f32,
+        modulator: crate::building_blocks::Modulator<BUFSIZE>,
     ) {
-        // no modulators so far
+        let SynthParameterAddress { label, idx } = par;
+
+        if let Some(0) = idx {
+            self.source.set_modulator(label, init, modulator.clone());
+        } else {
+            self.waveshaper
+                .set_modulator(label, init, modulator.clone());
+            self.envelope.set_modulator(label, init, modulator.clone());
+            self.balance.set_modulator(label, init, modulator.clone());
+            self.fb_delay.set_modulator(label, init, modulator.clone());
+            self.post_filter
+                .set_modulator(label, init, modulator.clone());
+        }
     }
 
     fn finish(&mut self) {
@@ -181,7 +203,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
             if self.burst_len > block_len {
                 self.burst_len -= block_len;
             } else {
-                for i in self.burst_len..BUFSIZE {
+                // cut of burst if needed
+                for i in (start_sample + self.burst_len)..BUFSIZE {
                     bb[i] = 0.0;
                 }
                 self.burst_len = 0;
@@ -194,6 +217,10 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
         let mut out = self
             .fb_delay
             .process_block(burst_block, start_sample, sample_buffers);
+
+        for s in start_sample..BUFSIZE {
+            out[s] *= self.source_gain;
+        }
 
         out = self
             .waveshaper
@@ -217,18 +244,5 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
 
     fn delay_level(&self) -> f32 {
         self.delay
-    }
-
-    fn set_param_or_modulator(
-        &mut self,
-        par: SynthParameterAddress,
-        val_or_mod: crate::building_blocks::ValueOrModulator<BUFSIZE>,
-    ) {
-        match val_or_mod {
-            crate::building_blocks::ValueOrModulator::Val(val) => self.set_parameter(par, &val),
-            crate::building_blocks::ValueOrModulator::Mod(init, modulator) => {
-                self.set_modulator(par, init, modulator)
-            }
-        }
     }
 }
