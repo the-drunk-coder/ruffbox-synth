@@ -5,6 +5,7 @@ pub mod envelopes;
 pub mod filters;
 pub mod interpolation;
 
+pub mod bitcrusher;
 pub mod modulator;
 pub mod oscillators;
 pub mod reverb;
@@ -114,7 +115,10 @@ pub enum SynthParameterLabel {
     Wavematrix,               // 46
     WavematrixTableIndex,     // 47
     WaveshaperMix,            // 48
-    FilterType,
+    FilterType,               // 49
+    BitcrusherMix,            // 50
+    BitcrusherBits,           // 51
+    BitcrusherDownsampling,   // 52
 }
 
 /// the value operation is defined on parameters

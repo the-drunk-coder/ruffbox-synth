@@ -1,3 +1,4 @@
+use crate::building_blocks::bitcrusher::Bitcrusher;
 use crate::building_blocks::envelopes::*;
 use crate::building_blocks::filters::*;
 use crate::building_blocks::routing::PanChan;
@@ -15,6 +16,7 @@ pub struct NChannelSampler<const BUFSIZE: usize, const NCHAN: usize> {
     sampler: MonoSampler<BUFSIZE>,
     envelope: MultiPointEffectEnvelope<BUFSIZE>,
     waveshaper: Waveshaper<BUFSIZE>,
+    bitcrusher: Bitcrusher<BUFSIZE>,
     hpf: Box<dyn MonoEffect<BUFSIZE> + Send + Sync>,
     peak_eq_1: Box<dyn MonoEffect<BUFSIZE> + Send + Sync>,
     peak_eq_2: Box<dyn MonoEffect<BUFSIZE> + Send + Sync>,
@@ -63,6 +65,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> NChannelSampler<BUFSIZE, NCHAN> {
             sampler: MonoSampler::with_bufnum_len(bufnum, buflen, true),
             envelope: env,
             waveshaper: Waveshaper::new(),
+            bitcrusher: Bitcrusher::new(sr),
             hpf: match hpf_type {
                 FilterType::BiquadHpf12dB => Box::new(BiquadHpf12dB::new(20.0, 0.3, sr)),
                 FilterType::BiquadHpf24dB => Box::new(BiquadHpf24dB::new(20.0, 0.3, sr)),
@@ -131,6 +134,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
     fn set_parameter(&mut self, par: SynthParameterAddress, val: &SynthParameterValue) {
         self.sampler.set_parameter(par.label, val);
         self.waveshaper.set_parameter(par.label, val);
+        self.bitcrusher.set_parameter(par.label, val);
         self.hpf.set_parameter(par.label, val);
 
         match par.label {
@@ -178,6 +182,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
         let mut out: [f32; BUFSIZE] = self.sampler.get_next_block(start_sample, sample_buffers);
         out = self
             .waveshaper
+            .process_block(out, start_sample, sample_buffers);
+        out = self
+            .bitcrusher
             .process_block(out, start_sample, sample_buffers);
         out = self.hpf.process_block(out, start_sample, sample_buffers);
         out = self
