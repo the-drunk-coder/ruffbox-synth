@@ -130,6 +130,7 @@ pub enum SynthParameterLabel {
     BitcrusherMix,            // 50
     BitcrusherBits,           // 51
     BitcrusherDownsampling,   // 52
+    BitcrusherMode,           // 53
 }
 
 /// the value operation is defined on parameters
@@ -177,7 +178,8 @@ pub enum SynthParameterValue {
     ScalarUsize(usize),
     VecF32(Vec<f32>),
     FilterType(FilterType), // these aren't really treated as parameters so far, but as a pragmatic solution that's ok for now ...
-    OscillatorType(OscillatorType), // these aren't really treated as parameters so far, but as a pragmatic solution that's ok for now ...    
+    OscillatorType(OscillatorType), // these aren't really treated as parameters so far, but as a pragmatic solution that's ok for now ...
+    BitcrusherMode(BitcrusherMode), // these aren't really treated as parameters so far, but as a pragmatic solution that's ok for now ...
     MatrixF32((usize, usize), Vec<Vec<f32>>), // dimension, content
     // lfo param order - init val, freq, phase, amp, add, operation (mul, add, sub, div, replace)
     Lfo(f32, Box<SynthParameterValue>, f32, Box<SynthParameterValue>, f32, ValOp), // sine lfo
