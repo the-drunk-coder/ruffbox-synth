@@ -1,3 +1,4 @@
+use crate::building_blocks::bitcrusher::Bitcrusher;
 use crate::building_blocks::delay::MonoDelay;
 use crate::building_blocks::envelopes::*;
 use crate::building_blocks::filters::BiquadHpf12dB;
@@ -12,6 +13,7 @@ use crate::building_blocks::filters::PeakEq;
 use crate::building_blocks::oscillators::*;
 use crate::building_blocks::routing::PanChan;
 use crate::building_blocks::waveshaper::Waveshaper;
+use crate::building_blocks::EffectType;
 use crate::building_blocks::EnvelopeSegmentInfo;
 use crate::building_blocks::EnvelopeSegmentType;
 use crate::building_blocks::FilterType;
@@ -19,12 +21,13 @@ use crate::building_blocks::OscillatorType;
 use crate::building_blocks::Synth;
 use crate::building_blocks::SynthParameterAddress;
 use crate::building_blocks::{MonoEffect, MonoSource, SynthParameterLabel, SynthParameterValue};
+use crate::synths::SynthDescription;
 
 pub struct KarPlusPlus<const BUFSIZE: usize, const NCHAN: usize> {
     source: Box<dyn MonoSource<BUFSIZE> + Sync + Send>,
     source_gain: f32,
+    pre_filter_effects: Vec<Box<dyn MonoEffect<BUFSIZE> + Send + Sync>>,
     fb_delay: MonoDelay<BUFSIZE>,
-    waveshaper: Waveshaper<BUFSIZE>,
     post_filter: Box<dyn MonoEffect<BUFSIZE> + Sync + Send>,
     envelope: MultiPointEffectEnvelope<BUFSIZE>,
     balance: PanChan<BUFSIZE, NCHAN>,
@@ -35,12 +38,7 @@ pub struct KarPlusPlus<const BUFSIZE: usize, const NCHAN: usize> {
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> KarPlusPlus<BUFSIZE, NCHAN> {
-    pub fn new(
-        source_type: OscillatorType,
-        delay_filter_type: FilterType,
-        post_filter_type: FilterType,
-        samplerate: f32,
-    ) -> Self {
+    pub fn new(desc: SynthDescription, samplerate: f32) -> Self {
         // assemble a default ASR envelope ...
         let env_segments = vec![
             EnvelopeSegmentInfo {
@@ -65,9 +63,25 @@ impl<const BUFSIZE: usize, const NCHAN: usize> KarPlusPlus<BUFSIZE, NCHAN> {
 
         let envelope = MultiPointEffectEnvelope::new(env_segments, false, samplerate);
 
+        // fixed filter order for now ...
+        let post_filter_type = desc.filters.first().unwrap_or(&FilterType::BiquadHpf12dB);
+        let delay_filter_type = desc.filters.get(1).unwrap_or(&FilterType::Dummy);
+
+        let mut pre_filter_effects: Vec<Box<dyn MonoEffect<BUFSIZE> + Sync + Send>> = Vec::new();
+        for ef in desc.pre_filter_effects.into_iter() {
+            match ef {
+                EffectType::Bitcrusher(m) => pre_filter_effects.push(Box::new(Bitcrusher::new(m))),
+                EffectType::Waveshaper => pre_filter_effects.push(Box::new(Waveshaper::new())),
+            }
+        }
+
         KarPlusPlus {
-            fb_delay: MonoDelay::with_filter_type(samplerate, delay_filter_type),
-            source: match source_type {
+            fb_delay: MonoDelay::with_filter_type(samplerate, *delay_filter_type),
+            source: match desc
+                .oscillator_types
+                .first()
+                .unwrap_or(&OscillatorType::WhiteNoise)
+            {
                 OscillatorType::Sine => Box::new(SineOsc::new(440.0, 0.5, samplerate)),
                 OscillatorType::LFTri => Box::new(LFTri::new(440.0, 0.5, samplerate)),
                 OscillatorType::LFSquare => Box::new(LFSquare::new(440.0, 0.5, 0.5, samplerate)),
@@ -83,6 +97,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> KarPlusPlus<BUFSIZE, NCHAN> {
                 OscillatorType::WhiteNoise => Box::new(WhiteNoise::new(0.2)),
                 OscillatorType::BrownNoise => Box::new(BrownNoise::new(0.2, 0.125)),
             },
+            pre_filter_effects,
             post_filter: match post_filter_type {
                 FilterType::Dummy => Box::new(DummyFilter::new()),
                 FilterType::Lpf18 => Box::new(Lpf18::new(1500.0, 0.5, 0.1, samplerate)),
@@ -91,15 +106,14 @@ impl<const BUFSIZE: usize, const NCHAN: usize> KarPlusPlus<BUFSIZE, NCHAN> {
                 FilterType::BiquadHpf12dB => Box::new(BiquadHpf12dB::new(1500.0, 0.5, samplerate)),
                 FilterType::BiquadHpf24dB => Box::new(BiquadHpf24dB::new(1500.0, 0.5, samplerate)),
                 FilterType::ButterworthLpf(order) => {
-                    Box::new(ButterworthLpf::new(1500.0, order, samplerate))
+                    Box::new(ButterworthLpf::new(1500.0, *order, samplerate))
                 }
                 FilterType::ButterworthHpf(order) => {
-                    Box::new(ButterworthHpf::new(1500.0, order, samplerate))
+                    Box::new(ButterworthHpf::new(1500.0, *order, samplerate))
                 }
                 FilterType::PeakEQ => Box::new(PeakEq::new(1500.0, 100.0, 0.0, samplerate)),
             },
             source_gain: 1.0,
-            waveshaper: Waveshaper::new(),
             envelope,
             balance: PanChan::new(),
             reverb: 0.0,
@@ -140,7 +154,10 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
             }
         }
 
-        self.waveshaper.set_parameter(label, val);
+        for ef in self.pre_filter_effects.iter_mut() {
+            ef.set_parameter(label, val);
+        }
+
         self.envelope.set_parameter(label, val);
         self.balance.set_parameter(label, val);
         self.fb_delay.set_parameter(label, val);
@@ -172,8 +189,10 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
         if let Some(0) = idx {
             self.source.set_modulator(label, init, modulator.clone());
         } else {
-            self.waveshaper
-                .set_modulator(label, init, modulator.clone());
+            for ef in self.pre_filter_effects.iter_mut() {
+                ef.set_modulator(label, init, modulator.clone());
+            }
+
             self.envelope.set_modulator(label, init, modulator.clone());
             self.balance.set_modulator(label, init, modulator.clone());
             self.fb_delay.set_modulator(label, init, modulator.clone());
@@ -222,9 +241,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
             out[s] *= self.source_gain;
         }
 
-        out = self
-            .waveshaper
-            .process_block(out, start_sample, sample_buffers);
+        for ef in self.pre_filter_effects.iter_mut() {
+            out = ef.process_block(out, start_sample, sample_buffers)
+        }
 
         out = self
             .post_filter

@@ -112,32 +112,21 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
         Some(PreparedInstance {
             sr: self.samplerate,
             ev: match src_type {
-                SynthType::KarPlusPlus(osc_type, del_filter_type, post_filter_type) => {
-                    ScheduledEvent::new(
-                        timestamp,
-                        ScheduledSource::Channel(Box::new(KarPlusPlus::new(
-                            osc_type,
-                            del_filter_type,
-                            post_filter_type,
-                            self.samplerate,
-                        ))),
-                    )
-                }
-                SynthType::SingleOscillator(osc_type, lp_type, hp_type) => ScheduledEvent::new(
+                SynthType::KarPlusPlus(desc) => ScheduledEvent::new(
+                    timestamp,
+                    ScheduledSource::Channel(Box::new(KarPlusPlus::new(desc, self.samplerate))),
+                ),
+                SynthType::SingleOscillator(desc) => ScheduledEvent::new(
                     timestamp,
                     ScheduledSource::Channel(Box::new(SingleOscillatorSynth::new(
-                        osc_type,
-                        lp_type,
-                        hp_type,
+                        desc,
                         self.samplerate,
                     ))),
                 ),
-                SynthType::MultiOscillator(osc_types, lp_type, hp_type) => ScheduledEvent::new(
+                SynthType::MultiOscillator(desc) => ScheduledEvent::new(
                     timestamp,
                     ScheduledSource::Channel(Box::new(MultiOscillatorSynth::new(
-                        osc_types,
-                        lp_type,
-                        hp_type,
+                        desc,
                         self.samplerate,
                     ))),
                 ),
@@ -145,69 +134,55 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
                     timestamp,
                     ScheduledSource::Channel(Box::new(RissetBell::new(self.samplerate))),
                 ),
-                SynthType::Sampler(hpf_type, pf1_type, pf2_type, lpf_type) => ScheduledEvent::new(
+                SynthType::Sampler(desc) => ScheduledEvent::new(
                     timestamp,
                     // insert the right sampler type
                     match *self.buffer_types.get(&sample_buf).unwrap() {
                         BufferType::Mono => {
-                            ScheduledSource::Channel(Box::new(NChannelSampler::with_bufnum_len(
+                            ScheduledSource::Channel(Box::new(NChannelSampler::new(
+                                desc,
                                 sample_buf,
                                 *self.buffer_lengths.get(&sample_buf).unwrap(),
-                                hpf_type,
-                                pf1_type,
-                                pf2_type,
-                                lpf_type,
                                 self.samplerate,
                             )))
                         }
-                        BufferType::Stereo => ScheduledSource::Channel(Box::new(
-                            NChannelStereoSampler::with_bufnum_len(
+                        BufferType::Stereo => {
+                            ScheduledSource::Channel(Box::new(NChannelStereoSampler::new(
+                                desc,
                                 sample_buf,
                                 *self.buffer_lengths.get(&sample_buf).unwrap(),
-                                hpf_type,
-                                pf1_type,
-                                pf2_type,
-                                lpf_type,
                                 self.samplerate,
-                            ),
-                        )),
+                            )))
+                        }
                     },
                 ),
-                SynthType::AmbisonicSampler(hpf_type, pf1_type, pf2_type, lpf_type) => {
+                SynthType::AmbisonicSampler(desc) => {
                     ScheduledEvent::new(
                         timestamp,
                         // insert the right sampler type
                         // only mono sources are spatialized to ambisonic so far ...
                         match *self.buffer_types.get(&sample_buf).unwrap() {
-                            BufferType::Mono => ScheduledSource::Ambi(Box::new(
-                                AmbisonicSamplerO1::with_bufnum_len(
+                            BufferType::Mono => {
+                                ScheduledSource::Ambi(Box::new(AmbisonicSamplerO1::new(
+                                    desc,
                                     sample_buf,
                                     *self.buffer_lengths.get(&sample_buf).unwrap(),
-                                    hpf_type,
-                                    pf1_type,
-                                    pf2_type,
-                                    lpf_type,
                                     self.samplerate,
-                                ),
-                            )),
+                                )))
+                            }
                             // just ignore for now ...
-                            BufferType::Stereo => ScheduledSource::Channel(Box::new(
-                                NChannelStereoSampler::with_bufnum_len(
+                            BufferType::Stereo => {
+                                ScheduledSource::Channel(Box::new(NChannelStereoSampler::new(
+                                    desc,
                                     sample_buf,
                                     *self.buffer_lengths.get(&sample_buf).unwrap(),
-                                    hpf_type,
-                                    pf1_type,
-                                    pf2_type,
-                                    lpf_type,
                                     self.samplerate,
-                                ),
-                            )),
+                                )))
+                            }
                         },
                     )
                 }
-                SynthType::LiveSampler(hpf_type, pf1_type, pf2_type, lpf_type)
-                    if self.num_live_buffers > 0 =>
-                {
+                SynthType::LiveSampler(desc) if self.num_live_buffers > 0 => {
                     let final_bufnum = if sample_buf < self.num_live_buffers {
                         sample_buf
                     } else {
@@ -215,20 +190,15 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
                     };
                     ScheduledEvent::new(
                         timestamp,
-                        ScheduledSource::Channel(Box::new(NChannelSampler::with_bufnum_len(
+                        ScheduledSource::Channel(Box::new(NChannelSampler::new(
+                            desc,
                             final_bufnum,
                             *self.buffer_lengths.get(&final_bufnum).unwrap(),
-                            hpf_type,
-                            pf1_type,
-                            pf2_type,
-                            lpf_type,
                             self.samplerate,
                         ))),
                     )
                 }
-                SynthType::FrozenSampler(hpf_type, pf1_type, pf2_type, lpf_type)
-                    if self.num_freeze_buffers > 0 =>
-                {
+                SynthType::FrozenSampler(desc) if self.num_freeze_buffers > 0 => {
                     let final_bufnum = if sample_buf < self.num_freeze_buffers {
                         sample_buf + self.freeze_buffer_offset
                     } else {
@@ -236,13 +206,10 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
                     };
                     ScheduledEvent::new(
                         timestamp,
-                        ScheduledSource::Channel(Box::new(NChannelSampler::with_bufnum_len(
+                        ScheduledSource::Channel(Box::new(NChannelSampler::new(
+                            desc,
                             final_bufnum,
                             *self.buffer_lengths.get(&final_bufnum).unwrap(),
-                            hpf_type,
-                            pf1_type,
-                            pf2_type,
-                            lpf_type,
                             self.samplerate,
                         ))),
                     )

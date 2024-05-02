@@ -1,18 +1,21 @@
+use crate::building_blocks::bitcrusher::Bitcrusher;
 use crate::building_blocks::envelopes::*;
 use crate::building_blocks::filters::*;
 use crate::building_blocks::oscillators::*;
 use crate::building_blocks::routing::PanChan;
+use crate::building_blocks::EffectType;
 use crate::building_blocks::SynthParameterAddress;
 use crate::building_blocks::{
     waveshaper::Waveshaper, EnvelopeSegmentInfo, EnvelopeSegmentType, FilterType, Modulator,
     MonoEffect, MonoSource, OscillatorType, SampleBuffer, Synth, SynthParameterLabel,
     SynthParameterValue,
 };
+use crate::synths::SynthDescription;
 
 /// a triangle synth with envelope etc.
 pub struct MultiOscillatorSynth<const BUFSIZE: usize, const NCHAN: usize> {
     oscillators: Vec<Box<dyn MonoSource<BUFSIZE> + Sync + Send>>,
-    waveshaper: Waveshaper<BUFSIZE>,
+    pre_filter_effects: Vec<Box<dyn MonoEffect<BUFSIZE> + Send + Sync>>,
     lp_filter: Box<dyn MonoEffect<BUFSIZE> + Sync + Send>,
     hp_filter: Box<dyn MonoEffect<BUFSIZE> + Sync + Send>,
     envelope: MultiPointEffectEnvelope<BUFSIZE>,
@@ -22,12 +25,7 @@ pub struct MultiOscillatorSynth<const BUFSIZE: usize, const NCHAN: usize> {
 }
 
 impl<const BUFSIZE: usize, const NCHAN: usize> MultiOscillatorSynth<BUFSIZE, NCHAN> {
-    pub fn new(
-        osc_types: Vec<OscillatorType>,
-        lpf_type: FilterType,
-        hpf_type: FilterType,
-        sr: f32,
-    ) -> Self {
+    pub fn new(desc: SynthDescription, sr: f32) -> Self {
         // assemble a default ASR envelope ...
         let env_segments = vec![
             EnvelopeSegmentInfo {
@@ -51,7 +49,20 @@ impl<const BUFSIZE: usize, const NCHAN: usize> MultiOscillatorSynth<BUFSIZE, NCH
         ];
 
         let envelope = MultiPointEffectEnvelope::new(env_segments, false, sr);
-        let oscillators: Vec<Box<dyn MonoSource<BUFSIZE> + Send + Sync>> = osc_types
+
+        let lpf_type = desc.filters.first().unwrap_or(&FilterType::Lpf18);
+        let hpf_type = desc.filters.get(1).unwrap_or(&FilterType::BiquadHpf12dB);
+
+        let mut pre_filter_effects: Vec<Box<dyn MonoEffect<BUFSIZE> + Sync + Send>> = Vec::new();
+        for ef in desc.pre_filter_effects.into_iter() {
+            match ef {
+                EffectType::Bitcrusher(m) => pre_filter_effects.push(Box::new(Bitcrusher::new(m))),
+                EffectType::Waveshaper => pre_filter_effects.push(Box::new(Waveshaper::new())),
+            }
+        }
+
+        let oscillators: Vec<Box<dyn MonoSource<BUFSIZE> + Send + Sync>> = desc
+            .oscillator_types
             .iter()
             .map(|x| {
                 let y: Box<dyn MonoSource<BUFSIZE> + Send + Sync> = match x {
@@ -76,14 +87,14 @@ impl<const BUFSIZE: usize, const NCHAN: usize> MultiOscillatorSynth<BUFSIZE, NCH
 
         MultiOscillatorSynth {
             oscillators,
-            waveshaper: Waveshaper::new(),
+            pre_filter_effects,
             lp_filter: match lpf_type {
                 FilterType::Dummy => Box::new(DummyFilter::new()),
                 FilterType::Lpf18 => Box::new(Lpf18::new(1500.0, 0.5, 0.1, sr)),
                 FilterType::BiquadLpf12dB => Box::new(BiquadLpf12dB::new(1500.0, 0.5, sr)),
                 FilterType::BiquadLpf24dB => Box::new(BiquadLpf24dB::new(1500.0, 0.5, sr)),
                 FilterType::ButterworthLpf(order) => {
-                    Box::new(ButterworthLpf::new(1500.0, order, sr))
+                    Box::new(ButterworthLpf::new(1500.0, *order, sr))
                 }
                 FilterType::PeakEQ => Box::new(PeakEq::new(1500.0, 100.0, 0.0, sr)),
                 _ => Box::new(Lpf18::new(1500.0, 0.5, 0.1, sr)),
@@ -92,7 +103,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> MultiOscillatorSynth<BUFSIZE, NCH
                 FilterType::Dummy => Box::new(DummyFilter::new()),
                 FilterType::BiquadHpf12dB => Box::new(BiquadHpf12dB::new(20.0, 0.5, sr)),
                 FilterType::BiquadHpf24dB => Box::new(BiquadHpf24dB::new(20.0, 0.5, sr)),
-                FilterType::ButterworthHpf(order) => Box::new(ButterworthHpf::new(20.0, order, sr)),
+                FilterType::ButterworthHpf(order) => {
+                    Box::new(ButterworthHpf::new(20.0, *order, sr))
+                }
                 FilterType::PeakEQ => Box::new(PeakEq::new(500.0, 100.0, 0.0, sr)),
                 _ => Box::new(BiquadHpf12dB::new(1500.0, 0.5, sr)),
             },
@@ -131,6 +144,10 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
             _ => {}
         }
 
+        for ef in self.pre_filter_effects.iter_mut() {
+            ef.set_modulator(par.label, init, modulator.clone());
+        }
+
         self.lp_filter
             .set_modulator(par.label, init, modulator.clone());
         self.hp_filter
@@ -158,7 +175,11 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
             }
             _ => {}
         }
-        self.waveshaper.set_parameter(par.label, val);
+
+        for ef in self.pre_filter_effects.iter_mut() {
+            ef.set_parameter(par.label, val);
+        }
+
         self.lp_filter.set_parameter(par.label, val);
         self.hp_filter.set_parameter(par.label, val);
         self.envelope.set_parameter(par.label, val);
@@ -199,9 +220,10 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
             }
         }
 
-        out = self
-            .waveshaper
-            .process_block(out, start_sample, sample_buffers);
+        for ef in self.pre_filter_effects.iter_mut() {
+            out = ef.process_block(out, start_sample, sample_buffers)
+        }
+
         out = self
             .lp_filter
             .process_block(out, start_sample, sample_buffers);

@@ -16,6 +16,8 @@ pub mod waveshaper;
 pub use crate::building_blocks::envelopes::source_env::*;
 pub use crate::building_blocks::modulator::Modulator;
 
+use self::bitcrusher::BitcrusherMode;
+
 /// currently available oscillator types
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
@@ -50,6 +52,15 @@ pub enum FilterType {
     ButterworthLpf(usize),
     ButterworthHpf(usize),
     PeakEQ,
+}
+
+/// the available effect types.
+#[repr(C)]
+#[derive(Clone, Copy, Debug)]
+pub enum EffectType {
+    Bitcrusher(BitcrusherMode),
+    Waveshaper,
+    // that's it for the moment, reverb and delays are on the master bus ...
 }
 
 /// used to determine whether something has finished

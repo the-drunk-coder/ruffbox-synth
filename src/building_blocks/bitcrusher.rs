@@ -24,13 +24,13 @@ pub struct Bitcrusher<const BUFSIZE: usize> {
 }
 
 impl<const BUFSIZE: usize> Bitcrusher<BUFSIZE> {
-    pub fn new(_sr: f32) -> Self {
+    pub fn new(mode: BitcrusherMode) -> Self {
         Bitcrusher {
             mix: 0.0,
             bits: 32,
             stages: f32::powf(2.0, 31.0),
             update_every: 1,
-            mode: BitcrusherMode::Cast,
+            mode,
         }
     }
 }

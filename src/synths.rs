@@ -10,16 +10,29 @@ pub use crate::synths::n_channel::single_oscillator_synth::SingleOscillatorSynth
 // ambisonic synths
 pub use crate::synths::ambisonic::ambisonic_sampler_o1::AmbisonicSamplerO1;
 
-use crate::building_blocks::{FilterType, OscillatorType};
+use crate::building_blocks::{EffectType, FilterType, OscillatorType};
+
+/// parts to assemble a synth
+#[repr(C)]
+pub struct SynthDescription {
+    /// effects before the filter ...
+    pub pre_filter_effects: Vec<EffectType>,
+
+    /// filter chain (keeping these apart for now ...)
+    pub filters: Vec<FilterType>,
+
+    /// leave empty if not needed ...
+    pub oscillator_types: Vec<OscillatorType>,
+}
 
 #[repr(C)]
 pub enum SynthType {
-    Sampler(FilterType, FilterType, FilterType, FilterType),
-    AmbisonicSampler(FilterType, FilterType, FilterType, FilterType),
-    LiveSampler(FilterType, FilterType, FilterType, FilterType),
-    FrozenSampler(FilterType, FilterType, FilterType, FilterType),
-    SingleOscillator(OscillatorType, FilterType, FilterType),
-    MultiOscillator(Vec<OscillatorType>, FilterType, FilterType),
-    KarPlusPlus(OscillatorType, FilterType, FilterType),
+    Sampler(SynthDescription),
+    AmbisonicSampler(SynthDescription),
+    LiveSampler(SynthDescription),
+    FrozenSampler(SynthDescription),
+    SingleOscillator(SynthDescription),
+    MultiOscillator(SynthDescription),
+    KarPlusPlus(SynthDescription),
     RissetBell,
 }
