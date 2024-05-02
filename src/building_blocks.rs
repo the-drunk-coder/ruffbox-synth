@@ -56,7 +56,7 @@ pub enum FilterType {
 
 /// the available effect types.
 #[repr(C)]
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum EffectType {
     Bitcrusher(BitcrusherMode),
     Waveshaper,

@@ -3,7 +3,7 @@ use crate::building_blocks::{
 };
 
 #[repr(C)]
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 /// different modes for the bitcrusher effect
 pub enum BitcrusherMode {
     Cast,  // quantize by casting to i32
@@ -26,7 +26,7 @@ pub struct Bitcrusher<const BUFSIZE: usize> {
 impl<const BUFSIZE: usize> Bitcrusher<BUFSIZE> {
     pub fn new(mode: BitcrusherMode) -> Self {
         Bitcrusher {
-            mix: 0.0,
+            mix: 1.0,
             bits: 32,
             stages: f32::powf(2.0, 31.0),
             update_every: 1,
@@ -81,7 +81,11 @@ impl<const BUFSIZE: usize> MonoEffect<BUFSIZE> for Bitcrusher<BUFSIZE> {
 
             if self.bits >= 32 {
                 for (i, x) in block.iter().enumerate() {
-                    out_block[i] = *x;
+                    if i % self.update_every == 0 {
+                        out_block[i] = *x;
+                    } else {
+                        out_block[i] = out_block[i - 1];
+                    }
                 }
             } else {
                 match self.mode {
