@@ -3,7 +3,6 @@ use crate::building_blocks::{
 };
 
 use std::f32::consts::PI;
-//use std::f32::consts::FRAC_PI_2;
 
 /**
  * A non-optimized BLIT implementation, following the stilson&smith paper,
@@ -52,6 +51,19 @@ impl<const BUFSIZE: usize> NaiveBlitOsc<BUFSIZE> {
         } else {
             self.m = 2.0 * self.num_harm.floor() + 1.0; // number of harmonics is always odd
         }
+    }
+}
+
+#[inline(always)]
+// phase already includes the pi multiplication
+// this isn't quite the sinc_m function from the paper,
+// but this one works and the other one doesn't??
+fn sinc_ish_m(phase: f32, m: f32) -> f32 {
+    let den_f = phase.sin();
+    if den_f < f32::EPSILON {
+        1.0 // avoid division by zero, value approaches 1 in this case
+    } else {
+        (phase * m).sin() / (m * den_f)
     }
 }
 
@@ -115,15 +127,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for NaiveBlitOsc<BUFSIZE> {
         // the (M/P) factor is reversed to produce a normalized signal
 
         for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
-            // sin(pi * x)
-            let denominator_factor = self.phase.sin();
-
-            // avoid division by zero when the sine value approaches 0
-            *current_sample = if denominator_factor <= f32::EPSILON {
-                1.0
-            } else {
-                (self.m * self.phase).sin() / (self.m * denominator_factor)
-            } * self.amp;
+            *current_sample = sinc_ish_m(self.phase, self.m) * self.amp;
 
             // keep phase in [-PI;PI]
             self.phase += self.phase_inc;
