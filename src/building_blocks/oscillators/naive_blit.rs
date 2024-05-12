@@ -50,7 +50,7 @@ impl<const BUFSIZE: usize> NaiveBlitOsc<BUFSIZE> {
         if self.num_harm == 0.0 {
             self.m = 2.0 * max_harmonics + 1.0; // number of harmonics is always odd
         } else {
-            self.m = 2.0 * self.num_harm + 1.0; // number of harmonics is always odd
+            self.m = 2.0 * self.num_harm.floor() + 1.0; // number of harmonics is always odd
         }
     }
 }
