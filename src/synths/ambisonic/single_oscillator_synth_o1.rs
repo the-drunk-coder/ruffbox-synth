@@ -8,6 +8,8 @@ use crate::building_blocks::{
     SampleBuffer, Synth, SynthParameterLabel, SynthParameterValue,
 };
 
+use self::naive_blit::NaiveBlitOsc;
+
 /// a triangle synth with envelope etc.
 pub struct SingleOscillatorSynthO1<const BUFSIZE: usize> {
     oscillator: Box<dyn MonoSource<BUFSIZE> + Sync + Send>,
@@ -43,6 +45,7 @@ impl<const BUFSIZE: usize> SingleOscillatorSynthO1<BUFSIZE> {
                 OscillatorType::Wavematrix => Box::new(Wavematrix::new(sr)),
                 OscillatorType::WhiteNoise => Box::new(WhiteNoise::new(0.2)),
                 OscillatorType::BrownNoise => Box::new(BrownNoise::new(0.2, 0.125)),
+                OscillatorType::NaiveBlit => Box::new(NaiveBlitOsc::new(440.0, 0.5, sr)),
             },
             waveshaper: Waveshaper::new(),
             lp_filter: match lpf_type {

@@ -12,6 +12,8 @@ use crate::building_blocks::{
 };
 use crate::synths::SynthDescription;
 
+use self::naive_blit::NaiveBlitOsc;
+
 /// a triangle synth with envelope etc.
 pub struct SingleOscillatorSynth<const BUFSIZE: usize, const NCHAN: usize> {
     oscillator: Box<dyn MonoSource<BUFSIZE> + Sync + Send>,
@@ -81,6 +83,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> SingleOscillatorSynth<BUFSIZE, NC
                 OscillatorType::Wavematrix => Box::new(Wavematrix::new(sr)),
                 OscillatorType::WhiteNoise => Box::new(WhiteNoise::new(0.2)),
                 OscillatorType::BrownNoise => Box::new(BrownNoise::new(0.2, 0.125)),
+                OscillatorType::NaiveBlit => Box::new(NaiveBlitOsc::new(440.0, 0.5, sr)),
             },
             pre_filter_effects,
             lp_filter: match lpf_type {

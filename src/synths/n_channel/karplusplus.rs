@@ -23,6 +23,8 @@ use crate::building_blocks::SynthParameterAddress;
 use crate::building_blocks::{MonoEffect, MonoSource, SynthParameterLabel, SynthParameterValue};
 use crate::synths::SynthDescription;
 
+use self::naive_blit::NaiveBlitOsc;
+
 pub struct KarPlusPlus<const BUFSIZE: usize, const NCHAN: usize> {
     source: Box<dyn MonoSource<BUFSIZE> + Sync + Send>,
     source_gain: f32,
@@ -96,6 +98,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> KarPlusPlus<BUFSIZE, NCHAN> {
                 OscillatorType::Wavematrix => Box::new(Wavematrix::new(samplerate)),
                 OscillatorType::WhiteNoise => Box::new(WhiteNoise::new(0.2)),
                 OscillatorType::BrownNoise => Box::new(BrownNoise::new(0.2, 0.125)),
+                OscillatorType::NaiveBlit => Box::new(NaiveBlitOsc::new(440.0, 0.5, samplerate)),
             },
             pre_filter_effects,
             post_filter: match post_filter_type {

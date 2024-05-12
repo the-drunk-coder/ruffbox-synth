@@ -36,6 +36,7 @@ pub enum OscillatorType {
     Wavematrix,
     WhiteNoise,
     BrownNoise,
+    NaiveBlit,
 }
 
 /// the available filter types.
@@ -131,6 +132,7 @@ pub enum SynthParameterLabel {
     BitcrusherBits,           // 51
     BitcrusherDownsampling,   // 52
     BitcrusherMode,           // 53
+    NumHarmonics,             // 54
 }
 
 /// the value operation is defined on parameters

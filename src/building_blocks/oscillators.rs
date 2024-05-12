@@ -9,6 +9,7 @@ pub mod lf_rsaw;
 pub mod lf_saw;
 pub mod lf_square;
 pub mod lf_tri;
+pub mod naive_blit;
 pub mod sine_osc;
 pub mod wavematrix;
 pub mod wavetable;
