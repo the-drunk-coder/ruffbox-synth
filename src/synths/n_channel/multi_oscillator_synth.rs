@@ -166,6 +166,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> Synth<BUFSIZE, NCHAN>
             | SynthParameterLabel::OscillatorPhaseEffective
             | SynthParameterLabel::OscillatorPhaseRelative
             | SynthParameterLabel::PitchFrequency
+            | SynthParameterLabel::NumHarmonics
             | SynthParameterLabel::Pulsewidth
             | SynthParameterLabel::WavematrixTableIndex
             | SynthParameterLabel::Wavetable

@@ -41,7 +41,7 @@ impl<const BUFSIZE: usize> NaiveBlitOsc<BUFSIZE> {
             phase_inc: PI / p,
             p,
             sr,
-	    freq_mod: None,
+            freq_mod: None,
         }
     }
 
@@ -57,7 +57,7 @@ impl<const BUFSIZE: usize> NaiveBlitOsc<BUFSIZE> {
     }
 
     fn set_frequency(&mut self, freq: f32) {
-	self.freq = freq;
+        self.freq = freq;
         self.p = self.sr / freq;
         self.phase_inc = PI / self.p;
         self.update_harmonics();
@@ -86,11 +86,11 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for NaiveBlitOsc<BUFSIZE> {
         init: f32,
         modulator: Modulator<BUFSIZE>,
     ) {
-	match par {
+        match par {
             SynthParameterLabel::PitchFrequency => {
                 self.freq = init;
                 self.freq_mod = Some(modulator);
-            }            
+            }
             _ => {}
         }
     }
@@ -139,37 +139,40 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for NaiveBlitOsc<BUFSIZE> {
         // p = sr / freq
         // with the phase, which is incremented by PI/p
         // the (M/P) factor is reversed to produce a normalized signal
-	if self.freq_mod.is_some() {
-	   let freq_buf =
+        if self.freq_mod.is_some() {
+            let freq_buf =
                 self.freq_mod
                     .as_mut()
                     .unwrap()
-                .process(self.amp, start_sample, in_buffers);
+                    .process(self.amp, start_sample, in_buffers);
 
-	    for (i, current_sample) in out_buf.iter_mut().take(BUFSIZE).skip(start_sample).enumerate() {
+            for (i, current_sample) in out_buf
+                .iter_mut()
+                .take(BUFSIZE)
+                .skip(start_sample)
+                .enumerate()
+            {
+                self.set_frequency(freq_buf[i]);
+                *current_sample = sinc_ish_m(self.phase, self.m) * self.amp;
 
-		self.set_frequency(freq_buf[i]);
-		*current_sample = sinc_ish_m(self.phase, self.m) * self.amp;
-		
-		// keep phase in [-PI;PI]
-		self.phase += self.phase_inc;
-		if self.phase >= PI {
+                // keep phase in [-PI;PI]
+                self.phase += self.phase_inc;
+                if self.phase >= PI {
                     self.phase -= PI;
-		}
+                }
             }
+        } else {
+            for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
+                *current_sample = sinc_ish_m(self.phase, self.m) * self.amp;
 
-	} else {
-	    for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
-		*current_sample = sinc_ish_m(self.phase, self.m) * self.amp;
-
-		// keep phase in [-PI;PI]
-		self.phase += self.phase_inc;
-		if self.phase >= PI {
+                // keep phase in [-PI;PI]
+                self.phase += self.phase_inc;
+                if self.phase >= PI {
                     self.phase -= PI;
-		}
+                }
             }
-	}
-		     
+        }
+
         out_buf
     }
 }
