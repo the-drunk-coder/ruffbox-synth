@@ -52,8 +52,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> MultiOscillatorSynth<BUFSIZE, NCH
 
         let envelope = MultiPointEffectEnvelope::new(env_segments, false, sr);
 
-        let lpf_type = desc.filters.first().unwrap_or(&FilterType::Lpf18);
-        let hpf_type = desc.filters.get(1).unwrap_or(&FilterType::BiquadHpf12dB);
+        let hpf_type = desc.filters.first().unwrap_or(&FilterType::Lpf18);
+        let lpf_type = desc.filters.get(1).unwrap_or(&FilterType::BiquadHpf12dB);
 
         let mut pre_filter_effects: Vec<Box<dyn MonoEffect<BUFSIZE> + Sync + Send>> = Vec::new();
         for ef in desc.pre_filter_effects.into_iter() {
