@@ -25,6 +25,8 @@ pub struct NaiveBlitOsc<const BUFSIZE: usize> {
     phase_inc: f32,
     p: f32,
     sr: f32,
+
+    freq_mod: Option<Modulator<BUFSIZE>>, // currently allows modulating frequency ..
 }
 
 impl<const BUFSIZE: usize> NaiveBlitOsc<BUFSIZE> {
@@ -39,6 +41,7 @@ impl<const BUFSIZE: usize> NaiveBlitOsc<BUFSIZE> {
             phase_inc: PI / p,
             p,
             sr,
+	    freq_mod: None,
         }
     }
 
@@ -51,6 +54,13 @@ impl<const BUFSIZE: usize> NaiveBlitOsc<BUFSIZE> {
         } else {
             self.m = 2.0 * self.num_harm.floor() + 1.0; // number of harmonics is always odd
         }
+    }
+
+    fn set_frequency(&mut self, freq: f32) {
+	self.freq = freq;
+        self.p = self.sr / freq;
+        self.phase_inc = PI / self.p;
+        self.update_harmonics();
     }
 }
 
@@ -72,20 +82,24 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for NaiveBlitOsc<BUFSIZE> {
 
     fn set_modulator(
         &mut self,
-        _par: SynthParameterLabel,
-        _init: f32,
-        _modulator: Modulator<BUFSIZE>,
+        par: SynthParameterLabel,
+        init: f32,
+        modulator: Modulator<BUFSIZE>,
     ) {
+	match par {
+            SynthParameterLabel::PitchFrequency => {
+                self.freq = init;
+                self.freq_mod = Some(modulator);
+            }            
+            _ => {}
+        }
     }
     // some parameter limits might be nice ...
     fn set_parameter(&mut self, par: SynthParameterLabel, value: &SynthParameterValue) {
         match par {
             SynthParameterLabel::PitchFrequency => {
                 if let SynthParameterValue::ScalarF32(f) = value {
-                    self.freq = *f;
-                    self.p = self.sr / *f;
-                    self.phase_inc = PI / self.p;
-                    self.update_harmonics();
+                    self.set_frequency(*f);
                 }
             }
             SynthParameterLabel::NumHarmonics => {
@@ -114,7 +128,7 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for NaiveBlitOsc<BUFSIZE> {
     fn get_next_block(
         &mut self,
         start_sample: usize,
-        _in_buffers: &[SampleBuffer],
+        in_buffers: &[SampleBuffer],
     ) -> [f32; BUFSIZE] {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
@@ -125,17 +139,37 @@ impl<const BUFSIZE: usize> MonoSource<BUFSIZE> for NaiveBlitOsc<BUFSIZE> {
         // p = sr / freq
         // with the phase, which is incremented by PI/p
         // the (M/P) factor is reversed to produce a normalized signal
+	if self.freq_mod.is_some() {
+	   let freq_buf =
+                self.freq_mod
+                    .as_mut()
+                    .unwrap()
+                .process(self.amp, start_sample, in_buffers);
 
-        for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
-            *current_sample = sinc_ish_m(self.phase, self.m) * self.amp;
+	    for (i, current_sample) in out_buf.iter_mut().take(BUFSIZE).skip(start_sample).enumerate() {
 
-            // keep phase in [-PI;PI]
-            self.phase += self.phase_inc;
-            if self.phase >= PI {
-                self.phase -= PI;
+		self.set_frequency(freq_buf[i]);
+		*current_sample = sinc_ish_m(self.phase, self.m) * self.amp;
+		
+		// keep phase in [-PI;PI]
+		self.phase += self.phase_inc;
+		if self.phase >= PI {
+                    self.phase -= PI;
+		}
             }
-        }
 
+	} else {
+	    for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
+		*current_sample = sinc_ish_m(self.phase, self.m) * self.amp;
+
+		// keep phase in [-PI;PI]
+		self.phase += self.phase_inc;
+		if self.phase >= PI {
+                    self.phase -= PI;
+		}
+            }
+	}
+		     
         out_buf
     }
 }
