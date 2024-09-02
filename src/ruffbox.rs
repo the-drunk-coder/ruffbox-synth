@@ -114,6 +114,7 @@ pub(crate) enum ControlMessage<const BUFSIZE: usize, const NCHAN: usize> {
     SetGlobalParamOrModulator(SynthParameterLabel, ValueOrModulator<BUFSIZE>),
     ScheduleEvent(ScheduledEvent<BUFSIZE, NCHAN>),
     FreezeBuffer(usize, usize),
+    FreezeAddBuffer(usize, usize),
 }
 
 /// before loading, analyze how many samples you want to load,

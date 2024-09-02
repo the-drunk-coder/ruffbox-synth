@@ -254,6 +254,17 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
             .unwrap();
     }
 
+    /// transfer contents of live buffer to freeze buffer
+    pub fn freeze_add_buffer(&self, freezbuf: usize, inbuf: usize) {
+        // acutal buffer numbers are calculated here ...
+        self.control_q_send
+            .send(ControlMessage::FreezeAddBuffer(
+                freezbuf + self.freeze_buffer_offset,
+                inbuf,
+            ))
+            .unwrap();
+    }
+
     /// Loads a mono sample and returns the assigned buffer number.
     ///
     /// Resample to current samplerate if necessary and specified.
