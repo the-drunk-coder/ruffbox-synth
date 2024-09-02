@@ -194,6 +194,7 @@ pub enum SynthParameterValue {
     ExpRamp(f32, f32, f32, ValOp), // exponential ramp - from, to, time,
     EnvelopeSegmentType(EnvelopeSegmentType),
     MultiPointEnvelope(Vec<EnvelopeSegmentInfo>, bool, ValOp), // segments, loop ...
+    Symbolic(String)
 }
 
 // but in practice, it's not that easy ...
