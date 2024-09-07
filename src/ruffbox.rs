@@ -173,7 +173,7 @@ mod tests {
     use crate::building_blocks::{
         EnvelopeSegmentInfo, EnvelopeSegmentType, FilterType, OscillatorType, ValOp,
     };
-    use crate::synths::SynthType;
+    use crate::synths::{SynthDescription, SynthType};
     use std::f32::consts::PI;
 
     #[test]
@@ -269,7 +269,11 @@ mod tests {
             init_ruffbox::<128, 2>(0, 2.0, &ReverbMode::FreeVerb, 44100.0, 3000, 10, false);
 
         if let Some(mut inst) = ctrl.prepare_instance(
-            SynthType::SingleOscillator(OscillatorType::Sine, FilterType::Dummy, FilterType::Dummy),
+            SynthType::SingleOscillator(SynthDescription {
+                pre_filter_effects: vec![],
+                filters: vec![FilterType::Dummy, FilterType::Dummy],
+                oscillator_types: vec![OscillatorType::Sine],
+            }),
             0.0,
             0,
         ) {
@@ -345,12 +349,16 @@ mod tests {
         ruff.process(0.0, true);
 
         if let Some(mut inst_1) = ctrl.prepare_instance(
-            SynthType::Sampler(
-                FilterType::BiquadHpf12dB,
-                FilterType::Dummy,
-                FilterType::Dummy,
-                FilterType::Lpf18,
-            ),
+            SynthType::Sampler(SynthDescription {
+                pre_filter_effects: vec![],
+                filters: vec![
+                    FilterType::BiquadHpf12dB,
+                    FilterType::Dummy,
+                    FilterType::Dummy,
+                    FilterType::Lpf18,
+                ],
+                oscillator_types: vec![],
+            }),
             0.0,
             bnum1,
         ) {
@@ -402,12 +410,16 @@ mod tests {
             ctrl.trigger(inst_1);
         }
         if let Some(mut inst_2) = ctrl.prepare_instance(
-            SynthType::Sampler(
-                FilterType::BiquadHpf12dB,
-                FilterType::Dummy,
-                FilterType::Dummy,
-                FilterType::Lpf18,
-            ),
+            SynthType::Sampler(SynthDescription {
+                pre_filter_effects: vec![],
+                filters: vec![
+                    FilterType::BiquadHpf12dB,
+                    FilterType::Dummy,
+                    FilterType::Dummy,
+                    FilterType::Lpf18,
+                ],
+                oscillator_types: vec![],
+            }),
             0.0,
             bnum2,
         ) {
@@ -482,12 +494,16 @@ mod tests {
         ruff.process(0.0, true);
 
         if let Some(mut inst_1) = ctrl.prepare_instance(
-            SynthType::Sampler(
-                FilterType::BiquadHpf12dB,
-                FilterType::Dummy,
-                FilterType::Dummy,
-                FilterType::Lpf18,
-            ),
+            SynthType::Sampler(SynthDescription {
+                pre_filter_effects: vec![],
+                filters: vec![
+                    FilterType::BiquadHpf12dB,
+                    FilterType::Dummy,
+                    FilterType::Dummy,
+                    FilterType::Lpf18,
+                ],
+                oscillator_types: vec![],
+            }),
             0.0,
             bnum1,
         ) {
@@ -567,12 +583,16 @@ mod tests {
         let bnum2 = ctrl.load_mono_sample(&mut sample2, false, 44100.0);
 
         if let Some(mut inst_1) = ctrl.prepare_instance(
-            SynthType::Sampler(
-                FilterType::BiquadHpf12dB,
-                FilterType::Dummy,
-                FilterType::Dummy,
-                FilterType::Lpf18,
-            ),
+            SynthType::Sampler(SynthDescription {
+                pre_filter_effects: vec![],
+                filters: vec![
+                    FilterType::BiquadHpf12dB,
+                    FilterType::Dummy,
+                    FilterType::Dummy,
+                    FilterType::Lpf18,
+                ],
+                oscillator_types: vec![],
+            }),
             0.291,
             bnum1,
         ) {
@@ -612,12 +632,16 @@ mod tests {
         }
 
         if let Some(mut inst_2) = ctrl.prepare_instance(
-            SynthType::Sampler(
-                FilterType::BiquadHpf12dB,
-                FilterType::Dummy,
-                FilterType::Dummy,
-                FilterType::Lpf18,
-            ),
+            SynthType::Sampler(SynthDescription {
+                pre_filter_effects: vec![],
+                filters: vec![
+                    FilterType::BiquadHpf12dB,
+                    FilterType::Dummy,
+                    FilterType::Dummy,
+                    FilterType::Lpf18,
+                ],
+                oscillator_types: vec![],
+            }),
             0.291,
             bnum2,
         ) {
@@ -688,12 +712,16 @@ mod tests {
         let bnum2 = ctrl.load_mono_sample(&mut sample2, false, 44100.0);
 
         if let Some(mut inst_1) = ctrl.prepare_instance(
-            SynthType::Sampler(
-                FilterType::BiquadHpf12dB,
-                FilterType::Dummy,
-                FilterType::Dummy,
-                FilterType::Lpf18,
-            ),
+            SynthType::Sampler(SynthDescription {
+                pre_filter_effects: vec![],
+                filters: vec![
+                    FilterType::BiquadHpf12dB,
+                    FilterType::Dummy,
+                    FilterType::Dummy,
+                    FilterType::Lpf18,
+                ],
+                oscillator_types: vec![],
+            }),
             0.291,
             bnum1,
         ) {
@@ -732,12 +760,16 @@ mod tests {
         }
 
         if let Some(mut inst_2) = ctrl.prepare_instance(
-            SynthType::Sampler(
-                FilterType::BiquadHpf12dB,
-                FilterType::Dummy,
-                FilterType::Dummy,
-                FilterType::Lpf18,
-            ),
+            SynthType::Sampler(SynthDescription {
+                pre_filter_effects: vec![],
+                filters: vec![
+                    FilterType::BiquadHpf12dB,
+                    FilterType::Dummy,
+                    FilterType::Dummy,
+                    FilterType::Lpf18,
+                ],
+                oscillator_types: vec![],
+            }),
             0.291 + (4.0 * sec_per_sample),
             bnum2,
         ) {
@@ -823,12 +855,16 @@ mod tests {
         let second_sample_timestamp = 0.291 + (10.0 * block_duration);
 
         if let Some(mut inst_1) = ctrl.prepare_instance(
-            SynthType::Sampler(
-                FilterType::Dummy,
-                FilterType::Dummy,
-                FilterType::Dummy,
-                FilterType::Dummy,
-            ),
+            SynthType::Sampler(SynthDescription {
+                pre_filter_effects: vec![],
+                filters: vec![
+                    FilterType::Dummy,
+                    FilterType::Dummy,
+                    FilterType::Dummy,
+                    FilterType::Dummy,
+                ],
+                oscillator_types: vec![],
+            }),
             0.291,
             bnum1,
         ) {
@@ -855,12 +891,16 @@ mod tests {
             ctrl.trigger(inst_1);
         }
         if let Some(mut inst_2) = ctrl.prepare_instance(
-            SynthType::Sampler(
-                FilterType::Dummy,
-                FilterType::Dummy,
-                FilterType::Dummy,
-                FilterType::Dummy,
-            ),
+            SynthType::Sampler(SynthDescription {
+                pre_filter_effects: vec![],
+                filters: vec![
+                    FilterType::Dummy,
+                    FilterType::Dummy,
+                    FilterType::Dummy,
+                    FilterType::Dummy,
+                ],
+                oscillator_types: vec![],
+            }),
             second_sample_timestamp,
             bnum2,
         ) {
@@ -928,12 +968,16 @@ mod tests {
         ruff.process(0.0, false);
 
         if let Some(mut inst_1) = ctrl.prepare_instance(
-            SynthType::Sampler(
-                FilterType::BiquadHpf12dB,
-                FilterType::Dummy,
-                FilterType::Dummy,
-                FilterType::Lpf18,
-            ),
+            SynthType::Sampler(SynthDescription {
+                pre_filter_effects: vec![],
+                filters: vec![
+                    FilterType::BiquadHpf12dB,
+                    FilterType::Dummy,
+                    FilterType::Dummy,
+                    FilterType::Lpf18,
+                ],
+                oscillator_types: vec![],
+            }),
             0.1,
             bnum1,
         ) {
@@ -985,7 +1029,7 @@ mod tests {
 mod memory_tests {
     use super::*;
     use crate::building_blocks::{EnvelopeSegmentInfo, EnvelopeSegmentType, FilterType, ValOp};
-    use crate::synths::SynthType;
+    use crate::synths::{SynthDescription, SynthType};
     use assert_no_alloc::*;
 
     #[cfg(debug_assertions)] // required when disable_release is set (default)
@@ -1006,12 +1050,16 @@ mod memory_tests {
         ruff.process(0.0, true);
 
         if let Some(mut inst_1) = ctrl.prepare_instance(
-            SynthType::Sampler(
-                FilterType::BiquadHpf12dB,
-                FilterType::Dummy,
-                FilterType::Dummy,
-                FilterType::Lpf18,
-            ),
+            SynthType::Sampler(SynthDescription {
+                pre_filter_effects: vec![],
+                filters: vec![
+                    FilterType::BiquadHpf12dB,
+                    FilterType::Dummy,
+                    FilterType::Dummy,
+                    FilterType::Lpf18,
+                ],
+                oscillator_types: vec![],
+            }),
             0.0,
             bnum1,
         ) {
@@ -1063,12 +1111,16 @@ mod memory_tests {
             ctrl.trigger(inst_1);
         }
         if let Some(mut inst_2) = ctrl.prepare_instance(
-            SynthType::Sampler(
-                FilterType::BiquadHpf12dB,
-                FilterType::Dummy,
-                FilterType::Dummy,
-                FilterType::Lpf18,
-            ),
+            SynthType::Sampler(SynthDescription {
+                pre_filter_effects: vec![],
+                filters: vec![
+                    FilterType::BiquadHpf12dB,
+                    FilterType::Dummy,
+                    FilterType::Dummy,
+                    FilterType::Lpf18,
+                ],
+                oscillator_types: vec![],
+            }),
             0.0,
             bnum2,
         ) {
