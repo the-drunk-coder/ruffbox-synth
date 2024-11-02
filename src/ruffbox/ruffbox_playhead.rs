@@ -17,7 +17,7 @@ use crate::ruffbox::ScheduledSource;
 
 pub(crate) struct LiveBufferMetadata<const BUFSIZE: usize> {
     live_buffer_idx: usize,
-    pub(crate) stitch_buffer_incoming: Vec<f32>,
+    //pub(crate) stitch_buffer_incoming: Vec<f32>,
     pub(crate) stitch_buffer_previous: Vec<f32>,
     accum_buf: [f32; BUFSIZE],
     accum_buf_idx: usize,
@@ -147,8 +147,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
             // one stitch buffer per live buffer
             for _ in 0..live_buffers {
                 live_buffer_metadata.push(LiveBufferMetadata {
-                    live_buffer_idx: 1,
-                    stitch_buffer_incoming: vec![0.0; stitch_size],
+                    live_buffer_idx: 2, // let room for interpolation
+                    //stitch_buffer_incoming: vec![0.0; stitch_size],
                     stitch_buffer_previous: vec![0.0; stitch_size],
                     accum_buf: [0.0; BUFSIZE],
                     accum_buf_idx: 0,
@@ -191,119 +191,85 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
         self.ambisonic_binaural = Some(AmbisonicBinaural::new(self.samplerate));
     }
 
-    pub fn write_samples_to_live_buffer(&mut self, bufnum: usize, samples: [f32; BUFSIZE]) {
+    pub fn write_samples_to_live_buffer(&mut self, bufnum: usize) {
         // so far we only allow writing to a mono buffer, one input at a time
         if let Some(SampleBuffer::Mono(buf)) = self.buffers.get_mut(bufnum) {
+            // WITHOUT interpolation samples
             let buflen = self.buffer_lengths[bufnum];
             let bufidx = self.live_buffer_metadata[bufnum].live_buffer_idx;
 
-            // the easiest case ...
-            if bufidx > self.stitch_size && bufidx + BUFSIZE <= buflen {
-                // first, reconstruct ...
-                buf[bufidx - self.stitch_size..bufidx]
-                    .copy_from_slice(&self.live_buffer_metadata[bufnum].stitch_buffer_incoming);
+            // make sure bufidx is always bigger than 1 and smaller than
+            // buflen + 2
 
-                // keep for later (incoming)
-                self.live_buffer_metadata[bufnum]
-                    .stitch_buffer_incoming
-                    .copy_from_slice(&samples[BUFSIZE - self.stitch_size..BUFSIZE]);
-
-                let stx_l = bufidx + BUFSIZE - self.stitch_size;
-                let stx_u = bufidx + BUFSIZE;
-
-                // keep for later (previous)
-                self.live_buffer_metadata[bufnum]
-                    .stitch_buffer_previous
-                    .copy_from_slice(&buf[stx_l..stx_u]);
-
-                // fill in the bulk
-                buf[bufidx..stx_l].copy_from_slice(&samples[0..BUFSIZE - self.stitch_size]);
-
-                // crossfade stitch zone
-                for i in 0..self.stitch_size {
-                    let gain = self.fade_curve[i];
-                    buf[stx_l + i] = self.live_buffer_metadata[bufnum].stitch_buffer_previous[i]
-                        * (1.0 - gain)
-                        + self.live_buffer_metadata[bufnum].stitch_buffer_incoming[i] * gain;
-                }
-
-                self.live_buffer_metadata[bufnum].live_buffer_idx += BUFSIZE;
+            // calculate start point, keeping interpolation samples in mind
+            let tmp_idx = bufidx - 2; // index is >= 2, always (interpolation)
+            let mut cur_idx = if tmp_idx >= self.stitch_size {
+                bufidx - self.stitch_size
             } else {
-                // first, reconstruct ...
-                let mut rev_idx = if bufidx > 0 { bufidx } else { buflen };
+                let tmp = self.stitch_size - tmp_idx;
+                (buflen - tmp) + 2 // add interp. samples
+            };
 
-                for i in (0..self.stitch_size).rev() {
-                    buf[rev_idx] = self.live_buffer_metadata[bufnum].stitch_buffer_incoming[i];
-                    rev_idx -= 1;
-                    if rev_idx == 0 {
-                        rev_idx = buflen;
-                    }
+            /*
+            assert!(cur_idx >= 2);
+            assert!(
+                cur_idx - 2 < buflen,
+                "cur {cur_idx} len {buflen} tmp {tmp_idx}"
+            );*/
+
+            for i in 0..self.stitch_size {
+                buf[cur_idx] = self.live_buffer_metadata[bufnum].stitch_buffer_previous[i];
+                cur_idx += 1;
+                // flip if necessary
+                if cur_idx - 2 >= buflen {
+                    //println!("FLIP 1");
+                    cur_idx = 2;
                 }
-
-                // keep for later (incoming)
-                self.live_buffer_metadata[bufnum]
-                    .stitch_buffer_incoming
-                    .copy_from_slice(&samples[BUFSIZE - self.stitch_size..BUFSIZE]);
-
-                // keep for later (previous)
-                let stx_l = bufidx + BUFSIZE - self.stitch_size;
-                // include buflen index because we have
-                // an offset of 1 for interpolation
-                let mut fwd_idx = if stx_l > buflen {
-                    stx_l - buflen
-                } else {
-                    stx_l
-                };
-
-                for i in 0..self.stitch_size {
-                    self.live_buffer_metadata[bufnum].stitch_buffer_previous[i] = buf[fwd_idx];
-                    fwd_idx += 1;
-                    if fwd_idx > buflen {
-                        fwd_idx = 1;
-                    }
-                }
-
-                // fill in the bulk
-                // include buflen index because we have
-                // an offset of 1 for interpolation
-                fwd_idx = if bufidx > buflen {
-                    bufidx - buflen
-                } else {
-                    bufidx
-                };
-                for i in 0..BUFSIZE - self.stitch_size {
-                    buf[fwd_idx] = samples[i];
-                    fwd_idx += 1;
-                    // include buflen index because we have
-                    // an offset of 1 for interpolation
-                    if fwd_idx > buflen {
-                        fwd_idx = 1;
-                    }
-                }
-
-                // crossfade stitch zone
-                // include buflen index because we have
-                // an offset of 1 for interpolation
-                fwd_idx = if stx_l > buflen {
-                    stx_l - buflen
-                } else {
-                    stx_l
-                };
-
-                for i in 0..self.stitch_size {
-                    let gain = self.fade_curve[i];
-                    buf[fwd_idx] = self.live_buffer_metadata[bufnum].stitch_buffer_previous[i]
-                        * (1.0 - gain)
-                        + self.live_buffer_metadata[bufnum].stitch_buffer_incoming[i] * gain;
-
-                    fwd_idx += 1;
-                    if fwd_idx > buflen {
-                        fwd_idx = 1;
-                    }
-                }
-
-                self.live_buffer_metadata[bufnum].live_buffer_idx = fwd_idx;
             }
+
+            //assert!(cur_idx >= 2);
+            //assert!(cur_idx - 2 < buflen);
+
+            // back to where we were ...
+            //assert!(cur_idx == bufidx, "curid {cur_idx} bufid {bufidx}");
+
+            let buf_head = BUFSIZE - self.stitch_size;
+
+            for i in 0..buf_head {
+                buf[cur_idx] = self.live_buffer_metadata[bufnum].accum_buf[i];
+                cur_idx += 1;
+                // flip if necessary
+                if cur_idx - 2 >= buflen {
+                    //println!("FLIP 2");
+                    cur_idx = 2;
+                }
+            }
+
+            //assert!(cur_idx >= 2);
+            //assert!(cur_idx - 2 < buflen);
+
+            // keep for later
+            for i in buf_head..BUFSIZE {
+                self.live_buffer_metadata[bufnum].stitch_buffer_previous[i - buf_head] =
+                    self.live_buffer_metadata[bufnum].accum_buf[i]
+            }
+
+            for i in 0..self.stitch_size {
+                let gain = self.fade_curve[i];
+                buf[cur_idx] = buf[cur_idx] * gain
+                    + self.live_buffer_metadata[bufnum].accum_buf[buf_head + i] * (1.0 - gain);
+                cur_idx += 1;
+                // flip if necessary
+                if cur_idx - 2 >= buflen {
+                    //println!("FLIP 3");
+                    cur_idx = 2;
+                }
+            }
+
+            //assert!(cur_idx >= 2);
+            //assert!(cur_idx - 2 < buflen);
+
+            self.live_buffer_metadata[bufnum].live_buffer_idx = cur_idx;
         }
     }
 
@@ -312,7 +278,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
         self.live_buffer_metadata[bufnum].accum_buf[idx] = sample;
         idx += 1;
         if idx == BUFSIZE {
-            self.write_samples_to_live_buffer(bufnum, self.live_buffer_metadata[bufnum].accum_buf);
+            self.write_samples_to_live_buffer(bufnum);
             self.live_buffer_metadata[bufnum].accum_buf_idx = 0;
         } else {
             self.live_buffer_metadata[bufnum].accum_buf_idx = idx;

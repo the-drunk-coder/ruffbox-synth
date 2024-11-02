@@ -58,6 +58,9 @@ impl<const BUFSIZE: usize> MonoSampler<BUFSIZE> {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
         if let SampleBuffer::Mono(buf) = &sample_buffers[self.bufnum] {
             for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
+                //assert!(self.phase >= 2);
+                //assert!(self.phase - 2 < self.buflen);
+
                 *current_sample = buf[self.phase] * self.amp;
 
                 // include buflen idx as we start counting at 2 due to interpolation
@@ -85,6 +88,9 @@ impl<const BUFSIZE: usize> MonoSampler<BUFSIZE> {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
         if let SampleBuffer::Mono(buf) = &sample_buffers[self.bufnum] {
             for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
+                //assert!(self.phase >= 2);
+                //assert!(self.phase - 2 < self.buflen);
+
                 *current_sample = buf[self.phase] * self.amp;
 
                 // include buflen idx as we start counting at 2 due to interpolation
@@ -111,6 +117,12 @@ impl<const BUFSIZE: usize> MonoSampler<BUFSIZE> {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
         if let SampleBuffer::Mono(buf) = &sample_buffers[self.bufnum] {
             for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
+                //assert!(self.phase >= 2);
+                //assert!(self.phase - 2 < self.buflen);
+
+                //assert!(self.frac_phase >= 2.0);
+                //assert!(self.frac_phase - 2.0 < self.buflen as f64);
+
                 // get sample:
                 let idx = self.frac_phase.floor();
                 let frac = self.frac_phase - idx;
@@ -129,7 +141,7 @@ impl<const BUFSIZE: usize> MonoSampler<BUFSIZE> {
                 self.frac_phase += self.frac_phase_increment;
 
                 // include buflen idx as we start counting at 1 due to interpolation
-                if self.repeat && self.frac_phase.floor() > self.buflen_plus_one_f64 {
+                if self.repeat && self.frac_phase.floor() >= self.buflen_plus_one_f64 {
                     // again, start counting at two (at some point i should use the correct fraction here ...)
                     self.frac_phase = 2.0;
                     self.phase = 2;
@@ -150,6 +162,9 @@ impl<const BUFSIZE: usize> MonoSampler<BUFSIZE> {
         let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
         if let SampleBuffer::Mono(buf) = &sample_buffers[self.bufnum] {
             for current_sample in out_buf.iter_mut().take(BUFSIZE).skip(start_sample) {
+                //assert!(self.phase >= 2);
+                //assert!(self.phase - 2 < self.buflen);
+
                 // get sample:
                 let idx = self.frac_phase.ceil();
                 let frac = idx - self.frac_phase;
@@ -168,7 +183,7 @@ impl<const BUFSIZE: usize> MonoSampler<BUFSIZE> {
                 self.frac_phase += self.frac_phase_increment;
 
                 // mind the buffer padding here ...
-                if self.repeat && self.frac_phase.ceil() < 2.0 {
+                if self.repeat && self.frac_phase.ceil() <= 2.0 {
                     self.frac_phase = self.buflen_plus_one_f64;
                     self.phase = self.buflen_plus_one;
                 } else {
@@ -241,10 +256,10 @@ impl<const BUFSIZE: usize> MonoSampler<BUFSIZE> {
 
                 self.frac_phase += self.frac_phase_increment;
 
-                if self.repeat && self.frac_phase.floor() > self.buflen_plus_one_f64 {
+                if self.repeat && self.frac_phase.floor() >= self.buflen_plus_one_f64 {
                     self.frac_phase = 2.0;
                     self.phase = 2;
-                } else if self.repeat && self.frac_phase.ceil() < 2.0 {
+                } else if self.repeat && self.frac_phase.ceil() <= 2.0 {
                     self.frac_phase = self.buflen_plus_one_f64;
                     self.phase = self.buflen_plus_one;
                 } else {
