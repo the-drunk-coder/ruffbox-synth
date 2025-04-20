@@ -377,7 +377,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
                 ControlMessage::FreezeBuffer(fb, ib) => {
                     // start at one to account for interpolation sample.
                     if let Ok([SampleBuffer::Mono(inbuf), SampleBuffer::Mono(freezbuf)]) =
-                        self.buffers.get_many_mut([ib, fb])
+                        self.buffers.get_disjoint_mut([ib, fb])
                     {
                         freezbuf[1..(self.buffer_lengths[ib] + 1)]
                             .copy_from_slice(&inbuf[1..(self.buffer_lengths[ib] + 1)]);
@@ -386,7 +386,7 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
                 ControlMessage::FreezeAddBuffer(fb, ib) => {
                     // start at one to account for interpolation sample.
                     if let Ok([SampleBuffer::Mono(inbuf), SampleBuffer::Mono(freezbuf)]) =
-                        self.buffers.get_many_mut([ib, fb])
+                        self.buffers.get_disjoint_mut([ib, fb])
                     {
                         for i in 1..(self.buffer_lengths[ib] + 1) {
                             freezbuf[i] += inbuf[i];
