@@ -15,12 +15,20 @@ use crate::ruffbox::{ControlMessage, ReverbMode, ScheduledEvent};
 
 use crate::ruffbox::ScheduledSource;
 
+pub(crate) struct FreezeAfterRec {
+    freeze_buffer_number: usize, // freeze to after recording
+    freeze_after: usize,         // the number of samples to be recorded
+    recorded: usize,             // the number of samples recorded
+    add: bool,                   // if true, add, if false, overwrite
+}
+
 pub(crate) struct LiveBufferMetadata<const BUFSIZE: usize> {
     live_buffer_idx: usize,
     //pub(crate) stitch_buffer_incoming: Vec<f32>,
     pub(crate) stitch_buffer_previous: Vec<f32>,
     accum_buf: [f32; BUFSIZE],
     accum_buf_idx: usize,
+    freeze_after_recs: Vec<FreezeAfterRec>,
 }
 
 /// ambisonic binaural module (order 1 for now)
@@ -152,14 +160,15 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
                     stitch_buffer_previous: vec![0.0; stitch_size],
                     accum_buf: [0.0; BUFSIZE],
                     accum_buf_idx: 0,
+                    freeze_after_recs: Vec::with_capacity(100),
                 });
             }
             // create live buffers and freeze buffers
             for b in 0..live_buffers + freeze_buffers {
+                let buflen_norinterp = (samplerate * live_buffer_time) as usize;
                 // two interpolation samples in each direction ...
-                buffers[b] =
-                    SampleBuffer::Mono(vec![0.0; (samplerate * live_buffer_time) as usize + 4]);
-                buffer_lengths[b] = (samplerate * live_buffer_time) as usize;
+                buffers[b] = SampleBuffer::Mono(vec![0.0; buflen_norinterp + 4]);
+                buffer_lengths[b] = buflen_norinterp;
             }
 
             println!("live buf time samples: {}", buffer_lengths[0]);
@@ -270,6 +279,13 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
             //assert!(cur_idx - 2 < buflen);
 
             self.live_buffer_metadata[bufnum].live_buffer_idx = cur_idx;
+            // update freeze-after-recs
+            for far in self.live_buffer_metadata[bufnum]
+                .freeze_after_recs
+                .iter_mut()
+            {
+                far.recorded += BUFSIZE;
+            }
         }
     }
 
@@ -379,8 +395,8 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
                     if let Ok([SampleBuffer::Mono(inbuf), SampleBuffer::Mono(freezbuf)]) =
                         self.buffers.get_disjoint_mut([ib, fb])
                     {
-                        freezbuf[1..(self.buffer_lengths[ib] + 1)]
-                            .copy_from_slice(&inbuf[1..(self.buffer_lengths[ib] + 1)]);
+                        freezbuf[2..(self.buffer_lengths[ib] + 2)]
+                            .copy_from_slice(&inbuf[2..(self.buffer_lengths[ib] + 2)]);
                     }
                 }
                 ControlMessage::FreezeAddBuffer(fb, ib) => {
@@ -388,12 +404,80 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
                     if let Ok([SampleBuffer::Mono(inbuf), SampleBuffer::Mono(freezbuf)]) =
                         self.buffers.get_disjoint_mut([ib, fb])
                     {
-                        for i in 1..(self.buffer_lengths[ib] + 1) {
+                        for i in 2..(self.buffer_lengths[ib] + 2) {
                             freezbuf[i] += inbuf[i];
                         }
                     }
                 }
+                ControlMessage::FreezeAfterRec(fb, ib, num_samples, add) => {
+                    // just checking ... don't need the actual data ...
+                    if let Ok([SampleBuffer::Mono(_), SampleBuffer::Mono(_)]) =
+                        self.buffers.get_disjoint_mut([ib, fb])
+                    {
+                        self.live_buffer_metadata[ib]
+                            .freeze_after_recs
+                            .push(FreezeAfterRec {
+                                freeze_buffer_number: fb,
+                                freeze_after: num_samples,
+                                recorded: 0,
+                                add,
+                            });
+                    }
+                }
             }
+        }
+
+        // check synced freezes ...
+        for (bufnum, lbm) in self.live_buffer_metadata.iter_mut().enumerate() {
+            for far in lbm.freeze_after_recs.iter() {
+                //println!("{}", far.recorded);
+                if far.recorded >= far.freeze_after {
+                    // freeze the number of recorded samples, copy to beginning of freezebuffer
+                    if let Ok([SampleBuffer::Mono(inbuf), SampleBuffer::Mono(freezbuf)]) = self
+                        .buffers
+                        .get_disjoint_mut([bufnum, far.freeze_buffer_number])
+                    {
+                        if lbm.live_buffer_idx - 1 >= far.freeze_after {
+                            let ib_offset = (lbm.live_buffer_idx - far.freeze_after) + 1;
+                            if far.add {
+                                for i in 0..far.freeze_after {
+                                    freezbuf[i + 2] += inbuf[ib_offset + i];
+                                }
+                            } else {
+                                for i in 0..far.freeze_after {
+                                    freezbuf[i + 2] = inbuf[ib_offset + i];
+                                }
+                            }
+                        } else {
+                            // always the same story ...
+                            let buflen = self.buffer_lengths[bufnum];
+
+                            let mut tmp_lbi =
+                                buflen - (far.freeze_after - (lbm.live_buffer_idx - 1)) + 2;
+                            if far.add {
+                                for i in 0..far.freeze_after {
+                                    freezbuf[i + 2] += inbuf[tmp_lbi];
+                                    tmp_lbi += 1;
+                                    if tmp_lbi - 2 >= buflen {
+                                        tmp_lbi = 2;
+                                    }
+                                }
+                            } else {
+                                for i in 0..far.freeze_after {
+                                    freezbuf[i + 2] = inbuf[tmp_lbi];
+                                    tmp_lbi += 1;
+                                    if tmp_lbi - 2 >= buflen {
+                                        tmp_lbi = 2;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            // purge the ones that are donw ...
+            lbm.freeze_after_recs
+                .retain(|far| far.recorded < far.freeze_after);
         }
 
         // handle already running instances

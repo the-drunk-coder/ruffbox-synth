@@ -115,6 +115,7 @@ pub(crate) enum ControlMessage<const BUFSIZE: usize, const NCHAN: usize> {
     ScheduleEvent(ScheduledEvent<BUFSIZE, NCHAN>),
     FreezeBuffer(usize, usize),
     FreezeAddBuffer(usize, usize),
+    FreezeAfterRec(usize, usize, usize, bool),
 }
 
 /// before loading, analyze how many samples you want to load,
