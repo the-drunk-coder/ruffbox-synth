@@ -68,6 +68,9 @@ pub struct RuffboxPlayhead<const BUFSIZE: usize, const NCHAN: usize> {
     stitch_size: usize,
     pub(crate) fade_curve: Vec<f32>, // crate public for test
     pub(crate) live_buffer_metadata: Vec<LiveBufferMetadata<BUFSIZE>>,
+    freeze_buffer_offset: usize,
+    num_live_buffers: usize,
+    num_freeze_buffers: usize,
     samplerate: f32,
     control_q_rec: crossbeam::channel::Receiver<ControlMessage<BUFSIZE, NCHAN>>,
     block_duration: f64,
@@ -192,6 +195,9 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
             now: Arc::clone(now),
             master_reverb: rev,
             master_delay: MultichannelDelay::new(samplerate as f32),
+            freeze_buffer_offset: live_buffers,
+            num_live_buffers: live_buffers,
+            num_freeze_buffers: freeze_buffers,
         }
     }
 
@@ -337,6 +343,85 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxPlayhead<BUFSIZE, NCHAN> {
 
         for cm in self.control_q_rec.try_iter() {
             match cm {
+                ControlMessage::ClearAllFreezeBuffers => {
+                    for i in self.freeze_buffer_offset
+                        ..self.freeze_buffer_offset + self.num_freeze_buffers
+                    {
+                        if let Some(freezbuf) = self.buffers.get_mut(i) {
+                            match freezbuf {
+                                SampleBuffer::Mono(buf) => {
+                                    buf.fill(0.0);
+                                }
+                                SampleBuffer::Stereo(buf_l, buf_r) => {
+                                    buf_l.fill(0.0);
+                                    buf_r.fill(0.0);
+                                }
+                                SampleBuffer::Placeholder => { /* no-op */ }
+                            }
+                        }
+                    }
+                }
+                ControlMessage::ClearAllLiveBuffers => {
+                    for i in 0..self.num_live_buffers {
+                        if let Some(livebuf) = self.buffers.get_mut(i) {
+                            match livebuf {
+                                SampleBuffer::Mono(buf) => {
+                                    buf.fill(0.0);
+                                }
+                                SampleBuffer::Stereo(buf_l, buf_r) => {
+                                    buf_l.fill(0.0);
+                                    buf_r.fill(0.0);
+                                }
+                                SampleBuffer::Placeholder => { /* no-op */ }
+                            }
+                        }
+                    }
+                }
+                ControlMessage::ClearAllBuffers => {
+                    for i in 0..self.freeze_buffer_offset + self.num_freeze_buffers {
+                        if let Some(xbuf) = self.buffers.get_mut(i) {
+                            match xbuf {
+                                SampleBuffer::Mono(buf) => {
+                                    buf.fill(0.0);
+                                }
+                                SampleBuffer::Stereo(buf_l, buf_r) => {
+                                    buf_l.fill(0.0);
+                                    buf_r.fill(0.0);
+                                }
+                                SampleBuffer::Placeholder => { /* no-op */ }
+                            }
+                        }
+                    }
+                }
+                ControlMessage::ClearLiveBuffer(bufnum) => {
+                    if let Some(livebuf) = self.buffers.get_mut(bufnum) {
+                        match livebuf {
+                            SampleBuffer::Mono(buf) => {
+                                buf.fill(0.0);
+                            }
+                            SampleBuffer::Stereo(buf_l, buf_r) => {
+                                buf_l.fill(0.0);
+                                buf_r.fill(0.0);
+                            }
+                            SampleBuffer::Placeholder => { /* no-op */ }
+                        }
+                    }
+                }
+                ControlMessage::ClearFreezeBuffer(bufnum) => {
+                    if let Some(freezbuf) = self.buffers.get_mut(self.freeze_buffer_offset + bufnum)
+                    {
+                        match freezbuf {
+                            SampleBuffer::Mono(buf) => {
+                                buf.fill(0.0);
+                            }
+                            SampleBuffer::Stereo(buf_l, buf_r) => {
+                                buf_l.fill(0.0);
+                                buf_r.fill(0.0);
+                            }
+                            SampleBuffer::Placeholder => { /* no-op */ }
+                        }
+                    }
+                }
                 ControlMessage::SetGlobalParamOrModulator(par, val) => {
                     // BAD CLONE in audio thread, but it should happen only very rarely ...
                     self.master_reverb.set_param_or_modulator(par, val.clone());

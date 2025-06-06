@@ -230,6 +230,36 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
             .unwrap();
     }
 
+    pub fn clear_all_buffers(&self) {
+        self.control_q_send
+            .send(ControlMessage::ClearAllBuffers)
+            .unwrap();
+    }
+
+    pub fn clear_all_live_buffers(&self) {
+        self.control_q_send
+            .send(ControlMessage::ClearAllLiveBuffers)
+            .unwrap();
+    }
+
+    pub fn clear_all_freeze_buffers(&self) {
+        self.control_q_send
+            .send(ControlMessage::ClearAllFreezeBuffers)
+            .unwrap();
+    }
+
+    pub fn clear_live_buffers(&self, bufnum: usize) {
+        self.control_q_send
+            .send(ControlMessage::ClearLiveBuffer(bufnum))
+            .unwrap();
+    }
+
+    pub fn clear_freeze_buffers(&self, bufnum: usize) {
+        self.control_q_send
+            .send(ControlMessage::ClearFreezeBuffer(bufnum))
+            .unwrap();
+    }
+
     /// triggers a synth for buffer reference or a synth
     pub fn trigger(&self, instance: PreparedInstance<BUFSIZE, NCHAN>) {
         self.control_q_send

@@ -116,6 +116,11 @@ pub(crate) enum ControlMessage<const BUFSIZE: usize, const NCHAN: usize> {
     FreezeBuffer(usize, usize),
     FreezeAddBuffer(usize, usize),
     FreezeAfterRec(usize, usize, usize, bool),
+    ClearLiveBuffer(usize),
+    ClearFreezeBuffer(usize),
+    ClearAllFreezeBuffers,
+    ClearAllLiveBuffers,
+    ClearAllBuffers, // only live and freeze buffers, not sample buffers
 }
 
 /// before loading, analyze how many samples you want to load,
