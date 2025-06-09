@@ -133,8 +133,6 @@ pub enum SynthParameterLabel {
     BitcrusherDownsampling,   // 52
     BitcrusherMode,           // 53
     NumHarmonics,             // 54
-    NoteArticulation,         // 55 - only needed for mégra so far ...
-    NoteSyllable,             // 56 - only needed for mégra so far ...
 }
 
 /// the value operation is defined on parameters
