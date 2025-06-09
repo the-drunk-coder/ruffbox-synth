@@ -248,13 +248,13 @@ impl<const BUFSIZE: usize, const NCHAN: usize> RuffboxControls<BUFSIZE, NCHAN> {
             .unwrap();
     }
 
-    pub fn clear_live_buffers(&self, bufnum: usize) {
+    pub fn clear_live_buffer(&self, bufnum: usize) {
         self.control_q_send
             .send(ControlMessage::ClearLiveBuffer(bufnum))
             .unwrap();
     }
 
-    pub fn clear_freeze_buffers(&self, bufnum: usize) {
+    pub fn clear_freeze_buffer(&self, bufnum: usize) {
         self.control_q_send
             .send(ControlMessage::ClearFreezeBuffer(bufnum))
             .unwrap();
